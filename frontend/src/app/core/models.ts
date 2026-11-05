@@ -69,3 +69,16 @@ export interface PublicCredential {
   revokedAt?: string;
   revocationReason?: string;
 }
+
+export type PortalItemType = 'ANNOUNCEMENT' | 'DEADLINE' | 'RESOURCE';
+
+export interface PortalItem {
+  id: string;
+  itemType: PortalItemType;
+  title: string;
+  description?: string;
+  eventAt?: string;
+  link?: string;
+  priority: number;
+  createdAt: string;
+}

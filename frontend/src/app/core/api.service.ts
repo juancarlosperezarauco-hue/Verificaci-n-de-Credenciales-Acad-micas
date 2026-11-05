@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { AuthResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PublicCredential, Student } from './models';
+import { AuthResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PortalItem, PortalItemType, PublicCredential, Student } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -41,6 +41,14 @@ export class ApiService {
   }
 
   listCredentials() { return this.http.get<Credential[]>('/api/credentials'); }
+
+  listPortalItems() { return this.http.get<PortalItem[]>('/api/portal/items'); }
+
+  createPortalItem(body: { itemType: PortalItemType; title: string; description: string; eventAt?: string; link: string; priority: number }) {
+    return this.http.post<PortalItem>('/api/portal/items', body);
+  }
+
+  deletePortalItem(id: string) { return this.http.delete<void>(`/api/portal/items/${id}`); }
 
   createCredential(body: { studentId: string; credentialType: string; title: string }) {
     return this.http.post<Credential>('/api/credentials', body);

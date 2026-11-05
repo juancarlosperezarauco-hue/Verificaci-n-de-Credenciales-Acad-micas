@@ -54,6 +54,15 @@ class CredentialFlowIntegrationTests {
                 .andReturn().getResponse().getContentAsString();
         String token = objectMapper.readTree(registerResponse).get("token").asText();
 
+        mvc.perform(post("/api/portal/items").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"itemType":"ANNOUNCEMENT","title":"Inicio de inscripciones",
+                                 "description":"La convocatoria ya está disponible.","priority":5}
+                                """))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.title").value("Inicio de inscripciones"));
+        mvc.perform(get("/api/portal/items").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].itemType").value("ANNOUNCEMENT"));
+
         mvc.perform(patch("/api/institution/profile").header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON).content("""
                                 {"primaryColor":"#123456","secondaryColor":"#345678","accentColor":"#9A34BC",
@@ -85,6 +94,10 @@ class CredentialFlowIntegrationTests {
                 .andExpect(jsonPath("$.role").value("STUDENT"))
                 .andReturn().getResponse().getContentAsString();
         String studentToken = objectMapper.readTree(studentResponse).get("token").asText();
+        mvc.perform(post("/api/portal/items").header("Authorization", "Bearer " + studentToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"itemType\":\"ANNOUNCEMENT\",\"title\":\"No permitido\",\"priority\":0}"))
+                .andExpect(status().isForbidden());
         String profile = mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+studentToken))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         String studentId = objectMapper.readTree(profile).get("id").asText();

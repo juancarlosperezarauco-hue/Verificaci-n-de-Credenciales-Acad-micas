@@ -46,6 +46,7 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 - Separación de usuarios y credenciales por organización.
 - Creación de credenciales en borrador.
 - Perfil institucional con logo, tres colores, estilo moderno/clásico/minimalista y datos del firmante.
+- Centro de Gestión Académica con avisos, fechas importantes, recursos y accesos rápidos administrables por institución.
 - Documento de respaldo institucional en MinIO con huella SHA-256.
 - Emisión por lotes para hasta 100 estudiantes y generación automática de certificados PDF con OpenPDF.
 - Carga del documento PDF en MinIO y cálculo de su hash SHA-256.
