@@ -19,6 +19,7 @@ import { BrandingService } from './core/branding.service';
             <span>{{ branding.profile()?.name ?? 'Credenciales Académicas' }}</span>
           </a>
           <nav class="flex flex-wrap items-center gap-2 text-sm">
+            <a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="bg-white/10" class="rounded-lg px-3 py-2">Inicio</a>
             <a routerLink="/verify" routerLinkActive="bg-white/10" class="rounded-lg px-3 py-2">Verificar</a>
             @if (auth.isAuthenticated()) {
               @if (auth.current()?.role === 'STUDENT') {
