@@ -21,8 +21,10 @@ public class IdentityService {
         String email=r.email().strip().toLowerCase(Locale.ROOT);
         if(accounts.findByEmail(email).isPresent())
             throw new IllegalArgumentException("Ya existe una cuenta con ese correo. Inicia sesión o recupera tu acceso.");
-        boolean anyProfileField = hasText(r.fullName()) || hasText(r.country()) || hasText(r.documentType()) || hasText(r.documentNumber());
-        boolean completeProfile = hasText(r.fullName()) && hasText(r.country()) && hasText(r.documentType()) && hasText(r.documentNumber());
+        boolean anyProfileField = hasText(r.fullName()) || hasText(r.country()) || hasText(r.documentType())
+                || hasText(r.documentNumber()) || r.dateOfBirth() != null || hasText(r.department());
+        boolean completeProfile = hasText(r.fullName()) && hasText(r.country()) && hasText(r.documentType())
+                && hasText(r.documentNumber()) && r.dateOfBirth() != null && hasText(r.department());
         if (anyProfileField && !completeProfile)
             throw new IllegalArgumentException("Completa todos los datos del perfil o regístrate solo con correo y contraseña.");
         StudentAccount account;
@@ -30,8 +32,8 @@ public class IdentityService {
             String country = normalizeCountry(r.country());
             String number = normalizeDocument(r.documentNumber());
             ensureIdentityAvailable(null, country, r.documentType(), number);
-            account = new StudentAccount(r.fullName().strip(), country, r.documentType(), number, email,
-                    passwords.encode(r.password()));
+            account = new StudentAccount(r.fullName().strip(), country, r.documentType(), number,
+                    r.dateOfBirth(), r.department().strip(), email, passwords.encode(r.password()));
         } else {
             account = new StudentAccount(email, passwords.encode(r.password()));
         }
@@ -53,7 +55,8 @@ public class IdentityService {
         String country = normalizeCountry(request.country());
         String number = normalizeDocument(request.documentNumber());
         ensureIdentityAvailable(id, country, request.documentType(), number);
-        student.updateProfile(request.fullName().strip(), country, request.documentType(), number);
+        student.updateProfile(request.fullName().strip(), country, request.documentType(), number,
+                request.dateOfBirth(), request.department().strip());
         return IdentityDtos.OwnProfile.from(student);
     }
     @Transactional

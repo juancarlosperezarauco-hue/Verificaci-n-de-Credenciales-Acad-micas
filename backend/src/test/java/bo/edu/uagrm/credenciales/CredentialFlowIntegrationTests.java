@@ -86,6 +86,7 @@ class CredentialFlowIntegrationTests {
 
         String studentJson = """
                 {"fullName":"María Pérez","country":"BO","documentType":"CI","documentNumber":"1234567",
+                 "dateOfBirth":"2000-03-19","department":"Santa Cruz",
                  "email":"maria@example.com","password":"StrongPassword123!"}
                 """;
         String studentResponse = mvc.perform(post("/api/auth/student/register")

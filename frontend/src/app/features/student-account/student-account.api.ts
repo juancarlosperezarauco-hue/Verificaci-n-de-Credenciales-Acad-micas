@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthResponse, PublicCredential } from '../../core/models';
-export interface IdentityProfile { id:string; fullName:string|null; country:string|null; documentType:string|null; documentNumber:string|null; searchCode:string; profileComplete:boolean; }
+export interface IdentityProfile { id:string; fullName:string|null; country:string|null; documentType:string|null; documentNumber:string|null; dateOfBirth:string|null; department:string|null; searchCode:string; profileComplete:boolean; }
 export interface StudentRegistration { email:string; password:string; }
-export interface StudentProfileUpdate { fullName:string; country:string; documentType:string; documentNumber:string; }
+export interface StudentProfileUpdate { fullName:string; country:string; documentType:string; documentNumber:string; dateOfBirth:string; department:string; }
 export interface Consent { id:string; institutionName:string; institutionSlug:string; expiresAt:string; usedAt:string|null; revokedAt:string|null; }
 export interface GeneratedConsent { code:string; access:Consent; }
 @Injectable({providedIn:'root'})

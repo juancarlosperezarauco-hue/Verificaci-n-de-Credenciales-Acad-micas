@@ -6,7 +6,7 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 
 1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo.
 2. El administrador ingresa al espacio privado de su institución.
-3. El estudiante crea una cuenta personal global con correo y contraseña en `/student/register`, accede en `/student/login` y completa su perfil dentro de Mi expediente mediante un asistente separado de dos pasos.
+3. El estudiante crea una cuenta personal global con correo y contraseña en `/student/register`, accede en `/student/login` y completa o edita su perfil dentro de Mi expediente mediante un asistente de tres pasos: nombre y fecha de nacimiento, CI, y país/departamento.
 4. Después de completar el perfil, el estudiante comparte su código de búsqueda `EST-…`. La institución lo pega en Estudiantes → Buscar y registrar, consulta sus datos básicos y lo vincula a su padrón para emitirle documentos.
 5. Selecciona uno o varios estudiantes, genera el PDF con logo y colores institucionales o adjunta un PDF propio.
 6. Emite la credencial y comparte su código o QR de verificación.
@@ -30,7 +30,7 @@ pero se conservan los vínculos y documentos existentes. Solo el estudiante pued
 El registro repetido en la misma institución es idempotente. Una autorización retirada no se reactiva con el mismo código.
 Cada nueva vinculación registra institución, usuario institucional y fecha en el historial de autorizaciones.
 También se mantiene la alternativa de generar códigos temporales destinados a una institución específica.
-El endpoint de canje solo entrega identificador interno, nombre, país, tipo y número de documento.
+El endpoint de canje solo entrega identificador interno, nombre, fecha de nacimiento, país, departamento, tipo y número de documento.
 Los códigos usan UUID aleatorio (122 bits de aleatoriedad), se guardan como SHA-256, caducan en 15 minutos y se consumen con bloqueo transaccional.
 El vínculo usado permanece activo hasta que el estudiante retire esa autorización; la expiración limita el canje inicial.
 Retirarla bloquea nuevas consultas y emisiones, pero no borra las credenciales emitidas ni información previamente consultada.

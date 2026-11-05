@@ -46,7 +46,8 @@ class StudentConsentIntegrationTests {
   mvc.perform(patch("/api/me/profile").header("Authorization","Bearer "+token)
       .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of(
           "fullName","Perfil Completo","country","BO","documentType","CI",
-          "documentNumber",UUID.randomUUID().toString()))))
+          "documentNumber",UUID.randomUUID().toString(),"dateOfBirth","2001-05-12",
+          "department","Santa Cruz"))))
       .andExpect(status().isOk()).andExpect(jsonPath("$.profileComplete").value(true))
       .andExpect(jsonPath("$.fullName").value("Perfil Completo"));
   postJson("/api/students/redeem",institution,Map.of("code",searchCode),200);
@@ -58,7 +59,7 @@ class StudentConsentIntegrationTests {
   String student=node(postJson("/api/auth/student/register",null,Map.of(
       "fullName","Estudiante Código","country","BO","documentType","CI",
       "documentNumber",UUID.randomUUID().toString(),"email",UUID.randomUUID()+"@example.com",
-      "password","StrongPassword123!"),201)).get("token").asText();
+      "password","StrongPassword123!","dateOfBirth","2000-08-21","department","La Paz"),201)).get("token").asText();
   String own=mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+student))
       .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
   String code=node(own).get("searchCode").asText(), id=node(own).get("id").asText();
@@ -101,7 +102,8 @@ class StudentConsentIntegrationTests {
   String a=institution(slugA),b=institution(slugB);
   String email=UUID.randomUUID()+"@example.com",document=UUID.randomUUID().toString();
   var registration=Map.of("fullName","Ana Prueba","country","BO","documentType","CI",
-    "documentNumber",document,"email",email,"password","StrongPassword123!");
+    "documentNumber",document,"email",email,"password","StrongPassword123!",
+    "dateOfBirth","1999-02-15","department","Cochabamba");
   String student=node(postJson("/api/auth/student/register",null,registration,201)).get("token").asText();
   postJson("/api/auth/student/register",null,registration,400);
   var duplicate=new HashMap<String,String>(registration);duplicate.put("email","other-"+email);
@@ -120,7 +122,8 @@ class StudentConsentIntegrationTests {
   var code=Map.of("code",g.get("code").asText());
   postJson("/api/students/redeem",b,code,400);
   JsonNode viewed=node(postJson("/api/students/redeem",a,code,200));
-  org.junit.jupiter.api.Assertions.assertEquals(Set.of("id","fullName","country","documentType","documentNumber"),
+  org.junit.jupiter.api.Assertions.assertEquals(Set.of("id","fullName","country","documentType","documentNumber",
+      "dateOfBirth","department"),
     new HashSet<>(viewed.properties().stream().map(Map.Entry::getKey).toList()));
   postJson("/api/students/redeem",a,code,400);
   String draft=node(postJson("/api/credentials",a,credential,201)).get("id").asText();
