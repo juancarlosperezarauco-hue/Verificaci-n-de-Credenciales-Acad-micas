@@ -10,10 +10,35 @@ import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from '.
  imports:[ReactiveFormsModule,DatePipe,RouterLink],
  template:`
  <section class="mx-auto max-w-6xl px-6 py-12">
- <p class="text-cyan-300">Mi identidad académica</p><h1 class="mt-3 text-3xl font-bold">{{profile()?.fullName || 'Mi cuenta'}}</h1>
- @if(profile(); as person){<p class="mt-3 text-slate-400">{{person.country}} · {{person.documentType}} {{person.documentNumber}}</p><p class="mt-2 break-all text-xs text-slate-500">Identificador permanente: {{person.id}}</p>}
+ <p class="text-cyan-300">Mi identidad académica</p><h1 class="mt-3 text-3xl font-bold">{{profile()?.fullName || 'Completa tu perfil'}}</h1>
+ @if(profile(); as person){@if(person.profileComplete){<p class="mt-3 text-slate-400">{{person.country}} · {{person.documentType}} {{person.documentNumber}}</p>}<p class="mt-2 break-all text-xs text-slate-500">Identificador permanente: {{person.id}}</p>}
  @if(error()){<p role="alert" class="mt-4 rounded-xl bg-red-500/10 p-4 text-red-300">{{error()}}</p>}
  @if(profile(); as person){
+ @if(!person.profileComplete){
+ <section class="mt-8 overflow-hidden rounded-3xl border border-cyan-400/25 bg-slate-900">
+  <div class="border-b border-white/10 p-6 sm:p-8">
+   <div class="flex items-center justify-between gap-4"><div><p class="text-sm font-bold uppercase tracking-[.2em] text-cyan-300">Configuración inicial</p><h2 class="mt-2 text-2xl font-bold">Completa tu perfil estudiantil</h2></div><span class="rounded-full bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-300">Paso {{profileStep()}} de 2</span></div>
+   <div class="mt-6 grid grid-cols-2 gap-2"><span [class]="profileStep() >= 1 ? 'h-2 rounded-full bg-cyan-400' : 'h-2 rounded-full bg-slate-700'"></span><span [class]="profileStep() >= 2 ? 'h-2 rounded-full bg-cyan-400' : 'h-2 rounded-full bg-slate-700'"></span></div>
+  </div>
+  <form [formGroup]="profileForm" (ngSubmit)="submitProfileStep()" class="p-6 sm:p-8">
+   @if(profileStep() === 1){
+    <p class="text-sm text-slate-400">Paso 1 · Datos personales</p>
+    <label class="mt-5 block">Nombre completo<input class="field" formControlName="fullName" maxlength="180" autocomplete="name" placeholder="Tal como aparece en tu documento"></label>
+    <p class="mt-3 text-sm text-slate-400">Este nombre aparecerá en tu expediente y será consultado por las instituciones que autorices.</p>
+    <button class="mt-6 rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950">Continuar</button>
+   } @else {
+    <p class="text-sm text-slate-400">Paso 2 · Documento de identidad</p>
+    <div class="mt-5 grid gap-5 sm:grid-cols-2">
+     <label class="block">País emisor<input class="field" formControlName="country" placeholder="BO" maxlength="2"></label>
+     <label class="block">Tipo de documento<select class="field" formControlName="documentType"><option value="CI">Cédula de identidad</option><option value="DNI">DNI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></label>
+     <label class="block sm:col-span-2">Número de documento<input class="field" formControlName="documentNumber" maxlength="80" autocomplete="off"></label>
+    </div>
+    <p class="mt-3 text-sm text-slate-400">La institución deberá comprobar esta información antes de emitir un reconocimiento.</p>
+    <div class="mt-6 flex flex-wrap gap-3"><button type="button" (click)="profileStep.set(1)" class="rounded-xl border border-white/20 px-5 py-3">Volver</button><button [disabled]="busy() || profileForm.invalid" class="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 disabled:opacity-50">{{busy() ? 'Guardando…' : 'Completar perfil'}}</button></div>
+   }
+  </form>
+ </section>
+ } @else {
  <section class="mt-8 rounded-2xl border border-cyan-400/30 bg-cyan-400/5 p-6">
  <h2 class="text-2xl font-bold">Mi código de búsqueda</h2>
  <p class="mt-3 text-slate-300">Entrega este código a tu colegio, universidad o instituto. Podrán pegarlo en Estudiantes para consultar tu nombre y documento, registrarte en su padrón y emitirte reconocimientos.</p>
@@ -31,13 +56,14 @@ import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from '.
  <button type="button" [disabled]="busy()" (click)="rotateSearchCode()" class="mt-3 mr-4 text-cyan-300">Confirmar cambio</button>
  <button type="button" (click)="confirmRotation.set(false)">Cancelar</button>
  </div>}
- </section>}
+ </section>}}
+ @if(profile()?.profileComplete){
  <div class="mt-8 grid gap-8 lg:grid-cols-2">
- <form [formGroup]="form" (ngSubmit)="generate()" class="rounded-2xl border border-white/10 bg-slate-900 p-6">
+ <form [formGroup]="consentForm" (ngSubmit)="generate()" class="rounded-2xl border border-white/10 bg-slate-900 p-6">
  <h2 class="text-xl font-bold">Código temporal opcional</h2>
  <p class="mt-3 text-sm text-slate-400">Compartirás tu nombre y documento. La institución podrá vincularte y emitir reconocimientos hasta que retires la autorización. No tendrá acceso a tu historial completo.</p>
  <label class="mt-5 block">Identificador de la institución<input class="field" formControlName="institutionSlug" placeholder="universidad-demo"></label>
- <button [disabled]="busy() || form.invalid" class="mt-5 rounded-xl bg-cyan-400 p-3 font-bold text-slate-950 disabled:opacity-50">Generar código de un solo uso</button>
+ <button [disabled]="busy() || consentForm.invalid" class="mt-5 rounded-xl bg-cyan-400 p-3 font-bold text-slate-950 disabled:opacity-50">Generar código de un solo uso</button>
  @if(generated(); as result){
  <div class="mt-6 rounded-xl border border-cyan-400/30 p-4">
  <p class="font-bold">Para {{result.access.institutionName}}</p>
@@ -70,6 +96,7 @@ import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from '.
  </article>
  }@empty{<p class="mt-4 text-slate-400">Aquí aparecerán los documentos que las instituciones te emitan.</p>}
  </div>
+ }
  </section>`
 })
 export class StudentAccountPage implements OnInit {
@@ -78,8 +105,31 @@ export class StudentAccountPage implements OnInit {
  readonly credentials=signal<PublicCredential[]>([]); readonly generated=signal<GeneratedConsent|null>(null);
  readonly qr=signal('');readonly busy=signal(false);readonly loading=signal(true);readonly error=signal('');
  readonly searchQr=signal('');readonly copyMessage=signal('');readonly confirmRotation=signal(false);
- readonly form=inject(FormBuilder).nonNullable.group({institutionSlug:['',[Validators.required,Validators.maxLength(80)]]});
+ readonly profileStep=signal(1);
+ readonly profileForm=inject(FormBuilder).nonNullable.group({
+   fullName:['',[Validators.required,Validators.maxLength(180)]],
+   country:['BO',[Validators.required,Validators.pattern('[A-Za-z]{2}')]],
+   documentType:['CI',[Validators.required]],
+   documentNumber:['',[Validators.required,Validators.maxLength(80)]]
+ });
+ readonly consentForm=inject(FormBuilder).nonNullable.group({institutionSlug:['',[Validators.required,Validators.maxLength(80)]]});
  ngOnInit(){this.reload();}
+ submitProfileStep(){
+   if(this.profileStep()===1){
+     const name=this.profileForm.controls.fullName;
+     if(name.invalid){name.markAsTouched();return;}
+     this.profileStep.set(2);return;
+   }
+   this.saveProfile();
+ }
+ private saveProfile(){
+   if(this.profileForm.invalid || this.busy())return;
+   this.busy.set(true);this.error.set('');
+   this.api.updateProfile(this.profileForm.getRawValue()).pipe(finalize(()=>this.busy.set(false))).subscribe({
+     next:r=>{this.setProfile(r);this.profileStep.set(1);},
+     error:e=>this.error.set(e.error?.message ?? 'No se pudo completar el perfil.')
+   });
+ }
  async copySearchCode(){
    const code=this.profile()?.searchCode;
    if(!code)return;
@@ -96,15 +146,16 @@ export class StudentAccountPage implements OnInit {
  }
  private setProfile(profile:IdentityProfile){
    this.profile.set(profile);this.searchQr.set('');
+   if(!profile.profileComplete)return;
    void QRCode.toDataURL(profile.searchCode,{width:240}).then(url=>{
      if(this.profile()?.searchCode===profile.searchCode)this.searchQr.set(url);
    }).catch(()=>{});
  }
  expired(c:Consent){return new Date(c.expiresAt).getTime()<=Date.now();}
  generate(){
- if(this.form.invalid || this.busy())return;
+ if(this.consentForm.invalid || this.busy())return;
  this.busy.set(true);this.error.set('');
- this.api.generate(this.form.getRawValue().institutionSlug).pipe(finalize(()=>this.busy.set(false))).subscribe({
+ this.api.generate(this.consentForm.getRawValue().institutionSlug).pipe(finalize(()=>this.busy.set(false))).subscribe({
  next:r=>{this.generated.set(r);this.consents.update(items=>[r.access,...items]);this.qr.set('');void QRCode.toDataURL(r.code,{width:240}).then(url=>this.qr.set(url)).catch(()=>{});},
  error:e=>this.error.set(e.error?.message ?? 'No se pudo generar el código.')
  });

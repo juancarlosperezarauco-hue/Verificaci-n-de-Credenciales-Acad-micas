@@ -9,4 +9,5 @@ public interface StudentAccountRepository extends JpaRepository<StudentAccount, 
     Optional<StudentAccount> findLockedById(@org.springframework.data.repository.query.Param("id") UUID id);
     Optional<StudentAccount> findByEmail(String email);
     boolean existsByCountryAndDocumentTypeAndDocumentNumber(String country, String type, String number);
+    Optional<StudentAccount> findByCountryAndDocumentTypeAndDocumentNumber(String country, String type, String number);
 }

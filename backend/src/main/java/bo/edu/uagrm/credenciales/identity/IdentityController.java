@@ -17,6 +17,11 @@ public class IdentityController {
     AuthDtos.AuthResponse login(@Valid @RequestBody IdentityDtos.Login request) { return identities.login(request); }
     @GetMapping("/api/me/profile") @PreAuthorize("hasRole('STUDENT')")
     IdentityDtos.OwnProfile profile(@AuthenticationPrincipal UserPrincipal p) { return identities.profile(p.userId()); }
+    @PatchMapping("/api/me/profile") @PreAuthorize("hasRole('STUDENT')")
+    IdentityDtos.OwnProfile updateProfile(@AuthenticationPrincipal UserPrincipal p,
+                                           @Valid @RequestBody IdentityDtos.UpdateProfile request) {
+        return identities.updateProfile(p.userId(), request);
+    }
     @PostMapping("/api/me/search-code/rotate") @PreAuthorize("hasRole('STUDENT')")
     IdentityDtos.OwnProfile rotate(@AuthenticationPrincipal UserPrincipal p) {
         return identities.rotateSearchCode(p.userId());

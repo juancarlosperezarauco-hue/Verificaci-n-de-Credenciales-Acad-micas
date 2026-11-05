@@ -6,8 +6,8 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 
 1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo.
 2. El administrador ingresa al espacio privado de su institución.
-3. El estudiante crea una cuenta personal global en `/student/register` y accede en `/student/login`.
-4. El estudiante comparte su código de búsqueda `EST-…`. La institución lo pega en Estudiantes → Buscar y registrar, consulta sus datos básicos y lo vincula a su padrón para emitirle documentos.
+3. El estudiante crea una cuenta personal global con correo y contraseña en `/student/register`, accede en `/student/login` y completa su perfil dentro de Mi expediente mediante un asistente separado de dos pasos.
+4. Después de completar el perfil, el estudiante comparte su código de búsqueda `EST-…`. La institución lo pega en Estudiantes → Buscar y registrar, consulta sus datos básicos y lo vincula a su padrón para emitirle documentos.
 5. Selecciona uno o varios estudiantes, genera el PDF con logo y colores institucionales o adjunta un PDF propio.
 6. Emite la credencial y comparte su código o QR de verificación.
 

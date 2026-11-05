@@ -28,7 +28,7 @@ public class ConsentService {
         Tenant tenant=tenants.findBySlug(slug.strip().toLowerCase(Locale.ROOT)).filter(Tenant::isActive)
             .orElseThrow(() -> new IllegalArgumentException("Institución no encontrada. Solicita su identificador de acceso."));
         String code=UUID.randomUUID().toString().replace("-","").toUpperCase(Locale.ROOT);
-        StudentConsent c=consents.save(new StudentConsent(identities.require(studentId),tenant,hash(code),Instant.now()));
+        StudentConsent c=consents.save(new StudentConsent(identities.requireComplete(studentId),tenant,hash(code),Instant.now()));
         return new Generated(code,view(c));
     }
     @Transactional

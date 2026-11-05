@@ -9,18 +9,12 @@ import { StudentAccountApi } from './student-account.api';
  template:`
  <section class="mx-auto max-w-2xl px-6 py-12">
   <p class="text-cyan-300">Cuenta personal del estudiante</p>
-  <h1 class="mt-3 text-3xl font-bold">{{registering ? 'Crea tu identidad académica' : 'Ingresa a tu cuenta'}}</h1>
-  <p class="mt-3 text-slate-400">Una cuenta para tus reconocimientos de distintas instituciones.</p>
+  <h1 class="mt-3 text-3xl font-bold">{{registering ? 'Crea tu cuenta' : 'Ingresa a tu cuenta'}}</h1>
+  <p class="mt-3 text-slate-400">{{registering ? 'Comienza con tu correo y contraseña. Completarás tu perfil dentro de tu cuenta.' : 'Accede a tu perfil y a tus reconocimientos académicos.'}}</p>
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6 space-y-5">
-   @if(registering) {
-    <label class="block">Nombre completo<input class="field" formControlName="fullName" maxlength="180" autocomplete="name"></label>
-    <label class="block">País emisor del documento (2 letras)<input class="field" formControlName="country" placeholder="BO" maxlength="2"></label>
-    <label class="block">Tipo de documento<select class="field" formControlName="documentType"><option value="CI">Cédula de identidad</option><option value="DNI">DNI</option><option value="PASAPORTE">Pasaporte</option><option value="OTRO">Otro</option></select></label>
-    <label class="block">Número de documento<input class="field" formControlName="documentNumber" maxlength="80"></label>
-    <p class="text-sm text-slate-400">Registra tus datos tal como aparecen en tu documento. La institución deberá comprobar tu identidad antes de emitir.</p>
-   }
    <label class="block">Correo electrónico<input class="field" formControlName="email" type="email" autocomplete="email"></label>
    <label class="block">Contraseña<input class="field" formControlName="password" type="password" [autocomplete]="registering ? 'new-password' : 'current-password'"></label>
+   @if(registering){<p class="text-sm text-slate-400">Usa por lo menos 10 caracteres. Después podrás completar tus datos personales en pasos separados.</p>}
    @if(error()){<p role="alert" class="text-red-300">{{error()}}</p>}
    <button class="w-full rounded-xl bg-cyan-400 p-3 font-bold text-slate-950 disabled:opacity-50" [disabled]="busy() || form.invalid">{{busy() ? 'Procesando…' : registering ? 'Crear mi cuenta' : 'Ingresar'}}</button>
   </form>
@@ -35,9 +29,6 @@ export class StudentAccessPage {
  readonly registering=inject(ActivatedRoute).snapshot.data['registering']===true;
  readonly busy=signal(false); readonly error=signal('');
  readonly form=inject(FormBuilder).nonNullable.group({
- fullName:['',this.registering ? [Validators.required,Validators.maxLength(180)] : []],
- country:['BO',this.registering ? [Validators.required,Validators.pattern('[A-Za-z]{2}')] : []],
- documentType:['CI'],documentNumber:['',this.registering ? [Validators.required] : []],
  email:['',[Validators.required,Validators.email]],password:['',[Validators.required,Validators.minLength(this.registering ? 10 : 1),Validators.maxLength(72)]]
  });
  submit(){

@@ -32,6 +32,26 @@ class StudentConsentIntegrationTests {
   return node(postJson("/api/me/consents",token,Map.of("institutionSlug",slug),200));
  }
 
+ @Test void studentRegistersWithCredentialsThenCompletesProfileInSeparateSteps() throws Exception {
+  String slug="onboarding-"+UUID.randomUUID(), institution=institution(slug);
+  String email=UUID.randomUUID()+"@example.com";
+  String token=node(postJson("/api/auth/student/register",null,
+      Map.of("email",email,"password","StrongPassword123!"),201)).get("token").asText();
+  String initial=mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+token))
+      .andExpect(status().isOk()).andExpect(jsonPath("$.profileComplete").value(false))
+      .andExpect(jsonPath("$.fullName").doesNotExist()).andReturn().getResponse().getContentAsString();
+  String searchCode=node(initial).get("searchCode").asText();
+  postJson("/api/students/redeem",institution,Map.of("code",searchCode),400);
+  postJson("/api/me/consents",token,Map.of("institutionSlug",slug),400);
+  mvc.perform(patch("/api/me/profile").header("Authorization","Bearer "+token)
+      .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(Map.of(
+          "fullName","Perfil Completo","country","BO","documentType","CI",
+          "documentNumber",UUID.randomUUID().toString()))))
+      .andExpect(status().isOk()).andExpect(jsonPath("$.profileComplete").value(true))
+      .andExpect(jsonPath("$.fullName").value("Perfil Completo"));
+  postJson("/api/students/redeem",institution,Map.of("code",searchCode),200);
+ }
+
  @Test void permanentSearchCodeRegistersAcrossInstitutionsWithoutDuplicates() throws Exception {
   String slugA="search-a-"+UUID.randomUUID(),slugB="search-b-"+UUID.randomUUID();
   String a=institution(slugA),b=institution(slugB);
