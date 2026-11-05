@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    Map<String, Object> duplicate(org.springframework.dao.DataIntegrityViolationException exception) {
+        return error("Los datos ya están registrados o entran en conflicto con otro registro.");
+    }
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Map<String, Object> badRequest(RuntimeException exception) {

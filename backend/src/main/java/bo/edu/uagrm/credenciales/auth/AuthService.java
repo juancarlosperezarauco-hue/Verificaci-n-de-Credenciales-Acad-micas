@@ -34,7 +34,8 @@ public class AuthService {
         if (tenantRepository.findBySlug(slug).isPresent()) {
             throw new IllegalArgumentException("La organización ya existe");
         }
-        Tenant tenant = tenantRepository.save(new Tenant(request.organizationName().trim(), slug));
+        Tenant tenant = tenantRepository.save(new Tenant(request.organizationName().trim(), slug,
+                request.institutionType()));
         AppUser user = userRepository.save(new AppUser(tenant, request.email().trim(),
                 passwordEncoder.encode(request.password()), UserRole.ADMIN));
         return response(user);
@@ -56,7 +57,8 @@ public class AuthService {
     private AuthDtos.AuthResponse response(AppUser user) {
         UserPrincipal principal = UserPrincipal.from(user);
         return new AuthDtos.AuthResponse(jwtService.create(principal), "Bearer", user.getEmail(),
-                user.getRole().name(), user.getTenant().getId().toString());
+                user.getRole().name(), user.getTenant().getId().toString(), user.getTenant().getName(),
+                user.getTenant().getInstitutionType());
     }
 
     private String normalizeSlug(String value) {

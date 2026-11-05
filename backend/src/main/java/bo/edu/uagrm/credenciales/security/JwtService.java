@@ -25,7 +25,7 @@ public class JwtService {
         return JWT.create()
                 .withIssuer("uagrm-credentials")
                 .withSubject(principal.userId().toString())
-                .withClaim("tenantId", principal.tenantId().toString())
+                .withClaim("tenantId", principal.tenantId() == null ? null : principal.tenantId().toString())
                 .withClaim("email", principal.email())
                 .withClaim("role", principal.role().name())
                 .withIssuedAt(now)
@@ -36,7 +36,7 @@ public class JwtService {
     public JwtIdentity verify(String token) {
         DecodedJWT jwt = JWT.require(algorithm).withIssuer("uagrm-credentials").build().verify(token);
         return new JwtIdentity(UUID.fromString(jwt.getSubject()),
-                UUID.fromString(jwt.getClaim("tenantId").asString()));
+                jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()));
     }
 
     public record JwtIdentity(UUID userId, UUID tenantId) {}

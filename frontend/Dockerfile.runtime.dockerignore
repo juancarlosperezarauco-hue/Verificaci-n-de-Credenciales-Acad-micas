@@ -1,0 +1,6 @@
+**
+!nginx.conf
+!dist/
+!dist/frontend/
+!dist/frontend/browser/
+!dist/frontend/browser/**

@@ -1,12 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl place-items-center px-6 py-16">
       <div class="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl lg:grid-cols-2">
@@ -33,6 +34,7 @@ import { AuthService } from '../../core/auth.service';
           <button [disabled]="form.invalid || loading()" class="mt-7 w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 disabled:opacity-50">
             {{ loading() ? 'Ingresando…' : 'Ingresar' }}
           </button>
+          <p class="mt-5 text-center text-sm text-slate-400">¿Tu institución aún no está registrada? <a routerLink="/register" class="font-semibold text-cyan-300">Crear cuenta</a></p>
         </form>
       </div>
     </section>

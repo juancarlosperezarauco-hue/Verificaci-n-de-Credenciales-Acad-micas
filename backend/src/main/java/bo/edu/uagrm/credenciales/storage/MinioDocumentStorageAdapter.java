@@ -3,6 +3,7 @@ package bo.edu.uagrm.credenciales.storage;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.GetObjectArgs;
 import io.minio.PutObjectArgs;
 import java.io.ByteArrayInputStream;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,15 @@ public class MinioDocumentStorageAdapter implements DocumentStoragePort {
             return objectKey;
         } catch (Exception exception) {
             throw new IllegalStateException("No se pudo almacenar el documento", exception);
+        }
+    }
+
+    @Override
+    public byte[] load(String objectKey) {
+        try (var stream = client.getObject(GetObjectArgs.builder().bucket(bucket).object(objectKey).build())) {
+            return stream.readAllBytes();
+        } catch (Exception exception) {
+            throw new IllegalStateException("No se pudo recuperar el documento", exception);
         }
     }
 }

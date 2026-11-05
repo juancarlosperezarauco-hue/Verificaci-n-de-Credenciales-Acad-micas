@@ -1,5 +1,6 @@
 package bo.edu.uagrm.credenciales.credential;
 
+import bo.edu.uagrm.credenciales.student.Student;
 import bo.edu.uagrm.credenciales.tenant.Tenant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,6 +21,12 @@ public class Credential {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tenant_id", nullable = false)
     private Tenant tenant;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id")
+    private Student student;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_account_id")
+    private bo.edu.uagrm.credenciales.identity.StudentAccount studentAccount;
     @Column(name = "holder_name", nullable = false, length = 180)
     private String holderName;
     @Column(name = "holder_document", length = 80)
@@ -51,11 +58,12 @@ public class Credential {
 
     protected Credential() {}
 
-    public Credential(Tenant tenant, String holderName, String holderDocument, String credentialType, String title) {
+    public Credential(Tenant tenant, bo.edu.uagrm.credenciales.identity.StudentAccount student, String credentialType, String title) {
         this.id = UUID.randomUUID();
         this.tenant = tenant;
-        this.holderName = holderName;
-        this.holderDocument = holderDocument;
+        this.studentAccount = student;
+        this.holderName = student.getFullName();
+        this.holderDocument = student.getDocumentNumber();
         this.credentialType = credentialType;
         this.title = title;
         this.status = CredentialStatus.DRAFT;
@@ -72,11 +80,18 @@ public class Credential {
         this.updatedAt = Instant.now();
     }
 
+    public void prepareVerificationCode(String verificationCode) {
+        if (status != CredentialStatus.DRAFT) {
+            throw new IllegalStateException("Solo una credencial en borrador puede preparar su verificación");
+        }
+        if (this.verificationCode == null) this.verificationCode = verificationCode;
+    }
+
     public void issue(String verificationCode, String blockchainTxId) {
         if (status != CredentialStatus.DRAFT) throw new IllegalStateException("Solo una credencial en borrador puede emitirse");
         if (documentHash == null) throw new IllegalStateException("Debe adjuntar el documento antes de emitir la credencial");
         this.status = CredentialStatus.ISSUED;
-        this.verificationCode = verificationCode;
+        if (this.verificationCode == null) this.verificationCode = verificationCode;
         this.blockchainTxId = blockchainTxId;
         this.issuedAt = Instant.now();
         this.updatedAt = issuedAt;
@@ -92,6 +107,8 @@ public class Credential {
 
     public UUID getId() { return id; }
     public Tenant getTenant() { return tenant; }
+    public Student getStudent() { return student; }
+    public bo.edu.uagrm.credenciales.identity.StudentAccount getStudentAccount() { return studentAccount; }
     public String getHolderName() { return holderName; }
     public String getHolderDocument() { return holderDocument; }
     public String getCredentialType() { return credentialType; }
@@ -99,11 +116,14 @@ public class Credential {
     public CredentialStatus getStatus() { return status; }
     public String getVerificationCode() { return verificationCode; }
     public String getDocumentName() { return documentName; }
+    public String getDocumentObjectKey() { return documentObjectKey; }
+    public String getDocumentContentType() { return documentContentType; }
     public String getDocumentHash() { return documentHash; }
     public String getBlockchainTxId() { return blockchainTxId; }
     public Instant getIssuedAt() { return issuedAt; }
     public Instant getRevokedAt() { return revokedAt; }
     public String getRevocationReason() { return revocationReason; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }
 

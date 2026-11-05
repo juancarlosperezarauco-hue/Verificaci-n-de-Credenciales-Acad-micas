@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CredentialRepository extends JpaRepository<Credential, UUID> {
+    List<Credential> findAllByStudentAccountIdOrderByCreatedAtDesc(UUID studentId);
     List<Credential> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
     Optional<Credential> findByIdAndTenantId(UUID id, UUID tenantId);
     Optional<Credential> findByVerificationCode(String verificationCode);

@@ -17,10 +17,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AppUserRepository userRepository;
+    private final bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts;
 
-    public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository userRepository,
+            bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
+        this.accounts = accounts;
     }
 
     @Override
@@ -30,8 +33,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ") && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 JwtService.JwtIdentity identity = jwtService.verify(header.substring(7));
-                userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId())
-                        .map(UserPrincipal::from)
+                (identity.tenantId() == null
+                    ? accounts.findById(identity.userId()).map(bo.edu.uagrm.credenciales.identity.IdentityService::principal)
+                    : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId()).map(UserPrincipal::from))
                         .filter(UserPrincipal::enabled)
                         .ifPresent(principal -> SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())));
