@@ -28,6 +28,7 @@ public class JwtService {
                 .withClaim("tenantId", principal.tenantId() == null ? null : principal.tenantId().toString())
                 .withClaim("email", principal.email())
                 .withClaim("role", principal.role().name())
+                .withClaim("accountType", principal.role() == bo.edu.uagrm.credenciales.user.UserRole.STUDENT ? "STUDENT" : "USER")
                 .withIssuedAt(now)
                 .withExpiresAt(now.plus(expirationMinutes, ChronoUnit.MINUTES))
                 .sign(algorithm);
@@ -36,9 +37,10 @@ public class JwtService {
     public JwtIdentity verify(String token) {
         DecodedJWT jwt = JWT.require(algorithm).withIssuer("uagrm-credentials").build().verify(token);
         return new JwtIdentity(UUID.fromString(jwt.getSubject()),
-                jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()));
+                jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()),
+                "USER".equals(jwt.getClaim("accountType").asString()));
     }
 
-    public record JwtIdentity(UUID userId, UUID tenantId) {}
+    public record JwtIdentity(UUID userId, UUID tenantId, boolean userAccount) {}
 }
 

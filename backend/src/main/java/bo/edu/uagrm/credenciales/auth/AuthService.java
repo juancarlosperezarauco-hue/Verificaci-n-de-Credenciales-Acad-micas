@@ -37,7 +37,7 @@ public class AuthService {
         Tenant tenant = tenantRepository.save(new Tenant(request.organizationName().trim(), slug,
                 request.institutionType()));
         AppUser user = userRepository.save(new AppUser(tenant, request.email().trim(),
-                passwordEncoder.encode(request.password()), UserRole.ADMIN));
+                passwordEncoder.encode(request.password()), UserRole.TENANT_ADMIN));
         return response(user);
     }
 
@@ -48,7 +48,7 @@ public class AuthService {
         AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().toLowerCase())
                 .filter(AppUser::isActive)
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!UserPrincipal.from(user).enabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
         return response(user);

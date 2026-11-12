@@ -29,7 +29,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
                         .requestMatchers("/api/me/**").hasRole("STUDENT")
-                        .requestMatchers("/api/students/**", "/api/credentials/**").hasAnyRole("ADMIN", "ISSUER", "AUDITOR")
+                        .requestMatchers("/api/platform/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/students/**", "/api/credentials/**", "/api/institution/**", "/api/portal/**")
+                            .hasAnyRole("ADMIN", "TENANT_ADMIN", "CUSTOM", "ISSUER", "AUDITOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

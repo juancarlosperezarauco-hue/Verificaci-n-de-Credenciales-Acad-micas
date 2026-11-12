@@ -33,13 +33,14 @@ public class CredentialController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('CREDENTIAL_VIEW')")
     List<CredentialDtos.Response> list(@AuthenticationPrincipal UserPrincipal principal) {
         return credentialService.list(principal.tenantId());
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_CREATE')")
     CredentialDtos.Response create(@AuthenticationPrincipal UserPrincipal principal,
                                    @Valid @RequestBody CredentialDtos.CreateRequest request) {
         return credentialService.create(principal.tenantId(), request);
@@ -47,14 +48,14 @@ public class CredentialController {
 
     @PostMapping("/batch")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_CREATE')")
     List<CredentialDtos.Response> createBatch(@AuthenticationPrincipal UserPrincipal principal,
                                               @Valid @RequestBody CredentialDtos.CreateBatchRequest request) {
         return credentialService.createBatch(principal.tenantId(), request);
     }
 
     @PostMapping(value = "/{id}/document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_CREATE')")
     CredentialDtos.Response attachDocument(@AuthenticationPrincipal UserPrincipal principal,
                                              @PathVariable UUID id,
                                              @RequestPart("file") MultipartFile file) {
@@ -62,13 +63,14 @@ public class CredentialController {
     }
 
     @PostMapping("/{id}/generate-document")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_CREATE')")
     CredentialDtos.Response generateDocument(@AuthenticationPrincipal UserPrincipal principal,
                                               @PathVariable UUID id) {
         return credentialService.generateDocument(principal.tenantId(), id);
     }
 
     @GetMapping("/{id}/document")
+    @PreAuthorize("hasAuthority('CREDENTIAL_VIEW')")
     ResponseEntity<byte[]> downloadDocument(@AuthenticationPrincipal UserPrincipal principal,
                                             @PathVariable UUID id) {
         var document = credentialService.document(principal.tenantId(), id);
@@ -80,13 +82,13 @@ public class CredentialController {
     }
 
     @PatchMapping("/{id}/issue")
-    @PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_ISSUE')")
     CredentialDtos.Response issue(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id) {
         return credentialService.issue(principal.tenantId(), id);
     }
 
     @PatchMapping("/{id}/revoke")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('CREDENTIAL_REVOKE')")
     CredentialDtos.Response revoke(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id,
                                    @Valid @RequestBody CredentialDtos.RevokeRequest request) {
         return credentialService.revoke(principal.tenantId(), id, request.reason());

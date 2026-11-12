@@ -85,7 +85,7 @@ export class InstitutionPage implements OnInit {
   readonly logoPreview = signal('');
   readonly message = signal('');
   readonly error = signal('');
-  readonly canEdit = () => this.auth.current()?.role === 'ADMIN';
+  readonly canEdit = () => ['ADMIN', 'TENANT_ADMIN'].includes(this.auth.current()?.role ?? '');
   readonly form = this.fb.nonNullable.group({
     primaryColor: ['#22D3EE', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],
     secondaryColor: ['#2563EB', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],

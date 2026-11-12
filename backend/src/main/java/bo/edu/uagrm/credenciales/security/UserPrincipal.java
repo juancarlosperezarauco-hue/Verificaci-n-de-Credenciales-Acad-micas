@@ -15,16 +15,37 @@ public record UserPrincipal(
         String email,
         String password,
         UserRole role,
-        boolean enabled) implements UserDetails {
+        boolean enabled,
+        java.util.Set<String> permissions) implements UserDetails {
+
+    public UserPrincipal(UUID userId, UUID tenantId, String email, String password, UserRole role, boolean enabled) {
+        this(userId, tenantId, email, password, role, enabled, defaults(role));
+    }
+
+    public static java.util.Set<String> defaults(UserRole role) {
+        return switch (role) {
+            case ADMIN, TENANT_ADMIN -> java.util.Arrays.stream(bo.edu.uagrm.credenciales.rbac.PermissionCode.values())
+                    .map(Enum::name).collect(java.util.stream.Collectors.toUnmodifiableSet());
+            case ISSUER -> java.util.Set.of("ORGANIZATION_VIEW", "STUDENT_VIEW", "STUDENT_LINK",
+                    "CREDENTIAL_VIEW", "CREDENTIAL_CREATE", "CREDENTIAL_ISSUE");
+            case AUDITOR -> java.util.Set.of("ORGANIZATION_VIEW", "CREDENTIAL_VIEW", "REPORT_VIEW", "AUDIT_VIEW");
+            default -> java.util.Set.of();
+        };
+    }
 
     public static UserPrincipal from(AppUser user) {
-        return new UserPrincipal(user.getId(), user.getTenant().getId(), user.getEmail(),
-                user.getPasswordHash(), user.getRole(), user.isActive() && user.getTenant().isActive());
+        return new UserPrincipal(user.getId(), user.getTenant() == null ? null : user.getTenant().getId(), user.getEmail(),
+                user.getPasswordHash(), user.getRole(), user.isActive() &&
+                (user.getRole() == UserRole.SUPER_ADMIN ? user.getTenant() == null :
+                    user.getTenant() != null && user.getTenant().isActive()));
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        java.util.Set<GrantedAuthority> authorities = new java.util.HashSet<>();
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        permissions.forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
+        return authorities;
     }
 
     @Override public String getPassword() { return password; }

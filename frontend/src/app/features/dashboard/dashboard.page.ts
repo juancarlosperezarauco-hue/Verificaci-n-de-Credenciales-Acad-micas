@@ -119,7 +119,7 @@ export class DashboardPage implements OnInit {
       .subscribe({ next: result => { this.students.set(result.students); this.credentials.set(result.credentials); this.portalItems.set(result.portal); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
-  canManage(): boolean { return this.auth.current()?.role === 'ADMIN'; }
+  canManage(): boolean { return ['ADMIN', 'TENANT_ADMIN'].includes(this.auth.current()?.role ?? ''); }
   toggleEditor(): void { this.showEditor.update(value => !value); }
 
   publish(): void {
