@@ -1,5 +1,9 @@
 # Asignación actualizada: dos IAs
 
+Actualización: Codex retomó y completó esta asignación al agotarse los tokens
+de Antigravity. Ver docs/UI_DELIVERY.md. El contenido siguiente queda como
+registro histórico de la distribución de tareas, no como trabajo pendiente.
+
 Repositorio: https://github.com/juancarlosperezarauco-hue/Verificaci-n-de-Credenciales-Acad-micas
 
 Codex terminó el backend de RBAC, superadmin y onboarding que correspondía a DeepSeek.

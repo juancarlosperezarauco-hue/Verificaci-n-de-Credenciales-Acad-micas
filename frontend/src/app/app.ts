@@ -2,6 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth.service';
 import { BrandingService } from './core/branding.service';
+import { OrganizationApi } from './features/organization/organization.api';
 
 @Component({
   selector: 'app-root',
@@ -23,11 +24,15 @@ import { BrandingService } from './core/branding.service';
               @if (auth.current()?.role === 'STUDENT') {
                 <a routerLink="/student/account" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mi expediente</a>
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
+              } @else if(auth.current()?.role === 'SUPER_ADMIN') {
+                <a routerLink="/superadmin/organizations" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organizaciones</a>
+                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else {
-                <a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>
-                <a routerLink="/students" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>
-                <a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>
-                <a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Institución</a>
+                @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}
+                @if(access.can('STUDENT_VIEW')){<a routerLink="/students" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>}
+                @if(access.can('CREDENTIAL_VIEW')){<a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>}
+                @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/organization" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organización</a><a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Imagen institucional</a>}
+                @if(isAdmin()){<a routerLink="/organization/team" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Equipo y roles</a>}
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               }
               <button (click)="logout()" class="ml-1 rounded-lg border border-white/15 px-3 py-2">Salir</button>
@@ -56,23 +61,31 @@ import { BrandingService } from './core/branding.service';
 export class App {
   readonly auth = inject(AuthService);
   readonly branding = inject(BrandingService);
+  readonly access = inject(OrganizationApi);
   private readonly router = inject(Router);
-  readonly isLanding = signal(this.router.url === '/');
+  readonly isLanding = signal(this.lightSurface(this.router.url));
+  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied)(\/|$|\?)/.test(url);}
+  isAdmin(){return ['ADMIN','TENANT_ADMIN'].includes(this.auth.current()?.role??'');}
 
   constructor() {
     this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) this.isLanding.set(event.urlAfterRedirects === '/');
+      if (event instanceof NavigationEnd) this.isLanding.set(this.lightSurface(event.urlAfterRedirects));
     });
     effect(() => {
       const session = this.auth.current();
-      if (session?.token && session.role !== 'STUDENT') this.branding.load();
-      else this.branding.clear();
+      this.access.access.set(null);
+      this.branding.clear();
+      if (session?.token && session.role !== 'STUDENT') this.access.me().subscribe({
+        next:p=>{if(p.permissions.includes('ORGANIZATION_VIEW'))this.branding.load();},
+        error:()=>this.access.access.set(null)
+      });
     });
   }
 
   logout(): void {
     const student = this.auth.current()?.role === 'STUDENT';
     this.auth.logout();
+    this.access.access.set(null);
     void this.router.navigate([student ? '/student/login' : '/login']);
   }
 }

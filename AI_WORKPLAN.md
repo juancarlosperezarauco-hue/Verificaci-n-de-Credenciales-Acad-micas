@@ -14,5 +14,10 @@ Codex es propietario de todos los archivos backend y migraciones V11/V12.
 Antigravity es propietario de nuevas pantallas frontend. Cambios existentes mínimos
 de compatibilidad TENANT_ADMIN en dashboard/institution ya pertenecen a Codex.
 Entregar commits, pruebas y handoffs; no integrar directamente en main.
-Estado: Codex completó backend y validación (9 pruebas PostgreSQL, 8 Angular).
-Frontend administrativo pendiente de entrega de Antigravity. Ver handoffs/codex.md.
+Estado actualizado: Antigravity también se detuvo antes de implementar pantallas.
+Codex completó su alcance frontend y lo conectó al backend real.
+Validación: 9 pruebas backend PostgreSQL, 15 Angular, recorrido HTTP completo con
+PDF real en MinIO y verificación de suspensión/restauración.
+La versión integrada está ejecutándose en Docker local (web 4300).
+La herramienta de revisión visual no inició: no se entregan capturas ni se afirma QA visual.
+La rama de entrega sigue siendo codex/rbac-superadmin; main no se modifica.

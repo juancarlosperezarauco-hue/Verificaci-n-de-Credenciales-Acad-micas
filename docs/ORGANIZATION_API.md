@@ -21,6 +21,7 @@ El correo del representante es la cuenta inicial TENANT_ADMIN.
 Todos los otros campos y al menos un nivel son obligatorios.
 
 GET /api/institution/details: detalle legal; 404 si perfil histórico incompleto.
+GET /api/institution/status: nombre, slug, tipo y estado de la organización propia.
 PUT /api/institution/details: mismo objeto profile; valida unicidad y actualiza.
 Permisos ORGANIZATION_VIEW/ORGANIZATION_UPDATE respectivamente.
 No cambia la cuenta de acceso al editar el correo del representante.

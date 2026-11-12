@@ -56,6 +56,9 @@ class RbacIntegrationTests {
   String email=UUID.randomUUID()+"@platform.example";
   users.save(new AppUser(null,email,encoder.encode(password),UserRole.SUPER_ADMIN));
   String root=postJson("/api/auth/platform/login","",Map.of("email",email,"password",password),200).get("token").asText();
+  mvc.perform(get("/api/institution/status").header("Authorization","Bearer "+token))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id));
+  mvc.perform(get("/api/institution/status").header("Authorization","Bearer "+root)).andExpect(status().isForbidden());
   mvc.perform(get("/api/platform/organizations").header("Authorization","Bearer "+token)).andExpect(status().isForbidden());
   mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+root)).andExpect(status().isForbidden());
   mvc.perform(get("/api/credentials").header("Authorization","Bearer "+root)).andExpect(status().isForbidden());

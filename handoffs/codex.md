@@ -5,7 +5,7 @@ Se implementó superadministración global sin tenant, TENANT_ADMIN, empleados C
 con roles por organización, 19 permisos, autenticación con consulta de estado/permisos
 en cada petición, historial de cambios de estado y registro institucional completo.
 Codex retomó el backend asignado a DeepSeek, sin encontrar una entrega publicada suya.
-El frontend de administración queda asignado a Antigravity en handoffs/antigravity.md.
+Codex también completó el frontend al detenerse Antigravity. Ver docs/UI_DELIVERY.md.
 
 ## Migraciones
 - V11__rbac_and_platform_governance.sql: permisos, roles, asignaciones con claves
@@ -30,26 +30,29 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
 ## Validación ejecutada
 - Maven verify: 9 pruebas, 0 fallos, 0 errores (H2).
 - Maven verify contra PostgreSQL 16 dedicado con Flyway habilitado y Hibernate
-  ddl-auto=validate: 9 pruebas, 0 fallos, 0 errores. Historial Flyway confirma V1–V8,V11,V12.
+  ddl-auto=validate: 9 pruebas, 0 fallos, 0 errores. La entrega integrada valida V1–V12.
 - Las pruebas cubren permisos retirados con JWT vigente, usuarios desactivados,
   IDs ajenos, estudiantes independientes, suspensión/restauración, documentos legales,
   validación de URL y duplicados de identificación fiscal/licencia por país.
 - npm run build: compilación de producción correcta.
-- npm test -- --watch=false --browsers=ChromeHeadless: 8 pruebas correctas.
+- npm test -- --watch=false --browsers=ChromeHeadless: 15 pruebas correctas.
+- scripts/smoke-organization.ps1: PASS contra PostgreSQL/MinIO/API reales,
+  incluyendo emisión, descarga, verificación, revocación y suspensión/restauración.
 - git diff --check: correcto.
 
 ## Riesgos y límites
-- Las nuevas pantallas/login superadmin corresponden a Antigravity y no están entregadas.
+- Las nuevas pantallas/login superadmin están implementadas por Codex; revisión visual
+  limitada por indisponibilidad de cua_repl ("failed to write kernel assets").
 - ADMIN/ISSUER/AUDITOR históricos conservan compatibilidad; no se duplican estudiantes.
 - Los registros nuevos mantienen ACTIVE; aprobación obligatoria previa no fue solicitada
   como condición de registro. Los estados pueden administrarse por superadmin.
 - El catálogo IDENTITY_REVIEW/REPORT_VIEW/AUDIT_VIEW no desarrolla esos módulos.
 - El bootstrap no tiene credenciales por defecto: usar variables locales documentadas
   y retirarlas tras crear el primer superadmin. Cambios de roles son inmediatos.
-- V9/V10 de seguridad del estudiante existen únicamente como cambios locales previos.
-  No se publican en esta entrega. Al integrarlos posteriormente en una base que ya
-  tenga V11/V12, revisar expresamente el orden Flyway antes de desplegar.
-- No se integró ni desplegó sobre main. La aplicación principal conserva su versión.
+- V9/V10 se incorporaron con el contenido previo, sin alterar su checksum, para
+  validar el historial ya aplicado en la base local y permitir instalar desde cero.
+  Esto no publica el código local pendiente del módulo de seguridad del estudiante.
+- main permanece sin modificar. Docker local ahora ejecuta la versión integrada de esta rama.
 - No hay avances remotos de DeepSeek/Antigravity que revisar al momento de esta entrega.
 - Datos y contenedores de pruebas se mantuvieron separados de los datos del usuario.
 

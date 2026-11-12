@@ -24,6 +24,8 @@ public class PlatformController {
  }
  @GetMapping("/api/platform/organizations") @PreAuthorize("hasRole('SUPER_ADMIN')")
  public List<PlatformService.Organization> list(){return service.list();}
+ @GetMapping("/api/institution/status") @PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
+ public PlatformService.Organization own(@AuthenticationPrincipal UserPrincipal p){return service.get(p.tenantId());}
  @GetMapping("/api/platform/organizations/{id}") @PreAuthorize("hasRole('SUPER_ADMIN')")
  public PlatformService.Organization get(@PathVariable UUID id){return service.get(id);}
  @PatchMapping("/api/platform/organizations/{id}/status") @PreAuthorize("hasRole('SUPER_ADMIN')")
