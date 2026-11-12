@@ -4,4 +4,3 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 export class ConfirmDialogComponent {
  readonly data=inject<{title:string;message:string}>(DIALOG_DATA);readonly ref=inject(DialogRef<boolean>);
 }
-

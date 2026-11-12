@@ -52,4 +52,3 @@ export class OrganizationRegisterPage {
  next:r=>{this.auth.save(r);this.form.get('password')?.reset();this.form.get('confirmPassword')?.reset();void this.router.navigate(['/organization']);},
  error:e=>this.error.set(requestError(e))});}
 }
-

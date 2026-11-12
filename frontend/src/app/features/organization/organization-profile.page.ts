@@ -37,4 +37,3 @@ export class OrganizationProfilePage {
  this.api.saveDetails(toDetails(this.form)).pipe(finalize(()=>this.saving.set(false))).subscribe({
  next:d=>{fillDetails(this.form,d);this.notice.set('Datos institucionales guardados.');this.api.myOrganization().subscribe(o=>this.organization.set(o));},error:e=>this.error.set(requestError(e))});}
 }
-

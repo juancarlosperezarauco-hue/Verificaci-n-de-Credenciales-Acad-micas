@@ -41,4 +41,3 @@ export function requestError(error:unknown):string {
  }
  return 'No se pudo completar la operación. Intenta nuevamente.';
 }
-

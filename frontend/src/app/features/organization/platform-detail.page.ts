@@ -43,4 +43,3 @@ export class PlatformDetailPage {
  confirmStatus(){this.statusForm.markAllAsTouched();if(this.statusForm.invalid||this.busy())return;const v=this.statusForm.getRawValue();
  this.dialog.open<boolean>(ConfirmDialogComponent,{data:{title:'Cambiar estado de la organización',message:'Se cambiará el estado a '+this.labels[v.status]+'. La decisión quedará registrada en el historial.'},ariaLabelledBy:'confirm-title',autoFocus:'first-tabbable',restoreFocus:true}).closed.subscribe(ok=>{if(!ok)return;this.busy.set(true);this.error.set('');this.notice.set('');this.api.changeStatus(this.id,v.status,v.reason.trim()).pipe(finalize(()=>this.busy.set(false))).subscribe({next:()=>{this.statusForm.controls.reason.reset();this.notice.set('Estado actualizado.');this.load();},error:e=>this.error.set(requestError(e))});});}
 }
-

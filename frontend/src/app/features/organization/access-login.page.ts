@@ -30,4 +30,3 @@ export class AccessLoginPage {
  const destination=p.role==='SUPER_ADMIN'?'/superadmin/organizations':p.permissions.includes('ORGANIZATION_VIEW')?'/dashboard':p.permissions.includes('STUDENT_VIEW')?'/students':p.permissions.includes('CREDENTIAL_VIEW')?'/credentials':'/access-denied';
  void this.router.navigate([destination]);},error:e=>this.error.set(requestError(e))});},error:e=>this.error.set(requestError(e))});}
 }
-

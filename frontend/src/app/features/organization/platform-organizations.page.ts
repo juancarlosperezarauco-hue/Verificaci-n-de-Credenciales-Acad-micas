@@ -25,4 +25,3 @@ export class PlatformOrganizationsPage {
  constructor(){this.load();}
  load(){this.loading.set(true);this.error.set('');this.api.organizations().pipe(finalize(()=>this.loading.set(false))).subscribe({next:r=>{this.organizations.set(r);this.page.set(0);},error:e=>this.error.set(requestError(e))});}
 }
-

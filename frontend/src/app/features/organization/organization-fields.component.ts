@@ -27,4 +27,3 @@ import { OrgField } from './organization.form';
 export class OrganizationFieldsComponent {
  readonly form=input.required<FormGroup>(); readonly fields=input.required<OrgField[]>(); readonly prefix=input('org-');
 }
-

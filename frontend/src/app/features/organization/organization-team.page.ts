@@ -62,4 +62,3 @@ export class OrganizationTeamPage {
  removeRole(r:TenantRole){this.confirm('Eliminar rol','Se retirará el rol '+r.name+' de todos los usuarios que lo tienen asignado.',()=>this.run(this.api.deleteRole(r.id),'Rol eliminado.',()=>this.resetRole()));}
  private run<T>(request:Observable<T>,message:string,done:()=>void=()=>{}){if(this.busy())return;this.busy.set(true);this.error.set('');this.notice.set('');request.pipe(finalize(()=>this.busy.set(false))).subscribe({next:()=>{done();this.notice.set(message);this.load();},error:e=>this.error.set(requestError(e))});}
 }
-

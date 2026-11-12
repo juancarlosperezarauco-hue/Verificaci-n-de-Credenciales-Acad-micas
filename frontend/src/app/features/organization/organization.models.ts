@@ -23,4 +23,3 @@ export const PERMISSION_LABELS: Record<string, string> = {
  CREDENTIAL_VIEW: 'Consultar credenciales', CREDENTIAL_CREATE: 'Crear credenciales', CREDENTIAL_ISSUE: 'Emitir credenciales',
  CREDENTIAL_REVOKE: 'Revocar credenciales', IDENTITY_REVIEW: 'Revisar identidad', REPORT_VIEW: 'Consultar reportes', AUDIT_VIEW: 'Consultar auditoría'
 };
-

@@ -58,4 +58,3 @@ export function fillDetails(form:FormGroup,d:OrganizationDetails) {
  documentNumber:d.representative.documentNumber,position:d.representative.position,representativeEmail:d.representative.email,
  representativePhone:d.representative.phone});
 }
-
