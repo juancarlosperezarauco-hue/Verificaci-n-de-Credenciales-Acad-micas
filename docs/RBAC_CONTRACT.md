@@ -2,9 +2,9 @@
 
 Base: origin/main a53fc14. Rama propietaria: codex/rbac-superadmin.
 
-Codex posee security, auth, user, rbac, platform y migración V11.
+Codex posee security, auth, user, rbac, platform, onboarding y migraciones V11/V12.
 V9/V10 están reservadas a seguridad de estudiantes existente localmente.
-DeepSeek debe usar V12 o posterior para onboarding y coordinar cambios de auth/Tenant.
+DeepSeek está detenido; Codex asume onboarding. Ver AI_WORKPLAN.md.
 Antigravity consume este contrato sin crear endpoints alternativos.
 
 - STUDENT: identidad global en student_accounts.
@@ -34,7 +34,7 @@ BOOTSTRAP_SUPERADMIN_PASSWORD (mínimo 12 caracteres); ninguna credencial por de
 Quitar esas variables después del primer arranque. No hay registro público de superadmin.
 
 Los registros existentes y el registro actual mantienen ACTIVE por compatibilidad.
-DeepSeek puede introducir PENDING_REVIEW en su flujo de onboarding coordinándolo con Codex.
+El flujo de aprobación obligatoria previa queda como decisión posterior de producto.
 Roles eliminados y permisos modificados surten efecto en la siguiente petición.
 Los IDs de usuarios/roles recibidos se resuelven siempre dentro del tenant autenticado.
 
