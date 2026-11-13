@@ -23,8 +23,8 @@ import { OrgField } from './organization.form';
   } @else {
   <label class="org-label" [for]="prefix()+field.key">{{field.label}} @if(field.optional){<span class="font-normal text-slate-500">(opcional)</span>}
    @if(field.options) {
-    <select class="org-input" [id]="prefix()+field.key" [formControlName]="field.key" [multiple]="field.type==='multiple'" [attr.size]="field.type==='multiple'?5:null" [attr.aria-describedby]="prefix()+field.key+'-hint'">
-     @if(field.type!=='multiple'){<option value="">Selecciona una opción</option>}
+    <select class="org-input" [id]="prefix()+field.key" [formControlName]="field.key" [attr.aria-describedby]="prefix()+field.key+'-hint'">
+     <option value="">Selecciona una opción</option>
      @for(option of field.options;track option.value){<option [value]="option.value">{{option.label}}</option>}
     </select>
    } @else {

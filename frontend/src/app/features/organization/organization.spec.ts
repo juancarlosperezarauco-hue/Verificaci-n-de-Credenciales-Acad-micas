@@ -90,4 +90,12 @@ describe('Organization workflows',()=>{
   inputs[0].click();inputs[2].click();expect(page.form.get('educationLevels')?.value).toEqual(['INICIAL','SECUNDARIA']);
   inputs[0].click();expect(page.form.get('educationLevels')?.value).toEqual(['SECUNDARIA']);
  });
+ it('keeps the institution type scalar and displays the stored selection',()=>{
+  const fixture=TestBed.createComponent(OrganizationRegisterPage);const page=fixture.componentInstance;
+  page.form.patchValue({institutionType:'INSTITUTO_TECNICO'});fixture.detectChanges();
+  const select=fixture.nativeElement.querySelector('select') as HTMLSelectElement;
+  expect(select.value).toBe('INSTITUTO_TECNICO');
+  select.value='UNIVERSIDAD';select.dispatchEvent(new Event('change'));
+  expect(page.form.get('institutionType')?.value).toBe('UNIVERSIDAD');
+ });
 });
