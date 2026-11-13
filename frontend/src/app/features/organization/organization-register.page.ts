@@ -10,14 +10,15 @@ import { OrganizationFieldsComponent } from './organization-fields.component';
  imports:[ReactiveFormsModule,RouterLink,OrganizationFieldsComponent],
  template:`
  <section class="org-page max-w-5xl">
- <div class="mb-8"><p class="org-eyebrow">Una identidad institucional, un espacio propio</p><h1 class="org-title">Registra tu organización</h1>
- <p class="org-description">Completa sus datos y crea el acceso del administrador. Los estudiantes conservan su cuenta personal independiente.</p></div>
+ <div class="mb-8"><p class="org-eyebrow">Un espacio para cada organización educativa</p><h1 class="org-title">Registra tu organización educativa</h1>
+ <p class="org-description">Para escuelas, colegios, universidades, institutos, academias y centros de formación. Completa los datos de tu organización y crea la cuenta de su administrador.</p></div>
  <ol class="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-5" aria-label="Pasos del registro">
  @for(label of steps;track label;let i=$index){<li class="rounded-xl border p-3 text-sm" [class]="step()===i?'border-blue-600 bg-blue-50 text-blue-800':'border-slate-200 bg-white text-slate-500'" [attr.aria-current]="step()===i?'step':null"><span class="mr-2 font-bold">{{i+1}}</span>{{label}}</li>}
  </ol>
  <form [formGroup]="form" (ngSubmit)="submit()" class="org-card">
  @if(step()<4){
   <h2 class="mb-6 text-xl font-bold">{{sections[step()].title}}</h2>
+  @if(step()===2){<p class="org-info mb-6">Estos datos son opcionales. Puedes continuar y completarlos más adelante desde el perfil de tu organización.</p>}
   <app-organization-fields [form]="form" [fields]="sections[step()].fields"/>
   @if(step()===3){<hr class="my-7 border-slate-200"><h3 class="mb-5 font-semibold">Acceso de la organización</h3><app-organization-fields [form]="form" [fields]="accountFields"/><p class="mt-4 text-sm text-slate-500">El correo del representante será el correo de inicio de sesión.</p>}
  } @else {
@@ -38,7 +39,7 @@ import { OrganizationFieldsComponent } from './organization-fields.component';
 })
 export class OrganizationRegisterPage {
  private readonly api=inject(OrganizationApi);private readonly auth=inject(AuthService);private readonly router=inject(Router);
- readonly sections=DETAIL_SECTIONS;readonly accountFields=ACCOUNT_FIELDS;readonly steps=['Identificación','Contacto','Información legal','Representante','Revisión'];
+ readonly sections=DETAIL_SECTIONS.map(section=>({...section,fields:section.fields.filter(field=>field.key!=='educationLevels')}));readonly accountFields=ACCOUNT_FIELDS;readonly steps=['Identificación','Contacto','Información legal','Representante','Revisión'];
  readonly form=buildDetailsForm(true);readonly step=signal(0);readonly loading=signal(false);readonly error=signal('');readonly confirmed=signal(false);
  display(key:string):string {const field=this.sections.flatMap(s=>s.fields).find(f=>f.key===key);const v=this.form.get(key)?.value;
  const label=(x:string)=>field?.options?.find(o=>o.value===x)?.label??x;return Array.isArray(v)?v.map(label).join(', '):label(v||'Sin especificar');}

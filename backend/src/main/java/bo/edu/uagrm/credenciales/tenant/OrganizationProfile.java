@@ -30,6 +30,7 @@ public class OrganizationProfile {
  public OrganizationProfile(UUID tenantId){this.tenantId=tenantId;}
  private static String text(String value){return value==null?null:value.trim();}
  private static String key(String value){return value.replaceAll("\\s+","").toUpperCase(Locale.ROOT);}
+ private static String optionalKey(String value){if(value==null)return null;String normalized=key(value);return normalized.isEmpty()?null:normalized;}
  public void update(OrganizationDtos.Details d){
  legalName=text(d.legalName());
  country=key(d.country());
@@ -39,8 +40,8 @@ public class OrganizationProfile {
  contactEmail=d.contactEmail()==null?null:d.contactEmail().trim().toLowerCase(Locale.ROOT);
  website=text(d.website());
  domain=d.domain()==null?null:d.domain().trim().toLowerCase(Locale.ROOT);
- taxId=key(d.taxId());
- educationLicense=key(d.educationLicense());
+ taxId=optionalKey(d.taxId());
+ educationLicense=optionalKey(d.educationLicense());
  ministryRegistration=text(d.ministryRegistration());
  accreditation=text(d.accreditation());
  institutionType=d.institutionType();educationLevels.clear();educationLevels.addAll(d.educationLevels());

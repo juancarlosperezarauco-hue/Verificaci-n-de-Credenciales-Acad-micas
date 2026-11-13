@@ -11,6 +11,8 @@ Codex también completó el frontend al detenerse Antigravity. Ver docs/UI_DELIV
 - V11__rbac_and_platform_governance.sql: permisos, roles, asignaciones con claves
   compuestas que impiden cruces de tenant, alcance de usuarios y gobernanza.
 - V12__organization_details.sql: datos legales, representante y niveles educativos.
+- V13__optional_organization_legal_identifiers.sql: NIT/licencia opcionales,
+  normalización de vacíos a NULL y conservación de unicidad cuando se informan.
 No se modificó ninguna migración anterior.
 
 ## Endpoints
@@ -28,14 +30,13 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
 - GET /api/platform/organizations/{id}/details
 
 ## Validación ejecutada
-- Maven verify: 9 pruebas, 0 fallos, 0 errores (H2).
 - Maven verify contra PostgreSQL 16 dedicado con Flyway habilitado y Hibernate
-  ddl-auto=validate: 9 pruebas, 0 fallos, 0 errores. La entrega integrada valida V1–V12.
+  ddl-auto=validate: 11 pruebas, 0 fallos, 0 errores. La entrega integrada valida V1–V13.
 - Las pruebas cubren permisos retirados con JWT vigente, usuarios desactivados,
   IDs ajenos, estudiantes independientes, suspensión/restauración, documentos legales,
   validación de URL y duplicados de identificación fiscal/licencia por país.
 - npm run build: compilación de producción correcta.
-- npm test -- --watch=false --browsers=ChromeHeadless: 23 pruebas correctas.
+- npm test -- --watch=false --browsers=ChromeHeadless: 24 pruebas correctas.
 - scripts/smoke-organization.ps1: PASS contra PostgreSQL/MinIO/API reales,
   incluyendo emisión, descarga, verificación, revocación y suspensión/restauración.
 - git diff --check: correcto.
@@ -67,6 +68,10 @@ adicionales. Archivos: organization-options.ts, organization.form.ts,
 organization-fields.component.ts y organization.spec.ts dentro de
 frontend/src/app/features/organization/. Sin cambios de API ni migraciones.
 El commit de esta actualización se identifica en el historial de la rama y el PR.
+
+Registro general: se quitaron los niveles educativos del asistente; NIT/licencia
+son opcionales. V13 adapta esas columnas y el backend normaliza vacíos a NULL.
+Los ocho tipos institucionales se probaron registrando y editando sin esos datos.
 
 ## Cierre de revisión
 Se corrigieron el selector de tipo institucional, la selección de niveles en móvil,

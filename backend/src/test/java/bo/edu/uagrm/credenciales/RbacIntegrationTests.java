@@ -96,6 +96,36 @@ class RbacIntegrationTests {
   var invalid=new HashMap<>(profile("X","Y"));invalid.put("website","javascript:alert(1)");
   postJson("/api/auth/organizations/register","",Map.of("organizationSlug","org-"+UUID.randomUUID(),"password",password,"profile",invalid),400);
  }
+ @Test void organizationCanRegisterAndUpdateWithoutEducationLevels()throws Exception{
+  var details=new HashMap<>(profile(UUID.randomUUID().toString(),UUID.randomUUID().toString()));
+  details.put("educationLevels",List.of());
+  var session=postJson("/api/auth/organizations/register","",Map.of("organizationSlug","org-"+UUID.randomUUID(),
+   "password",password,"profile",details),201);
+  String token=session.get("token").asText();
+  mvc.perform(get("/api/institution/details").header("Authorization","Bearer "+token))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.educationLevels").isEmpty());
+  mvc.perform(put("/api/institution/details").header("Authorization","Bearer "+token)
+   .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(details)))
+   .andExpect(status().isOk()).andExpect(jsonPath("$.educationLevels").isEmpty());
+ }
+ @Test void allEducationalOrganizationTypesCanRegisterWithoutLegalIdentifiers()throws Exception{
+  for(var type:InstitutionType.values()){
+   var details=new HashMap<>(profile("unused","unused"));
+   details.put("institutionType",type.name());details.put("educationLevels",List.of());
+   details.remove("taxId");details.put("educationLicense","   ");
+   var session=postJson("/api/auth/organizations/register","",Map.of("organizationSlug","org-"+UUID.randomUUID(),
+    "password",password,"profile",details),201);
+   String token=session.get("token").asText();
+   mvc.perform(get("/api/institution/details").header("Authorization","Bearer "+token))
+    .andExpect(status().isOk()).andExpect(jsonPath("$.institutionType").value(type.name()))
+    .andExpect(jsonPath("$.taxId").isEmpty()).andExpect(jsonPath("$.educationLicense").isEmpty());
+   details.put("taxId","");details.put("educationLicense",null);
+   mvc.perform(put("/api/institution/details").header("Authorization","Bearer "+token)
+    .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(details)))
+    .andExpect(status().isOk()).andExpect(jsonPath("$.taxId").isEmpty())
+    .andExpect(jsonPath("$.educationLicense").isEmpty());
+  }
+ }
  @Test void studentAndUnknownPermissionsCannotEscalate()throws Exception{
   String token=postJson("/api/auth/student/register","",Map.of("email",UUID.randomUUID()+"@student.example","password",password),201).get("token").asText();
   mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+token)).andExpect(status().isOk());

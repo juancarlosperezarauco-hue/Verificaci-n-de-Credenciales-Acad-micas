@@ -16,7 +16,7 @@ de compatibilidad TENANT_ADMIN en dashboard/institution ya pertenecen a Codex.
 Entregar commits, pruebas y handoffs; no integrar directamente en main.
 Estado actualizado: Antigravity también se detuvo antes de implementar pantallas.
 Codex completó su alcance frontend y lo conectó al backend real.
-Validación: 9 pruebas backend PostgreSQL, 20 Angular, recorrido HTTP completo con
+Validación: 11 pruebas backend PostgreSQL, 24 Angular, recorrido HTTP completo con
 PDF real en MinIO y verificación de suspensión/restauración.
 La versión integrada está ejecutándose en Docker local (web 4300).
 La revisión visual se completó en escritorio y móvil; evidencias y correcciones

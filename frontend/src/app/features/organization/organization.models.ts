@@ -4,7 +4,7 @@ export interface Representative { fullName: string; documentType: string; docume
 export interface OrganizationDetails {
  legalName: string; institutionType: InstitutionType; educationLevels: string[];
  country: string; region: string; address: string; phone: string; contactEmail: string;
- website: string; domain: string; taxId: string; educationLicense: string;
+ website: string; domain: string; taxId: string|null; educationLicense: string|null;
  ministryRegistration: string; accreditation: string; representative: Representative;
 }
 export interface OrganizationSummary { id: string; name: string; slug: string; institutionType: InstitutionType; active: boolean; status: OrganizationStatus; }

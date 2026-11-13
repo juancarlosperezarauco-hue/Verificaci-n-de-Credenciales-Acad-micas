@@ -1,7 +1,15 @@
 # Contrato de organizaciones para Antigravity
 
+Actualización del registro: ya no se solicitan niveles educativos en el asistente.
+`profile.educationLevels` conserva el contrato de lista para compatibilidad, pero
+acepta `[]` al registrar o editar una institución. El frontend envía esa lista
+vacía cuando no existen niveles; no se infieren a partir del tipo de institución.
+Los valores previamente guardados se conservan y pueden editarse en el perfil.
+Registro general: los datos fiscales y de acreditación se pueden completar más
+adelante. V13 permite identificadores fiscales y licencias educativas nulos.
+
 Codex asume las tareas backend de DeepSeek. Todo cambio backend pertenece a Codex.
-La rama de trabajo sigue siendo codex/rbac-superadmin; migración V12.
+La rama de trabajo sigue siendo codex/rbac-superadmin; migraciones V12/V13.
 
 POST /api/auth/organizations/register (público):
 {organizationSlug,password,profile:{legalName,institutionType,educationLevels:[],
@@ -15,10 +23,14 @@ ACADEMIA, CENTRO_FORMACION, OTRO y añade ESCUELA, INSTITUTO_TECNICO.
 educationLevels: INICIAL, PRIMARIA, SECUNDARIA, SUPERIOR, TECNICO.
 country: código ISO de dos letras; obligatorio.
 website opcional, solo http/https. domain opcional, nombre de dominio sin protocolo.
-taxId y educationLicense se normalizan sin espacios y en mayúsculas; unicidad por país.
+taxId y educationLicense son opcionales. Valores ausentes, vacíos o compuestos solo
+de espacios se almacenan como null. Cuando se informan, se normalizan sin espacios
+y en mayúsculas y se conserva la unicidad por país.
 ministryRegistration/accreditation opcionales.
 El correo del representante es la cuenta inicial TENANT_ADMIN.
-Todos los otros campos y al menos un nivel son obligatorios.
+Los datos de identificación, ubicación/contacto y representante siguen siendo
+obligatorios. educationLevels admite lista vacía. Las ocho clases institucionales
+comparten el mismo formulario y contrato, incluida OTRO.
 
 GET /api/institution/details: detalle legal; 404 si perfil histórico incompleto.
 GET /api/institution/status: nombre, slug, tipo y estado de la organización propia.

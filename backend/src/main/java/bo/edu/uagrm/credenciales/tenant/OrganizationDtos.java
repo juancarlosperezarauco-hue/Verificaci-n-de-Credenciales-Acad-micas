@@ -16,11 +16,11 @@ public final class OrganizationDtos {
  @NotBlank @Email @Size(max=180) String contactEmail,
  @Size(max=255) @Pattern(regexp="^$|https?://[^\\s]+") String website,
  @Size(max=180) @Pattern(regexp="(?i)^$|[a-z0-9-]+(\\.[a-z0-9-]+)+") String domain,
- @NotBlank @Size(max=80) String taxId,
- @NotBlank @Size(max=120) String educationLicense,
+ @Size(max=80) String taxId,
+ @Size(max=120) String educationLicense,
  @Size(max=180) String ministryRegistration,
  @Size(max=500) String accreditation,
- @NotNull InstitutionType institutionType,@NotEmpty @Size(max=5) Set<@NotNull EducationLevel> educationLevels,
+ @NotNull InstitutionType institutionType,@NotNull @Size(max=5) Set<@NotNull EducationLevel> educationLevels,
  @NotNull @Valid Representative representative){}
  public record Registration(@NotBlank @Size(max=80) String organizationSlug,
  @NotBlank @Size(min=10,max=72) String password,@NotNull @Valid Details profile){}

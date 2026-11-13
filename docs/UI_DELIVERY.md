@@ -26,9 +26,9 @@ Se agregó GET /api/institution/status, limitado al tenant autenticado.
 Diseño claro con layouts adaptables, etiquetas, ayudas y diálogos CDK con foco.
 
 ## Validación
-- Backend: 9 pruebas con PostgreSQL real, Flyway habilitado y Hibernate validate.
-  Las doce migraciones se instalaron correctamente en una base de prueba nueva.
-- Frontend: compilación de producción y 23 pruebas Jasmine/Karma/ChromeHeadless.
+- Backend: 11 pruebas con PostgreSQL real, Flyway habilitado y Hibernate validate.
+  Las trece migraciones se instalaron correctamente en una base de prueba nueva.
+- Frontend: compilación de producción y 24 pruebas Jasmine/Karma/ChromeHeadless.
   Casos nuevos: pasos y contrato de registro, contraseñas, validación, permisos,
   alta de empleados y filtros del superadmin.
 - Prueba de servicios reales con scripts/smoke-organization.ps1: PASS.
@@ -82,6 +82,27 @@ Los servidores temporales de revisión se detuvieron al finalizar.
   compatibilidad con valores guardados. Sin cambios de API ni migraciones.
 - Se verificó en escritorio y móvil, sin enviar el registro ni crear datos en la base.
   [Captura del formulario corregido](evidence/register-document-dropdown.jpg).
+
+## Simplificación de identificación
+Se quitó el bloque de niveles educativos del registro y de su revisión final.
+La primera pantalla solicita únicamente el nombre legal y el tipo de institución.
+El registro envía niveles vacíos; su validación en la API ya permite esa lista.
+En el perfil institucional siguen disponibles como información opcional, conservando
+los valores históricos. No requiere migraciones.
+
+## Registro general de organizaciones educativas
+Las ocho clases institucionales utilizan el mismo asistente: escuela, colegio,
+universidad, instituto, instituto técnico, academia, centro de formación/capacitación
+y otra organización educativa. La identificación solicita nombre y tipo.
+La información fiscal, licencia, registro ministerial y acreditación es opcional;
+el asistente permite continuar sin esos datos y completarlos después.
+V13 permite guardar NIT/licencia ausentes como NULL y conserva las restricciones
+de unicidad para los identificadores informados. Las pruebas de PostgreSQL cubren
+alta y edición de los ocho tipos sin identificadores ni niveles, además de los
+rechazos por identificadores duplicados cuando se suministran.
+Se comprobó en la web Docker que se avanza sin niveles y con el paso legal vacío.
+La vista móvil conserva su ancho disponible. No se enviaron registros de prueba
+a la base local. [Captura del registro general](evidence/register-general.jpg).
 
 ## Acceso local
 Web: http://localhost:4300
