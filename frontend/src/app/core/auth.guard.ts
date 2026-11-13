@@ -17,6 +17,7 @@ export const permissionGuard: CanActivateFn = route => {
   const login=route.data['roles']?.includes('SUPER_ADMIN')?'/superadmin/login':'/login';
   if(!auth.isAuthenticated())return router.createUrlTree([login]);
   return api.me().pipe(map(p=>{
+    if(p.onboarding && !route.data['allowOnboarding'])return router.createUrlTree(['/organization']);
     const permission=route.data['permission'] as string | undefined;
     const roles=route.data['roles'] as string[] | undefined;
     return (!permission||p.permissions.includes(permission))&&(!roles||roles.includes(p.role))

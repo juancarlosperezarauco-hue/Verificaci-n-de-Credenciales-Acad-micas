@@ -16,6 +16,7 @@ export class OrganizationApi {
  register(body:{organizationSlug:string; password:string; profile:OrganizationDetails}) { return this.http.post<AuthResponse>('/api/auth/organizations/register',body); }
  details() { return this.http.get<OrganizationDetails>('/api/institution/details'); }
  myOrganization() { return this.http.get<OrganizationSummary>('/api/institution/status'); }
+ submitReview() { return this.http.post<OrganizationSummary>('/api/institution/submit-review',{}); }
  saveDetails(body:OrganizationDetails) { return this.http.put<OrganizationDetails>('/api/institution/details',body); }
  organizations() { return this.http.get<OrganizationSummary[]>('/api/platform/organizations'); }
  organization(id:string) { return this.http.get<OrganizationSummary>('/api/platform/organizations/'+id); }

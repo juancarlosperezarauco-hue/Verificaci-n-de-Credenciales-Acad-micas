@@ -4,6 +4,7 @@ param(
  [string]$SuperPassword = $env:REVIEW_SUPERADMIN_PASSWORD
 )
 $ErrorActionPreference = 'Stop'
+if(-not $SuperEmail -or -not $SuperPassword){throw 'La prueba requiere un SUPER_ADMIN del entorno aislado para aprobar la organización.'}
 function Invoke-Api([string]$Method,[string]$Path,$Body=$null,[string]$Token='') {
  $request = @{Method=$Method;Uri=$ApiBase+$Path;ContentType='application/json'}
  if($Token){$request.Headers=@{Authorization='Bearer '+$Token}}
@@ -16,7 +17,7 @@ $password='Smoke-'+[guid]::NewGuid().ToString('N')
 $slug='smoke-'+$suffix
 $profile=@{
  legalName='Instituto de prueba '+$suffix.Substring(0,6);institutionType='INSTITUTO_TECNICO'
- educationLevels=@('TECNICO');country='BO';region='Santa Cruz';address='Av. Educación 100'
+ educationLevels=@();country='BO';region='Santa Cruz';address='Av. Educación 100'
  phone='70000000';contactEmail='contacto-'+$suffix+'@example.test';website='https://instituto.example.test'
  domain='instituto.example.test';taxId=$suffix;educationLicense='EDU-'+$suffix
  ministryRegistration='REG-'+$suffix;accreditation='Registro de prueba local'
@@ -27,6 +28,12 @@ $admin=Invoke-Api POST '/api/auth/organizations/register' @{organizationSlug=$sl
 Assert-Value ($admin.role -eq 'TENANT_ADMIN') 'No se creó el administrador institucional'
 $own=Invoke-Api GET '/api/institution/status' $null $admin.token
 Assert-Value ($own.id -eq $admin.tenantId) 'El estado no pertenece al tenant autenticado'
+Assert-Value ($own.status -eq 'PENDING_REVIEW') 'El registro nuevo no quedó pendiente'
+$blockedBeforeApproval=$false
+try {Invoke-Api GET '/api/credentials' $null $admin.token | Out-Null}catch{if([int]$_.Exception.Response.StatusCode -eq 403){$blockedBeforeApproval=$true}else{throw}}
+Assert-Value $blockedBeforeApproval 'Una organización pendiente pudo consultar credenciales'
+$root=Invoke-Api POST '/api/auth/platform/login' @{email=$SuperEmail;password=$SuperPassword}
+Invoke-Api PATCH ('/api/platform/organizations/'+$admin.tenantId+'/status') @{status='ACTIVE';reason='Aprobación de organización de prueba'} $root.token | Out-Null
 $role=Invoke-Api POST '/api/access/roles' @{name='Emisor de prueba';permissions=@('ORGANIZATION_VIEW','STUDENT_VIEW','STUDENT_LINK','CREDENTIAL_VIEW','CREDENTIAL_CREATE','CREDENTIAL_ISSUE')} $admin.token
 $employeeEmail='docente-'+$suffix+'@example.test'
 $employee=Invoke-Api POST '/api/access/users' @{fullName='Docente de prueba';email=$employeeEmail;password=$password;roleIds=@($role.id)} $admin.token
@@ -59,4 +66,4 @@ if($SuperEmail -and $SuperPassword){
  Invoke-Api PATCH ('/api/platform/organizations/'+$admin.tenantId+'/status') @{status='ACTIVE';reason='Restauración después de prueba'} $root.token | Out-Null
  Invoke-Api GET '/api/credentials' $null $staff.token | Out-Null
 }
-[pscustomobject]@{result='PASS';organizationId=$admin.tenantId;organizationSlug=$slug;studentId=$studentProfile.id;credentialId=$credential.id;verificationCode=$issued.verificationCode;checks='Registro, roles, usuario, estudiante, vinculación, PDF real, emisión, expediente, verificación y revocación'}
+[pscustomobject]@{result='PASS';organizationId=$admin.tenantId;organizationSlug=$slug;studentId=$studentProfile.id;credentialId=$credential.id;verificationCode=$issued.verificationCode;checks='Registro pendiente, aprobación, roles, usuario, estudiante, vínculo, PDF real, emisión, expediente, verificación y revocación'}

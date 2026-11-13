@@ -22,7 +22,7 @@ import { OrganizationFieldsComponent } from './organization-fields.component';
   <app-organization-fields [form]="form" [fields]="sections[step()].fields"/>
   @if(step()===3){<hr class="my-7 border-slate-200"><h3 class="mb-5 font-semibold">Acceso de la organización</h3><app-organization-fields [form]="form" [fields]="accountFields"/><p class="mt-4 text-sm text-slate-500">El correo del representante será el correo de inicio de sesión.</p>}
  } @else {
-  <h2 class="text-xl font-bold">Revisa tus datos antes de enviar</h2>
+  <h2 class="text-xl font-bold">Revisa tus datos antes de enviar</h2><p class="org-info mt-4">Tu solicitud será revisada antes de habilitar la emisión de credenciales. Mientras tanto podrás completar los datos y la imagen de tu organización.</p>
   @for(section of sections;track section.title;let i=$index){
    <div class="mt-6 border-b border-slate-200 pb-5"><div class="mb-3 flex justify-between gap-3"><h3 class="font-semibold">{{section.title}}</h3><button type="button" class="org-link" (click)="step.set(i)">Editar {{section.title.toLowerCase()}}</button></div>
    <dl class="grid gap-3 sm:grid-cols-2">@for(field of section.fields;track field.key){<div><dt class="text-xs text-slate-500">{{field.label}}</dt><dd class="break-words text-sm">{{display(field.key)}}</dd></div>}</dl></div>
@@ -33,7 +33,7 @@ import { OrganizationFieldsComponent } from './organization-fields.component';
  @if(error()){<p class="org-error mt-5" role="alert">{{error()}}</p>}
  <div class="mt-8 flex flex-wrap justify-between gap-3">
  @if(step()>0){<button type="button" class="org-secondary" (click)="back()" [disabled]="loading()">Anterior</button>}@else{<a routerLink="/login" class="org-link self-center">Ya tengo una cuenta</a>}
- @if(step()<4){<button type="button" class="org-primary" (click)="next()">Continuar</button>}@else{<button type="submit" class="org-primary" [disabled]="loading() || !confirmed()">{{loading()?'Registrando…':'Crear organización'}}</button>}
+ @if(step()<4){<button type="button" class="org-primary" (click)="next()">Continuar</button>}@else{<button type="submit" class="org-primary" [disabled]="loading() || !confirmed()">{{loading()?'Enviando…':'Enviar solicitud de registro'}}</button>}
  </div>
  </form></section>`
 })

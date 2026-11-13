@@ -7,9 +7,9 @@ export interface OrganizationDetails {
  website: string; domain: string; taxId: string|null; educationLicense: string|null;
  ministryRegistration: string; accreditation: string; representative: Representative;
 }
-export interface OrganizationSummary { id: string; name: string; slug: string; institutionType: InstitutionType; active: boolean; status: OrganizationStatus; }
+export interface OrganizationSummary { id: string; name: string; slug: string; institutionType: InstitutionType; active: boolean; status: OrganizationStatus; reviewNote?:string|null; allowedTransitions?:OrganizationStatus[]; }
 export interface StatusEvent { id: string; actorId: string; previousStatus: OrganizationStatus; status: OrganizationStatus; reason: string; createdAt: string; }
-export interface AccessProfile { userId: string; tenantId: string | null; role: string; permissions: string[]; }
+export interface AccessProfile { userId: string; tenantId: string | null; role: string; permissions: string[]; onboarding?:boolean; }
 export interface TenantRole { id: string; name: string; permissions: string[]; }
 export interface StaffUser { id: string; fullName: string | null; email: string; active: boolean; role: string; roleIds: string[]; }
 export const STATUS_LABELS: Record<OrganizationStatus, string> = {

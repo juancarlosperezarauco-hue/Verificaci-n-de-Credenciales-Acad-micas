@@ -23,12 +23,13 @@ import { OrganizationApi } from './features/organization/organization.api';
             @if (auth.isAuthenticated()) {
               @if (auth.current()?.role === 'STUDENT') {
                 <a routerLink="/student/account" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mi expediente</a>
+                <a routerLink="/student/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Seguridad</a>
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else if(auth.current()?.role === 'SUPER_ADMIN') {
                 <a routerLink="/superadmin/organizations" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organizaciones</a>
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else {
-                @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}
+                @if(access.can('ORGANIZATION_VIEW')&&!access.access()?.onboarding){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}
                 @if(access.can('STUDENT_VIEW')){<a routerLink="/students" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>}
                 @if(access.can('CREDENTIAL_VIEW')){<a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>}
                 @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/organization" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organización</a><a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Imagen institucional</a>}
@@ -64,8 +65,8 @@ export class App {
   readonly access = inject(OrganizationApi);
   private readonly router = inject(Router);
   readonly isLanding = signal(this.lightSurface(this.router.url));
-  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied)(\/|$|\?)/.test(url);}
-  isAdmin(){return ['ADMIN','TENANT_ADMIN'].includes(this.auth.current()?.role??'');}
+  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied)(\/|$|\?)/.test(url)||/^\/student\/(security|recover|confirm-email)(\/|$|\?)/.test(url);}
+  isAdmin(){return !this.access.access()?.onboarding&&['ADMIN','TENANT_ADMIN'].includes(this.auth.current()?.role??'');}
 
   constructor() {
     this.router.events.subscribe((event) => {

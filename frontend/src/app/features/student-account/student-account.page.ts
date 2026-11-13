@@ -10,7 +10,7 @@ import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from '.
  imports:[ReactiveFormsModule,DatePipe,RouterLink],
  template:`
  <section class="mx-auto max-w-6xl px-6 py-12">
- <p class="text-cyan-300">Mi identidad académica</p><h1 class="mt-3 text-3xl font-bold">{{profile()?.fullName || 'Construye tu perfil estudiantil'}}</h1>
+ <p class="text-cyan-300">Mi identidad académica</p><h1 class="mt-3 text-3xl font-bold">{{profile()?.fullName || 'Construye tu perfil estudiantil'}}</h1><a routerLink="/student/security" class="mt-4 inline-block text-cyan-300 underline">Seguridad de mi cuenta</a>
  @if(profile(); as person){<p class="mt-3 text-slate-400">Administra tus datos personales y decide qué instituciones pueden vincularte.</p><p class="mt-2 break-all text-xs text-slate-500">Identificador permanente: {{person.id}}</p>}
  @if(error()){<p role="alert" class="mt-4 rounded-xl bg-red-500/10 p-4 text-red-300">{{error()}}</p>}
  @if(profile(); as person){
