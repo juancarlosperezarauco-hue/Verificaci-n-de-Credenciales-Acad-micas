@@ -15,6 +15,13 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    properties:
+      mail.smtp.connectiontimeout: 2000
+      mail.smtp.timeout: 2000
+      mail.smtp.writetimeout: 2000
   servlet:
     multipart:
       max-file-size: 10MB
@@ -37,8 +44,9 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  frontend-url: ${APP_FRONTEND_URL:${ALLOWED_ORIGIN:http://localhost:4200}}
   security:
-    jwt-secret: ${JWT_SECRET:change-this-development-secret-with-at-least-32-characters}
+    jwt-secret: ${JWT_SECRET}
     jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     allowed-origin: ${ALLOWED_ORIGIN:http://localhost:4200}
   storage:

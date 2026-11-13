@@ -13,8 +13,9 @@ public class IdentityService {
     private final StudentAccountRepository accounts;
     private final PasswordEncoder passwords;
     private final JwtService jwt;
-    public IdentityService(StudentAccountRepository accounts, PasswordEncoder passwords, JwtService jwt) {
-        this.accounts=accounts; this.passwords=passwords; this.jwt=jwt;
+    private final StudentSecurityService security;
+    public IdentityService(StudentAccountRepository accounts, PasswordEncoder passwords, JwtService jwt, StudentSecurityService security) {
+        this.accounts=accounts; this.passwords=passwords; this.jwt=jwt; this.security=security;
     }
     @Transactional
     public AuthDtos.AuthResponse register(IdentityDtos.Register r) {
@@ -37,11 +38,14 @@ public class IdentityService {
         } else {
             account = new StudentAccount(email, passwords.encode(r.password()));
         }
-        return session(accounts.saveAndFlush(account));
+        accounts.saveAndFlush(account);
+        security.onRegistered(account.getId());
+        return session(account);
     }
     @Transactional(readOnly=true)
     public AuthDtos.AuthResponse login(IdentityDtos.Login r) {
         StudentAccount s=accounts.findByEmail(r.email().strip().toLowerCase(Locale.ROOT))
+            .filter(StudentAccount::isActive)
             .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
         if(!passwords.matches(r.password(),s.getPasswordHash())) throw new BadCredentialsException("Credenciales inválidas");
         return session(s);
@@ -70,12 +74,13 @@ public class IdentityService {
     @Transactional
     public StudentAccount findBySearchCode(String code) {
         StudentAccount student = accounts.findBySearchCode(code.strip().toUpperCase(Locale.ROOT))
+            .filter(StudentAccount::isActive)
             .orElseThrow(() -> new IllegalArgumentException("Código de estudiante no encontrado."));
         ensureProfileComplete(student);
         return student;
     }
     public StudentAccount require(UUID id) {
-        return accounts.findById(id).orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado"));
+        return accounts.findById(id).filter(StudentAccount::isActive).orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado"));
     }
     public StudentAccount requireComplete(UUID id) {
         StudentAccount student = require(id);
@@ -103,6 +108,6 @@ public class IdentityService {
         return new AuthDtos.AuthResponse(jwt.create(principal(s)), "Bearer", s.getEmail(), "STUDENT", null, null, null);
     }
     public static UserPrincipal principal(StudentAccount s) {
-        return new UserPrincipal(s.getId(), null, s.getEmail(), s.getPasswordHash(), UserRole.STUDENT, true);
+        return new UserPrincipal(s.getId(), null, s.getEmail(), s.getPasswordHash(), UserRole.STUDENT, s.isActive(), Set.of(), false, s.getSecurityVersion());
     }
 }

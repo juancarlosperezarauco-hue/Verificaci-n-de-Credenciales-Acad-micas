@@ -41,6 +41,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     : (identity.tenantId() == null ? userRepository.findByIdAndTenantIsNull(identity.userId())
                         : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId())).map(access::principal))
                         .filter(UserPrincipal::enabled)
+                        .filter(principal -> principal.role() != bo.edu.uagrm.credenciales.user.UserRole.STUDENT
+                                || principal.securityVersion() == identity.securityVersion())
                         .ifPresent(principal -> SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())));
             } catch (JWTVerificationException | IllegalArgumentException ignored) {
