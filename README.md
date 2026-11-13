@@ -2,6 +2,21 @@
 
 Plataforma multitenant para que instituciones educativas creen, emitan, consulten y revoquen credenciales académicas verificables mediante código público y QR.
 
+## Estado verificado y plan de continuación
+
+Auditoría del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de referencia
+(11 backend + 24 web), se validaron V1–V13 en PostgreSQL 16 y se documentaron las
+funciones reales frente al prompt maestro. El incremento de integridad documental
+añade cinco pruebas backend y conserva las migraciones existentes.
+
+- [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
+- [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
+- [Primer sprint y criterios de aceptación](docs/SPRINT_01_V3.md).
+- [Resultados y comandos de validación](docs/VALIDATION_V3.md).
+
+Blockchain continúa con un adaptador de desarrollo; no existe firma digital
+criptográfica, OCR/anomalías ni aplicación Android implementados.
+
 ## Flujo funcional
 
 1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo.
@@ -31,7 +46,7 @@ El registro repetido en la misma institución es idempotente. Una autorización 
 Cada nueva vinculación registra institución, usuario institucional y fecha en el historial de autorizaciones.
 También se mantiene la alternativa de generar códigos temporales destinados a una institución específica.
 El endpoint de canje solo entrega identificador interno, nombre, fecha de nacimiento, país, departamento, tipo y número de documento.
-Los códigos usan UUID aleatorio (122 bits de aleatoriedad), se guardan como SHA-256, caducan en 15 minutos y se consumen con bloqueo transaccional.
+Los códigos temporales usan UUID aleatorio (122 bits de aleatoriedad), se guardan como SHA-256, caducan en 15 minutos y se consumen con bloqueo transaccional. El código EST reutilizable se conserva en la cuenta del estudiante y no tiene ese vencimiento.
 El vínculo usado permanece activo hasta que el estudiante retire esa autorización; la expiración limita el canje inicial.
 Retirarla bloquea nuevas consultas y emisiones, pero no borra las credenciales emitidas ni información previamente consultada.
 El historial personal muestra documentos emitidos y revocados de todas las instituciones, excluyendo borradores.
@@ -42,7 +57,9 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 ## Primera entrega funcional
 
 - Registro de una organización con su administrador.
-- Inicio de sesión con JWT y control de roles `ADMIN`, `ISSUER`, `AUDITOR` y `STUDENT`.
+- Inicio de sesión con JWT: `SUPER_ADMIN` global, `TENANT_ADMIN` institucional,
+  trabajadores `CUSTOM` con roles/permisos por tenant y estudiantes globales independientes.
+  Los roles históricos `ADMIN`, `ISSUER` y `AUDITOR` conservan compatibilidad.
 - Separación de usuarios y credenciales por organización.
 - Creación de credenciales en borrador.
 - Perfil institucional con logo, tres colores, estilo moderno/clásico/minimalista y datos del firmante.
@@ -150,9 +167,9 @@ docker-compose.yml
 
 ## Próximos módulos
 
-1. Gestión de usuarios, invitaciones y permisos por organización.
-2. Editor avanzado de plantillas con posiciones, tipografías y firmas digitales configurables.
-3. Integración blockchain de producción y explorador de transacciones.
-4. Notificaciones por correo y Firebase.
-5. Reportes Excel, Word y PDF, dashboard estadístico y auditoría.
-6. Aplicación móvil Flutter y planes de suscripción con Stripe.
+El detalle y estado están en [PRODUCT_BACKLOG_V3.md](docs/PRODUCT_BACKLOG_V3.md).
+Primero: seguridad de cuentas, revisión inicial de organizaciones, auditoría y
+validación documental. Después: expedientes, solicitudes/aprobaciones, plantillas,
+firma y verificación; luego reportes/notificaciones, blockchain, IA y Android.
+No se reconstruyen los usuarios, roles y permisos ya implementados. Pagos/Stripe
+no forman parte del alcance de las 40 tareas del prompt maestro V3.

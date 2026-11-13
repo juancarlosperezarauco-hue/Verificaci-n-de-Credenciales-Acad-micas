@@ -1,5 +1,16 @@
 # Trabajo entre dos IAs
 
+## Continuación auditada V3 (2026-11-13)
+
+Codex revisó el prompt maestro contra la arquitectura existente y reprodujo las
+35 pruebas. La corrección de integridad documental añade cinco casos: 16 backend
++ 24 frontend, además de smokes reales aislados. V1–V13 sin modificaciones.
+Estado y siguiente sprint: docs/PRODUCT_BACKLOG_V3.md y docs/SPRINT_01_V3.md.
+Handoff: handoffs/codex-v3.md. No se han iniciado agentes adicionales ni integrado
+trabajo pendiente del otro checkout. Docker principal sin nuevo despliegue.
+
+## Reparto histórico
+
 Codex: backend completo, seguridad, RBAC, superadmin, registro institucional,
 validaciones, migraciones, pruebas e integración. Rama codex/rbac-superadmin.
 

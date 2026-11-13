@@ -1,5 +1,13 @@
 # Entrega Codex: RBAC, superadmin y onboarding
 
+## Continuación V3
+
+La auditoría y el incremento posterior de integridad están en
+[codex-v3.md](codex-v3.md). Se reprodujo el baseline descrito abajo; ahora hay
+16 pruebas backend + 24 frontend aprobadas. Se mantienen V1–V13. El nuevo código
+se probó en Docker aislado; el stack principal sigue con la versión anterior.
+Inventario actualizado: docs/AUDIT_V3.md y docs/PRODUCT_BACKLOG_V3.md.
+
 ## Resumen
 Se implementó superadministración global sin tenant, TENANT_ADMIN, empleados CUSTOM
 con roles por organización, 19 permisos, autenticación con consulta de estado/permisos
