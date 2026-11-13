@@ -28,7 +28,7 @@ Diseño claro con layouts adaptables, etiquetas, ayudas y diálogos CDK con foco
 ## Validación
 - Backend: 9 pruebas con PostgreSQL real, Flyway habilitado y Hibernate validate.
   Las doce migraciones se instalaron correctamente en una base de prueba nueva.
-- Frontend: compilación de producción y 15 pruebas Jasmine/Karma/ChromeHeadless.
+- Frontend: compilación de producción y 20 pruebas Jasmine/Karma/ChromeHeadless.
   Casos nuevos: pasos y contrato de registro, contraseñas, validación, permisos,
   alta de empleados y filtros del superadmin.
 - Prueba de servicios reales con scripts/smoke-organization.ps1: PASS.
@@ -41,10 +41,33 @@ Diseño claro con layouts adaptables, etiquetas, ayudas y diálogos CDK con foco
   listado de organizaciones verificados a través del proxy del frontend.
   La base local pasó de V10 a V12, conservando los datos existentes.
 
-## Limitación de revisión visual
-cua_repl falló al inicializar dos veces con "failed to write kernel assets".
-No se obtuvieron capturas ni revisión visual manual de escritorio/móvil.
-Las pruebas de componentes se ejecutaron en ChromeHeadless.
+## Revisión visual completada
+Se recuperó la herramienta de navegador y se revisó la aplicación real contra una
+base PostgreSQL dedicada, con datos ficticios. Se comprobaron el asistente de
+registro, los dos accesos, el listado/búsqueda y expediente del superadmin, su
+historial, el equipo, el catálogo de permisos y el guardado del perfil institucional.
+Se revisaron escritorio (1440 × 1000) y móvil (390 × 844); el contenido de registro,
+expediente y roles no desborda horizontalmente el área disponible.
+
+Correcciones del cierre:
+- Niveles educativos mediante casillas independientes, utilizables en móvil.
+- El tipo institucional conserva el valor guardado y envía un valor escalar.
+- Los correos e identificadores largos se ajustan dentro del expediente móvil.
+- El error de credenciales inválidas indica cómo revisar los datos de acceso.
+- Los empleados con ORGANIZATION_UPDATE pueden editar la imagen institucional.
+- No se muestran formularios de equipo si falla la carga inicial; se permite reintentar.
+
+Capturas con datos de prueba:
+- [Registro en escritorio](evidence/register-desktop.jpg).
+- [Registro en móvil](evidence/register-mobile.jpg).
+- [Panel del superadmin](evidence/superadmin-desktop.jpg).
+- [Expediente en móvil](evidence/organization-mobile.jpg).
+- [Roles y permisos](evidence/roles-desktop.jpg).
+- [Confirmación de perfil guardado](evidence/profile-saved.jpg).
+
+Las modificaciones de permisos, suspensión y emisión se validaron mediante las
+pruebas de API; la revisión visual no cambió permisos de cuentas reales.
+Los servidores temporales de revisión se detuvieron al finalizar.
 
 ## Acceso local
 Web: http://localhost:4300

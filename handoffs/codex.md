@@ -35,14 +35,14 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
   IDs ajenos, estudiantes independientes, suspensión/restauración, documentos legales,
   validación de URL y duplicados de identificación fiscal/licencia por país.
 - npm run build: compilación de producción correcta.
-- npm test -- --watch=false --browsers=ChromeHeadless: 15 pruebas correctas.
+- npm test -- --watch=false --browsers=ChromeHeadless: 20 pruebas correctas.
 - scripts/smoke-organization.ps1: PASS contra PostgreSQL/MinIO/API reales,
   incluyendo emisión, descarga, verificación, revocación y suspensión/restauración.
 - git diff --check: correcto.
 
 ## Riesgos y límites
-- Las nuevas pantallas/login superadmin están implementadas por Codex; revisión visual
-  limitada por indisponibilidad de cua_repl ("failed to write kernel assets").
+- Las nuevas pantallas/login superadmin están implementadas por Codex y revisadas
+  visualmente en escritorio y móvil. Evidencias y recorrido: docs/UI_DELIVERY.md.
 - ADMIN/ISSUER/AUDITOR históricos conservan compatibilidad; no se duplican estudiantes.
 - Los registros nuevos mantienen ACTIVE; aprobación obligatoria previa no fue solicitada
   como condición de registro. Los estados pueden administrarse por superadmin.
@@ -56,10 +56,28 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
 - No hay avances remotos de DeepSeek/Antigravity que revisar al momento de esta entrega.
 - Datos y contenedores de pruebas se mantuvieron separados de los datos del usuario.
 
-## Commit de implementación
-5fec54d1c92e6c46357e79fa97f3b3f62b10c42f
+## Commit final de implementación
+fec11e8f6d7c07540af79f882f60a62b816187dd
 Este handoff se publica en un commit posterior de documentación; el HEAD de la rama
 incluye ambos y se identifica en la entrega del chat.
+
+## Cierre de revisión
+Se corrigieron el selector de tipo institucional, la selección de niveles en móvil,
+el desbordamiento de identificadores largos, el error de acceso inválido, la edición
+de imagen institucional por permiso y la recuperación de carga fallida del equipo.
+Se agregaron cinco pruebas de regresión y seis capturas con datos ficticios.
+No se añadieron migraciones ni endpoints durante este cierre.
+
+Archivos del cierre:
+- frontend/src/app/features/institution/institution.page.ts
+- frontend/src/app/features/organization/access-login.page.ts
+- frontend/src/app/features/organization/organization-fields.component.ts
+- frontend/src/app/features/organization/organization-team.page.ts
+- frontend/src/app/features/organization/organization.form.ts
+- frontend/src/app/features/organization/organization.spec.ts
+- frontend/src/styles.css
+- docs/UI_DELIVERY.md y docs/evidence/
+- AI_WORKPLAN.md y handoffs/antigravity.md
 
 ## Archivos de implementación
 - .env.example
