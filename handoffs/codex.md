@@ -35,7 +35,7 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
   IDs ajenos, estudiantes independientes, suspensión/restauración, documentos legales,
   validación de URL y duplicados de identificación fiscal/licencia por país.
 - npm run build: compilación de producción correcta.
-- npm test -- --watch=false --browsers=ChromeHeadless: 20 pruebas correctas.
+- npm test -- --watch=false --browsers=ChromeHeadless: 23 pruebas correctas.
 - scripts/smoke-organization.ps1: PASS contra PostgreSQL/MinIO/API reales,
   incluyendo emisión, descarga, verificación, revocación y suspensión/restauración.
 - git diff --check: correcto.
@@ -56,10 +56,17 @@ El detalle de cuerpos y respuestas está en docs/RBAC_CONTRACT.md y docs/ORGANIZ
 - No hay avances remotos de DeepSeek/Antigravity que revisar al momento de esta entrega.
 - Datos y contenedores de pruebas se mantuvieron separados de los datos del usuario.
 
-## Commit final de implementación
+## Commit de implementación base
 fec11e8f6d7c07540af79f882f60a62b816187dd
 Este handoff se publica en un commit posterior de documentación; el HEAD de la rama
 incluye ambos y se identifica en la entrega del chat.
+
+Actualización posterior del registro: selectores de documento, cargo, país y
+departamento de Bolivia; nueva distribución del representante y tres pruebas
+adicionales. Archivos: organization-options.ts, organization.form.ts,
+organization-fields.component.ts y organization.spec.ts dentro de
+frontend/src/app/features/organization/. Sin cambios de API ni migraciones.
+El commit de esta actualización se identifica en el historial de la rama y el PR.
 
 ## Cierre de revisión
 Se corrigieron el selector de tipo institucional, la selección de niveles en móvil,

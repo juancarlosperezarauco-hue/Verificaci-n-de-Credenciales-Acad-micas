@@ -28,7 +28,7 @@ Diseño claro con layouts adaptables, etiquetas, ayudas y diálogos CDK con foco
 ## Validación
 - Backend: 9 pruebas con PostgreSQL real, Flyway habilitado y Hibernate validate.
   Las doce migraciones se instalaron correctamente en una base de prueba nueva.
-- Frontend: compilación de producción y 20 pruebas Jasmine/Karma/ChromeHeadless.
+- Frontend: compilación de producción y 23 pruebas Jasmine/Karma/ChromeHeadless.
   Casos nuevos: pasos y contrato de registro, contraseñas, validación, permisos,
   alta de empleados y filtros del superadmin.
 - Prueba de servicios reales con scripts/smoke-organization.ps1: PASS.
@@ -68,6 +68,20 @@ Capturas con datos de prueba:
 Las modificaciones de permisos, suspensión y emisión se validaron mediante las
 pruebas de API; la revisión visual no cambió permisos de cuentas reales.
 Los servidores temporales de revisión se detuvieron al finalizar.
+
+## Ajuste del registro: selección de documentación
+- Tipo de documento mediante desplegable: CI, DNI, pasaporte, extranjería u otro.
+- Cargo mediante desplegable con funciones institucionales habituales.
+- País con nombres en español; el contrato sigue enviando el código de dos letras.
+- Al elegir Bolivia, departamento mediante desplegable de sus nueve departamentos.
+  Para otros países se permite escribir la región. Cambiar el país limpia la región.
+- Nombre del representante y correo ocupan filas completas; tipo y número de
+  documento se presentan juntos. Los valores históricos fuera del catálogo se
+  conservan como opciones identificadas, sin sobrescribirlos.
+- Tres pruebas nuevas cubren selección/documento enviado, país/departamento y
+  compatibilidad con valores guardados. Sin cambios de API ni migraciones.
+- Se verificó en escritorio y móvil, sin enviar el registro ni crear datos en la base.
+  [Captura del formulario corregido](evidence/register-document-dropdown.jpg).
 
 ## Acceso local
 Web: http://localhost:4300

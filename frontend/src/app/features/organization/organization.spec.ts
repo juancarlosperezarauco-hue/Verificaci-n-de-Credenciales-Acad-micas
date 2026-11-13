@@ -8,7 +8,7 @@ import { permissionGuard } from '../../core/auth.guard';
 import { OrganizationRegisterPage } from './organization-register.page';
 import { OrganizationTeamPage } from './organization-team.page';
 import { PlatformOrganizationsPage } from './platform-organizations.page';
-import { buildDetailsForm } from './organization.form';
+import { buildDetailsForm, toDetails } from './organization.form';
 import { OrganizationApi } from './organization.api';
 import { AccessLoginPage } from './access-login.page';
 import { InstitutionPage } from '../institution/institution.page';
@@ -97,5 +97,35 @@ describe('Organization workflows',()=>{
   expect(select.value).toBe('INSTITUTO_TECNICO');
   select.value='UNIVERSIDAD';select.dispatchEvent(new Event('change'));
   expect(page.form.get('institutionType')?.value).toBe('UNIVERSIDAD');
+ });
+ it('offers document and position dropdowns and sends the selected document type',()=>{
+  const fixture=TestBed.createComponent(OrganizationRegisterPage);const page=fixture.componentInstance;
+  page.form.patchValue(values);page.step.set(3);fixture.detectChanges();
+  const document=fixture.nativeElement.querySelector('#org-documentType') as HTMLSelectElement;
+  expect(document.tagName).toBe('SELECT');expect(Array.from(document.options).map(o=>o.value)).toContain('PASAPORTE');
+  expect(fixture.nativeElement.querySelector('#org-position').tagName).toBe('SELECT');
+  document.value='PASAPORTE';document.dispatchEvent(new Event('change'));fixture.detectChanges();
+  expect(toDetails(page.form).representative.documentType).toBe('PASAPORTE');
+  expect(page.form.get('documentNumber')?.value).toBe(values.documentNumber);
+ });
+ it('uses country names and Bolivia departments, clearing the region on a country change',()=>{
+  const fixture=TestBed.createComponent(OrganizationRegisterPage);const page=fixture.componentInstance;
+  page.step.set(1);fixture.detectChanges();
+  const country=fixture.nativeElement.querySelector('#org-country') as HTMLSelectElement;
+  expect(Array.from(country.options).find(o=>o.value==='BO')?.text).toBe('Bolivia');
+  country.value='BO';country.dispatchEvent(new Event('change'));fixture.detectChanges();
+  const region=fixture.nativeElement.querySelector('#org-region') as HTMLSelectElement;
+  expect(region.tagName).toBe('SELECT');expect(region.options.length).toBe(10);
+  region.value='La Paz';region.dispatchEvent(new Event('change'));
+  country.value='PE';country.dispatchEvent(new Event('change'));fixture.detectChanges();
+  expect(page.form.get('region')?.value).toBe('');expect(page.form.get('region')?.invalid).toBeTrue();
+  expect(fixture.nativeElement.querySelector('#org-region').tagName).toBe('INPUT');
+ });
+ it('preserves previously stored document types and job titles outside the suggestions',()=>{
+  const fixture=TestBed.createComponent(OrganizationRegisterPage);const page=fixture.componentInstance;
+  page.form.patchValue({...values,documentType:'RUN',position:'Coordinador académico'});page.step.set(3);fixture.detectChanges();
+  expect(fixture.nativeElement.querySelector('#org-documentType').value).toBe('RUN');
+  expect(fixture.nativeElement.querySelector('#org-position').value).toBe('Coordinador académico');
+  expect(toDetails(page.form).representative.position).toBe('Coordinador académico');
  });
 });
