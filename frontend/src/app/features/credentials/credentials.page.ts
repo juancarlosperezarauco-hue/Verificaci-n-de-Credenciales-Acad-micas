@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { finalize } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { Credential, Student } from '../../core/models';
+import { OrganizationApi } from '../organization/organization.api';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -12,7 +13,7 @@ import { Credential, Student } from '../../core/models';
     <section class="mx-auto max-w-7xl px-6 py-12">
       <div><p class="brand-text text-sm font-semibold">Paso 3 · Módulo de emisión</p><h1 class="mt-2 text-4xl font-black">Diplomas y certificados</h1><p class="mt-3 text-slate-400">Selecciona uno o varios estudiantes, crea los borradores y genera documentos con el estilo de tu institución.</p></div>
       <div class="mt-10 grid gap-8 lg:grid-cols-[390px_1fr]">
-        <form [formGroup]="form" (ngSubmit)="create()" class="h-fit rounded-2xl border border-white/10 bg-slate-900 p-6">
+        @if(access.can('CREDENTIAL_CREATE')){<form [formGroup]="form" (ngSubmit)="create()" class="h-fit rounded-2xl border border-white/10 bg-slate-900 p-6">
           <h2 class="text-xl font-bold">Crear certificados</h2>
           <div class="mt-6 space-y-4 text-sm">
             <fieldset><legend class="font-semibold">Estudiantes seleccionados ({{ selectedStudentIds().length }})</legend><div class="mt-2 max-h-52 space-y-2 overflow-auto rounded-xl border border-white/10 bg-slate-950 p-3">
@@ -25,7 +26,7 @@ import { Credential, Student } from '../../core/models';
           @if (!loadingStudents() && students().length === 0) { <p class="mt-5 rounded-xl bg-amber-400/10 p-3 text-sm text-amber-200">Primero debes <a routerLink="/students" class="font-bold underline">vincular un estudiante con su código</a>.</p> }
           <button [disabled]="form.invalid || selectedStudentIds().length === 0 || saving()" class="brand-bg mt-6 w-full rounded-xl px-4 py-3 font-bold text-slate-950 disabled:opacity-50">{{ saving() ? 'Creando…' : 'Crear ' + selectedStudentIds().length + ' borrador(es)' }}</button>
           @if(error()){<p role="alert" class="mt-4 text-sm text-red-300">{{error()}}</p>}
-        </form>
+        </form>}
 
         <div class="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <div class="border-b border-white/10 px-6 py-5"><h2 class="text-xl font-bold">Documentos registrados</h2></div>
@@ -36,9 +37,12 @@ import { Credential, Student } from '../../core/models';
               <article class="grid gap-4 p-6 sm:grid-cols-[1fr_auto] sm:items-center">
                 <div><div class="flex flex-wrap items-center gap-3"><h3 class="font-bold">{{ item.title }}</h3><span [class]="statusClass(item.status)">{{ item.status }}</span></div><p class="mt-1 text-sm text-slate-400">{{ item.holderName }} · {{ item.credentialType }}</p>@if (item.documentName) { <p class="brand-text mt-2 text-xs">Documento: {{ item.documentName }}</p> }@if (item.verificationCode) { <p class="mt-2 font-mono text-xs text-slate-500">{{ item.verificationCode }}</p> }</div>
                 <div class="flex flex-wrap gap-2">
-                  @if (item.status === 'DRAFT') { <button (click)="generate(item)" [disabled]="generating() === item.id" class="brand-bg rounded-lg px-3 py-2 text-sm font-bold text-slate-950 disabled:opacity-40">{{ generating() === item.id ? 'Generando…' : 'Generar PDF' }}</button><label class="cursor-pointer rounded-lg border border-white/15 px-3 py-2 text-sm">{{ item.documentName ? 'Reemplazar PDF' : 'Adjuntar PDF propio' }}<input type="file" accept="application/pdf" class="hidden" (change)="upload(item, $event)"></label><button (click)="issue(item)" [disabled]="!item.documentHash" class="rounded-lg bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">Emitir</button> }
+                  @if (item.status === 'DRAFT') {
+                    @if(access.can('CREDENTIAL_CREATE')){<button (click)="generate(item)" [disabled]="generating() === item.id" class="brand-bg rounded-lg px-3 py-2 text-sm font-bold text-slate-950 disabled:opacity-40">{{ generating() === item.id ? 'Generando…' : 'Generar PDF' }}</button><label class="cursor-pointer rounded-lg border border-white/15 px-3 py-2 text-sm">{{ item.documentName ? 'Reemplazar PDF' : 'Adjuntar PDF propio' }}<input type="file" accept="application/pdf" class="hidden" (change)="upload(item, $event)"></label>}
+                    @if(access.can('CREDENTIAL_ISSUE')){<button (click)="issue(item)" [disabled]="!item.documentHash" class="rounded-lg bg-emerald-400 px-3 py-2 text-sm font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-40">Emitir</button>}
+                  }
                   @if (item.documentName) { <button (click)="download(item)" class="rounded-lg border border-white/15 px-3 py-2 text-sm">Descargar</button> }
-                  @if (item.status === 'ISSUED') { <button (click)="showQr(item)" class="rounded-lg border border-white/15 px-3 py-2 text-sm">Ver QR</button><button (click)="revoke(item)" class="rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300">Revocar</button> }
+                  @if (item.status === 'ISSUED') { <button (click)="showQr(item)" class="rounded-lg border border-white/15 px-3 py-2 text-sm">Ver QR</button>@if(access.can('CREDENTIAL_REVOKE')){<button (click)="revoke(item)" class="rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300">Revocar</button>} }
                 </div>
               </article>
             }
@@ -56,6 +60,7 @@ import { Credential, Student } from '../../core/models';
 export class CredentialsPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
+  readonly access = inject(OrganizationApi);
   readonly credentials = signal<Credential[]>([]);
   readonly students = signal<Student[]>([]);
   readonly loading = signal(true);
@@ -70,7 +75,7 @@ export class CredentialsPage implements OnInit {
     title: ['', Validators.required],
   });
 
-  ngOnInit(): void { this.reload(); this.loadStudents(); }
+  ngOnInit(): void { this.reload(); if(this.access.can('STUDENT_VIEW'))this.loadStudents();else this.loadingStudents.set(false); }
 
   create(): void {
     if (this.form.invalid || this.selectedStudentIds().length === 0) return;

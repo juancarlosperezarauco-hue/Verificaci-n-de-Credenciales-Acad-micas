@@ -19,6 +19,10 @@ public class StudentAccount {
     @Column(name="password_hash", nullable=false, length=100) private String passwordHash;
     @Column(name="created_at", nullable=false) private Instant createdAt;
     @Column(name="search_code", nullable=false, unique=true, length=36) private String searchCode;
+    @Column(name="active", nullable=false) private boolean active = true;
+    @Column(name="email_verified", nullable=false) private boolean emailVerified;
+    @Column(name="deactivated_at") private Instant deactivatedAt;
+    @Column(name="security_version", nullable=false) private long securityVersion;
     protected StudentAccount() {}
     public StudentAccount(String name, String country, String type, String document, LocalDate dateOfBirth,
                           String department, String email, String hash) {
@@ -40,6 +44,13 @@ public class StudentAccount {
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getSearchCode() { return searchCode; }
+    public boolean isActive() { return active; }
+    public boolean isEmailVerified() { return emailVerified; }
+    public long getSecurityVersion() { return securityVersion; }
+    public void verifyEmail() { emailVerified = true; }
+    public void changePasswordHash(String hash) { passwordHash = hash; securityVersion++; }
+    public void changeEmail(String email) { this.email=email; emailVerified=true; securityVersion++; }
+    public void deactivate() { active=false; deactivatedAt=Instant.now(); securityVersion++; }
     public boolean isProfileComplete() {
         return fullName != null && country != null && documentType != null && documentNumber != null
                 && dateOfBirth != null && department != null;

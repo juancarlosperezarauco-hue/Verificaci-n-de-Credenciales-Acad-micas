@@ -17,13 +17,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AppUserRepository userRepository;
+    private final bo.edu.uagrm.credenciales.rbac.AccessService access;
     private final bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts;
 
     public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository userRepository,
-            bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts) {
+            bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts,
+            bo.edu.uagrm.credenciales.rbac.AccessService access) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.accounts = accounts;
+        this.access = access;
     }
 
     @Override
@@ -33,10 +36,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ") && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 JwtService.JwtIdentity identity = jwtService.verify(header.substring(7));
-                (identity.tenantId() == null
+                (identity.tenantId() == null && !identity.userAccount()
                     ? accounts.findById(identity.userId()).map(bo.edu.uagrm.credenciales.identity.IdentityService::principal)
-                    : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId()).map(UserPrincipal::from))
+                    : (identity.tenantId() == null ? userRepository.findByIdAndTenantIsNull(identity.userId())
+                        : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId())).map(access::principal))
                         .filter(UserPrincipal::enabled)
+                        .filter(principal -> principal.role() != bo.edu.uagrm.credenciales.user.UserRole.STUDENT
+                                || principal.securityVersion() == identity.securityVersion())
                         .ifPresent(principal -> SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())));
             } catch (JWTVerificationException | IllegalArgumentException ignored) {

@@ -19,13 +19,19 @@ public class AuthService {
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final bo.edu.uagrm.credenciales.rbac.AccessService access;
+    private final bo.edu.uagrm.credenciales.platform.GovernanceRepository governance;
 
     public AuthService(TenantRepository tenantRepository, AppUserRepository userRepository,
-                       PasswordEncoder passwordEncoder, JwtService jwtService) {
+                       PasswordEncoder passwordEncoder, JwtService jwtService,
+                       bo.edu.uagrm.credenciales.rbac.AccessService access,
+                       bo.edu.uagrm.credenciales.platform.GovernanceRepository governance) {
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.access = access;
+        this.governance = governance;
     }
 
     @Transactional
@@ -36,8 +42,11 @@ public class AuthService {
         }
         Tenant tenant = tenantRepository.save(new Tenant(request.organizationName().trim(), slug,
                 request.institutionType()));
+        tenant.setActive(false);
+        governance.save(new bo.edu.uagrm.credenciales.platform.OrganizationGovernance(tenant.getId(),
+                bo.edu.uagrm.credenciales.platform.OrganizationStatus.PENDING_REVIEW));
         AppUser user = userRepository.save(new AppUser(tenant, request.email().trim(),
-                passwordEncoder.encode(request.password()), UserRole.ADMIN));
+                passwordEncoder.encode(request.password()), UserRole.TENANT_ADMIN));
         return response(user);
     }
 
@@ -45,17 +54,17 @@ public class AuthService {
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
         Tenant tenant = tenantRepository.findBySlug(normalizeSlug(request.organizationSlug()))
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
-        AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().toLowerCase())
+        AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().trim().toLowerCase(Locale.ROOT))
                 .filter(AppUser::isActive)
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!access.principal(user).enabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
         return response(user);
     }
 
     private AuthDtos.AuthResponse response(AppUser user) {
-        UserPrincipal principal = UserPrincipal.from(user);
+        UserPrincipal principal = access.principal(user);
         return new AuthDtos.AuthResponse(jwtService.create(principal), "Bearer", user.getEmail(),
                 user.getRole().name(), user.getTenant().getId().toString(), user.getTenant().getName(),
                 user.getTenant().getInstitutionType());

@@ -22,7 +22,7 @@ public class StudentController {
     }
 
     @GetMapping
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('STUDENT_VIEW')")
     List<bo.edu.uagrm.credenciales.identity.IdentityDtos.Profile> list(@AuthenticationPrincipal UserPrincipal principal) {
         return consents.linked(principal.tenantId());
     }
@@ -30,7 +30,7 @@ public class StudentController {
     public record Redeem(@jakarta.validation.constraints.NotBlank
                          @jakarta.validation.constraints.Pattern(regexp="(?i)(EST-)?[a-f0-9]{32}") String code) {}
     @PostMapping("/redeem")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN','ISSUER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('STUDENT_LINK')")
     bo.edu.uagrm.credenciales.identity.IdentityDtos.Profile redeem(@AuthenticationPrincipal UserPrincipal principal,
                                 @Valid @RequestBody Redeem request) {
         return consents.redeem(principal.tenantId(), principal.userId(), request.code());

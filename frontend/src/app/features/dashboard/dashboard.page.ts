@@ -1,9 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { OrganizationApi } from '../organization/organization.api';
 import { Credential, PortalItem, PortalItemType, Student } from '../../core/models';
 
 @Component({
@@ -93,6 +94,7 @@ export class DashboardPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
   readonly auth = inject(AuthService);
+  readonly access = inject(OrganizationApi);
   readonly credentials = signal<Credential[]>([]);
   readonly students = signal<Student[]>([]);
   readonly portalItems = signal<PortalItem[]>([]);
@@ -115,11 +117,11 @@ export class DashboardPage implements OnInit {
   });
 
   ngOnInit(): void {
-    forkJoin({ students: this.api.listStudents(), credentials: this.api.listCredentials(), portal: this.api.listPortalItems() })
+    forkJoin({ students: this.access.can('STUDENT_VIEW')?this.api.listStudents():of([] as Student[]), credentials: this.access.can('CREDENTIAL_VIEW')?this.api.listCredentials():of([] as Credential[]), portal: this.api.listPortalItems() })
       .subscribe({ next: result => { this.students.set(result.students); this.credentials.set(result.credentials); this.portalItems.set(result.portal); this.loading.set(false); }, error: () => this.loading.set(false) });
   }
 
-  canManage(): boolean { return this.auth.current()?.role === 'ADMIN'; }
+  canManage(): boolean { return ['ADMIN', 'TENANT_ADMIN'].includes(this.auth.current()?.role ?? ''); }
   toggleEditor(): void { this.showEditor.update(value => !value); }
 
   publish(): void {

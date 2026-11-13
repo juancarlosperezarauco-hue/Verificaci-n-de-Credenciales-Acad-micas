@@ -16,6 +16,11 @@ public class JwtService {
 
     public JwtService(@Value("${app.security.jwt-secret}") String secret,
                       @Value("${app.security.jwt-expiration-minutes}") long expirationMinutes) {
+        if (secret == null || secret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32
+                || java.util.Set.of("change-this-development-secret-with-at-least-32-characters",
+                    "replace-with-a-random-secret-of-at-least-32-characters").contains(secret)) {
+            throw new IllegalArgumentException("Configura JWT_SECRET con una clave privada aleatoria de al menos 32 bytes.");
+        }
         this.algorithm = Algorithm.HMAC256(secret);
         this.expirationMinutes = expirationMinutes;
     }
@@ -28,6 +33,8 @@ public class JwtService {
                 .withClaim("tenantId", principal.tenantId() == null ? null : principal.tenantId().toString())
                 .withClaim("email", principal.email())
                 .withClaim("role", principal.role().name())
+                .withClaim("accountType", principal.role() == bo.edu.uagrm.credenciales.user.UserRole.STUDENT ? "STUDENT" : "USER")
+                .withClaim("securityVersion", principal.securityVersion())
                 .withIssuedAt(now)
                 .withExpiresAt(now.plus(expirationMinutes, ChronoUnit.MINUTES))
                 .sign(algorithm);
@@ -36,9 +43,12 @@ public class JwtService {
     public JwtIdentity verify(String token) {
         DecodedJWT jwt = JWT.require(algorithm).withIssuer("uagrm-credentials").build().verify(token);
         return new JwtIdentity(UUID.fromString(jwt.getSubject()),
-                jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()));
+                jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()),
+                "USER".equals(jwt.getClaim("accountType").asString()),
+                jwt.getClaim("securityVersion").isMissing() || jwt.getClaim("securityVersion").isNull()
+                        ? 0 : jwt.getClaim("securityVersion").asLong());
     }
 
-    public record JwtIdentity(UUID userId, UUID tenantId) {}
+    public record JwtIdentity(UUID userId, UUID tenantId, boolean userAccount, long securityVersion) {}
 }
 

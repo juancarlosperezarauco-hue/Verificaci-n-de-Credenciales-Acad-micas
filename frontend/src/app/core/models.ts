@@ -1,4 +1,4 @@
-export type InstitutionType = 'UNIVERSIDAD' | 'COLEGIO' | 'INSTITUTO' | 'ACADEMIA' | 'CENTRO_FORMACION' | 'OTRO';
+export type InstitutionType = 'ESCUELA' | 'INSTITUTO_TECNICO' | 'UNIVERSIDAD' | 'COLEGIO' | 'INSTITUTO' | 'ACADEMIA' | 'CENTRO_FORMACION' | 'OTRO';
 export type BrandingStyle = 'MODERNO' | 'CLASICO' | 'MINIMALISTA';
 
 export interface InstitutionProfile {

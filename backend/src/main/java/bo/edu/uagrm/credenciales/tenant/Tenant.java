@@ -118,6 +118,11 @@ public class Tenant {
     public String getSlug() { return slug; }
     public InstitutionType getInstitutionType() { return institutionType; }
     public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+    public void updateIdentification(String name, InstitutionType institutionType) {
+        this.name = name;
+        this.institutionType = institutionType;
+    }
     public String getPrimaryColor() { return primaryColor; }
     public String getSecondaryColor() { return secondaryColor; }
     public String getAccentColor() { return accentColor; }
