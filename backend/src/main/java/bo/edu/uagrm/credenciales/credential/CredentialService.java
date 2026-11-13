@@ -66,13 +66,17 @@ public class CredentialService {
 
     @Transactional
     public CredentialDtos.Response attachDocument(UUID tenantId, UUID id, MultipartFile file) {
-        Credential credential = findOwned(id, tenantId);
+        Credential credential = findOwnedForUpdate(id, tenantId);
+        if (credential.getStatus() != CredentialStatus.DRAFT) {
+            throw new IllegalStateException("No se puede cambiar el documento de una credencial emitida");
+        }
         if (file.isEmpty()) throw new IllegalArgumentException("El documento está vacío");
         try {
             byte[] content = file.getBytes();
             String originalName = file.getOriginalFilename() == null ? "documento.pdf" : file.getOriginalFilename();
             String safeName = originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
-            String objectKey = tenantId + "/" + id + "/" + safeName;
+            // Object storage is not rolled back with PostgreSQL. Never overwrite a committed object.
+            String objectKey = tenantId + "/" + id + "/uploads/" + UUID.randomUUID() + "/" + safeName;
             String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
             String storedKey = storage.store(objectKey, content, contentType);
             credential.attachDocument(storedKey, originalName, contentType, sha256(content));
@@ -84,7 +88,10 @@ public class CredentialService {
 
     @Transactional
     public CredentialDtos.Response issue(UUID tenantId, UUID id) {
-        Credential credential = findOwned(id, tenantId);
+        Credential credential = findOwnedForUpdate(id, tenantId);
+        if (credential.getStatus() != CredentialStatus.DRAFT) {
+            throw new IllegalStateException("Solo una credencial en borrador puede emitirse");
+        }
         if (credential.getStudentAccount() != null) {
             consents.authorizedStudent(tenantId, credential.getStudentAccount().getId());
         }
@@ -100,7 +107,7 @@ public class CredentialService {
 
     @Transactional
     public CredentialDtos.Response generateDocument(UUID tenantId, UUID id) {
-        Credential credential = findOwned(id, tenantId);
+        Credential credential = findOwnedForUpdate(id, tenantId);
         if (credential.getStatus() != CredentialStatus.DRAFT) {
             throw new IllegalStateException("Solo se puede generar el documento de un borrador");
         }
@@ -108,7 +115,7 @@ public class CredentialService {
         byte[] content = pdfService.generate(credential);
         String fileName = credential.getCredentialType().toLowerCase() + "-"
                 + credential.getHolderName().replaceAll("[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+", "-") + ".pdf";
-        String objectKey = tenantId + "/" + id + "/generated/" + fileName;
+        String objectKey = tenantId + "/" + id + "/generated/" + UUID.randomUUID() + "/" + fileName;
         storage.store(objectKey, content, "application/pdf");
         credential.attachDocument(objectKey, fileName, "application/pdf", sha256(content));
         return CredentialDtos.Response.from(credential);
@@ -126,7 +133,7 @@ public class CredentialService {
 
     @Transactional
     public CredentialDtos.Response revoke(UUID tenantId, UUID id, String reason) {
-        Credential credential = findOwned(id, tenantId);
+        Credential credential = findOwnedForUpdate(id, tenantId);
         credential.revoke(reason.trim());
         return CredentialDtos.Response.from(credential);
     }
@@ -141,6 +148,11 @@ public class CredentialService {
 
     private Credential findOwned(UUID id, UUID tenantId) {
         return credentialRepository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Credencial no encontrada"));
+    }
+
+    private Credential findOwnedForUpdate(UUID id, UUID tenantId) {
+        return credentialRepository.findLockedByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Credencial no encontrada"));
     }
 
