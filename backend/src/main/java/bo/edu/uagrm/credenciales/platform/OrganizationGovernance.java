@@ -8,6 +8,7 @@ public class OrganizationGovernance {
  @Version private long version;
  protected OrganizationGovernance(){}
  public OrganizationGovernance(UUID id,boolean active){tenantId=id;status=active?OrganizationStatus.ACTIVE:OrganizationStatus.INACTIVE;}
+ public OrganizationGovernance(UUID id,OrganizationStatus status){tenantId=id;this.status=status;}
  public OrganizationStatus getStatus(){return status;}
  public void change(OrganizationStatus status){this.status=status;}
 }

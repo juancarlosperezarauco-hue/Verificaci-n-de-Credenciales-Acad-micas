@@ -32,6 +32,7 @@ import org.springframework.test.web.servlet.MvcResult;
 class CredentialDocumentIntegrityIntegrationTests {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
+    @Autowired org.springframework.context.ApplicationContext context;
     @MockitoBean DocumentStoragePort storage;
     @MockitoBean BlockchainAnchorPort blockchain;
 
@@ -54,10 +55,10 @@ class CredentialDocumentIntegrityIntegrationTests {
     record Fixture(String token, String studentToken, String credentialId) {}
 
     private String organization() throws Exception {
-        return postJson("/api/auth/register", "", Map.of(
+        var session=postJson("/api/auth/register", "", Map.of(
                 "organizationName", "Organización integridad", "organizationSlug", "integrity-" + UUID.randomUUID(),
-                "institutionType", "ACADEMIA", "email", "admin@example.test", "password", PASSWORD), 201)
-                .get("token").asText();
+                "institutionType", "ACADEMIA", "email", "admin@example.test", "password", PASSWORD), 201);
+        ApprovedOrganizationFixture.approve(session,context);return session.get("token").asText();
     }
 
     private Fixture draft() throws Exception {

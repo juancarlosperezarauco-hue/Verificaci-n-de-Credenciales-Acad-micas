@@ -10,7 +10,7 @@ public class AccessController {
  private final AccessManagementService service;
  public AccessController(AccessManagementService service){this.service=service;}
  @GetMapping("/me")
- public Map<String,Object> me(@AuthenticationPrincipal UserPrincipal p){var result=new LinkedHashMap<String,Object>();result.put("userId",p.userId());result.put("tenantId",p.tenantId());result.put("role",p.role());result.put("permissions",p.permissions());return result;}
+ public Map<String,Object> me(@AuthenticationPrincipal UserPrincipal p){var result=new LinkedHashMap<String,Object>();result.put("userId",p.userId());result.put("tenantId",p.tenantId());result.put("role",p.role());result.put("permissions",p.permissions());result.put("onboarding",p.onboarding());return result;}
  @GetMapping("/permissions") @PreAuthorize("hasAnyRole('ADMIN','TENANT_ADMIN') and hasAnyAuthority('ROLE_VIEW','ROLE_CREATE','ROLE_UPDATE')")
  public List<PermissionCode> permissions(){return List.of(PermissionCode.values());}
  @GetMapping("/roles") @PreAuthorize("hasAnyRole('ADMIN','TENANT_ADMIN') and hasAuthority('ROLE_VIEW')")

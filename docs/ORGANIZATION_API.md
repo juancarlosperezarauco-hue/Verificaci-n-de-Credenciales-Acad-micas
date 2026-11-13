@@ -39,9 +39,33 @@ Permisos ORGANIZATION_VIEW/ORGANIZATION_UPDATE respectivamente.
 No cambia la cuenta de acceso al editar el correo del representante.
 GET /api/platform/organizations/{id}/details: detalle para SUPER_ADMIN.
 
-El registro anterior /api/auth/register sigue disponible por compatibilidad.
-No se impone aprobación previa al registro en este incremento (estado ACTIVE).
-La superadministración puede observar/suspender/desactivar posteriormente.
+## SEC-01: aprobación previa (contrato antes de implementar)
+
+Ambas rutas públicas de registro crean PENDING_REVIEW, active=false. La respuesta
+AuthResponse conserva su forma. El TENANT_ADMIN puede iniciar sesión y recibe
+acceso de onboarding: solo perfil/datos/respaldo institucional, estado propio y
+GET /api/access/me. No puede emitir, consultar estudiantes, publicar ni crear equipo.
+GET /api/access/me añade onboarding:boolean; las organizaciones ACTIVE anteriores
+conservan su acceso. El control se recalcula en cada petición, también con JWT viejo.
+
+GET /api/institution/status y resúmenes de plataforma añaden reviewNote (última
+decisión visible sin actor) y allowedTransitions (lista de estados admitidos).
+POST /api/institution/submit-review exige ORGANIZATION_UPDATE y perfil completo:
+OBSERVED pasa a PENDING_REVIEW con historial y motivo fijo, usando al administrador
+como actor. PENDING_REVIEW es idempotente. ACTIVE y estados bloqueados no se reenvían.
+Guardar datos no aprueba ni reactiva una organización.
+
+El SUPER_ADMIN usa el endpoint de estado existente; ACTIVE requiere perfil completo.
+PENDING_REVIEW permite ACTIVE/OBSERVED/REJECTED/INACTIVE; OBSERVED permite
+PENDING_REVIEW/ACTIVE/REJECTED/INACTIVE; ACTIVE permite OBSERVED/SUSPENDED/INACTIVE;
+SUSPENDED permite ACTIVE/OBSERVED/INACTIVE; REJECTED e INACTIVE permiten volver a
+PENDING_REVIEW/OBSERVED (REJECTED también INACTIVE). Sin transiciones repetidas.
+SUSPENDED/REJECTED/INACTIVE deniegan login y JWT existentes; solo revisión/observación
+habilitan al administrador para corregir su expediente, sin acceso operativo.
+
+La ruta anterior /api/auth/register conserva su DTO por compatibilidad, pero crea
+igualmente una solicitud pendiente; debe completarse el perfil antes de aprobar.
+No hay cambios de migraciones institucionales ni aprobación automática de registros.
 
 Errores: 400 validación, 401 login, 403 permisos, 404 recurso ajeno o no existente,
 409 identificación fiscal o licencia duplicada. Nunca exponer hashes de contraseña.

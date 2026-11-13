@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class RbacIntegrationTests {
  @Autowired MockMvc mvc; @Autowired ObjectMapper json; @Autowired AppUserRepository users;
  @Autowired TenantRepository tenants; @Autowired PasswordEncoder encoder;
+ @Autowired org.springframework.context.ApplicationContext context;
  @MockitoBean DocumentStoragePort storage;
  private final String password="RbacTestPassword123!";
  private JsonNode postJson(String path,String token,Object body,int code)throws Exception{
@@ -26,8 +27,9 @@ class RbacIntegrationTests {
    .andExpect(status().is(code)).andReturn().getResponse().getContentAsString());
  }
  private JsonNode register()throws Exception{
-  return postJson("/api/auth/register","",Map.of("organizationName","Institución RBAC","organizationSlug","rbac-"+UUID.randomUUID(),
+  var session=postJson("/api/auth/register","",Map.of("organizationName","Institución RBAC","organizationSlug","rbac-"+UUID.randomUUID(),
    "institutionType","UNIVERSIDAD","email","admin@example.edu","password",password),201);
+  ApprovedOrganizationFixture.approve(session,context);return session;
  }
  @Test void tenantIsolationAndLivePermissions()throws Exception{
   var first=register();var second=register();String a=first.get("token").asText(),b=second.get("token").asText();

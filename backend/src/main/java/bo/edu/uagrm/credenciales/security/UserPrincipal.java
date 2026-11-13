@@ -16,7 +16,14 @@ public record UserPrincipal(
         String password,
         UserRole role,
         boolean enabled,
-        java.util.Set<String> permissions) implements UserDetails {
+        java.util.Set<String> permissions,
+        boolean onboarding,
+        long securityVersion) implements UserDetails {
+
+    public UserPrincipal(UUID userId, UUID tenantId, String email, String password, UserRole role, boolean enabled,
+                         java.util.Set<String> permissions) {
+        this(userId, tenantId, email, password, role, enabled, permissions, false, 0);
+    }
 
     public UserPrincipal(UUID userId, UUID tenantId, String email, String password, UserRole role, boolean enabled) {
         this(userId, tenantId, email, password, role, enabled, defaults(role));

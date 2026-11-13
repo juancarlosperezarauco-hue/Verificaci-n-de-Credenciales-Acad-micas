@@ -34,6 +34,7 @@ public class SecurityConfig {
                             .hasAnyRole("ADMIN", "TENANT_ADMIN", "CUSTOM", "ISSUER", "AUDITOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new OnboardingAccessFilter(), JwtAuthenticationFilter.class)
                 .build();
     }
 

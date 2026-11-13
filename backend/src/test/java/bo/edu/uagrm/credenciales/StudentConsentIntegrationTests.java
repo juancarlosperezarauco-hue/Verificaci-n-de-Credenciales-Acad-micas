@@ -18,6 +18,7 @@ class StudentConsentIntegrationTests {
  @Autowired MockMvc mvc;
  @Autowired ObjectMapper json;
  @Autowired JdbcTemplate jdbc;
+ @Autowired org.springframework.context.ApplicationContext context;
  String postJson(String path,String token,Object body,int status) throws Exception {
   return mvc.perform(post(path).header("Authorization",token==null?"":"Bearer "+token)
     .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body)))
@@ -25,8 +26,9 @@ class StudentConsentIntegrationTests {
  }
  JsonNode node(String s)throws Exception{return json.readTree(s);}
  String institution(String slug)throws Exception{
-  return node(postJson("/api/auth/register",null,Map.of("organizationName",slug,"organizationSlug",slug,
-    "institutionType","COLEGIO","email","admin@example.com","password","StrongPassword123!"),201)).get("token").asText();
+  var session=node(postJson("/api/auth/register",null,Map.of("organizationName",slug,"organizationSlug",slug,
+    "institutionType","COLEGIO","email","admin@example.com","password","StrongPassword123!"),201));
+  ApprovedOrganizationFixture.approve(session,context);return session.get("token").asText();
  }
  JsonNode grant(String token,String slug)throws Exception{
   return node(postJson("/api/me/consents",token,Map.of("institutionSlug",slug),200));
