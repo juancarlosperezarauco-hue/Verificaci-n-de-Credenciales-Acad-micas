@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ApiService } from '../../core/api.service';
-import { AuthService } from '../../core/auth.service';
+import { OrganizationApi } from '../organization/organization.api';
 import { BrandingService } from '../../core/branding.service';
 import { BrandingStyle, InstitutionProfile } from '../../core/models';
 
@@ -12,7 +12,7 @@ import { BrandingStyle, InstitutionProfile } from '../../core/models';
     <section class="mx-auto max-w-7xl px-6 py-12">
       <div class="flex flex-wrap items-end justify-between gap-5">
         <div><p class="brand-text text-sm font-semibold">Identidad institucional</p><h1 class="mt-2 text-4xl font-black">Logo, colores y respaldo</h1><p class="mt-3 max-w-3xl text-slate-400">Este diseño se aplica al portal y a los certificados generados por la institución.</p></div>
-        @if (!canEdit()) { <span class="rounded-full bg-amber-400/10 px-4 py-2 text-sm text-amber-200">Solo el administrador puede editar</span> }
+        @if (!canEdit()) { <span class="rounded-full bg-amber-400/10 px-4 py-2 text-sm text-amber-200">Tu cuenta tiene acceso de lectura</span> }
       </div>
 
       @if (loading()) { <p class="mt-10 text-slate-400">Cargando configuración…</p> }
@@ -73,7 +73,7 @@ import { BrandingStyle, InstitutionProfile } from '../../core/models';
 export class InstitutionPage implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
-  private readonly auth = inject(AuthService);
+  private readonly access = inject(OrganizationApi);
   private readonly branding = inject(BrandingService);
   readonly profile = signal<InstitutionProfile | null>(null);
   readonly loading = signal(true);
@@ -85,7 +85,7 @@ export class InstitutionPage implements OnInit {
   readonly logoPreview = signal('');
   readonly message = signal('');
   readonly error = signal('');
-  readonly canEdit = () => ['ADMIN', 'TENANT_ADMIN'].includes(this.auth.current()?.role ?? '');
+  readonly canEdit = () => this.access.can('ORGANIZATION_UPDATE');
   readonly form = this.fb.nonNullable.group({
     primaryColor: ['#22D3EE', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],
     secondaryColor: ['#2563EB', [Validators.required, Validators.pattern(/^#[0-9A-Fa-f]{6}$/)]],

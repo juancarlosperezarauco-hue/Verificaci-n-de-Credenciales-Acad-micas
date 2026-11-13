@@ -12,7 +12,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
  @if(error()){<p class="org-error mb-5" role="alert">{{error()}} <button class="org-link" (click)="load()">Reintentar</button></p>}
  @if(notice()){<p class="org-success mb-5" role="status">{{notice()}}</p>}
  @if(loading()){<p role="status" class="org-card">Cargando equipo…</p>}
- @else if(tab()==='users'){
+ @else if(ready()&&tab()==='users'){
  <div class="grid gap-6 xl:grid-cols-[1.3fr_1fr]">
  <section class="org-card"><h2 class="mb-5 text-xl font-bold">Equipo institucional <span class="text-sm font-normal text-slate-500">({{users().length}})</span></h2>
  @for(user of users();track user.id){<article class="border-b border-slate-200 py-5 last:border-0"><div class="flex flex-wrap items-start justify-between gap-3"><div><h3 class="font-semibold">{{user.fullName||'Administrador institucional'}}</h3><p class="break-all text-sm text-slate-500">{{user.email}}</p><p class="mt-2 text-sm text-slate-600">{{user.role==='CUSTOM'?roleNames(user):'Administrador del tenant'}}</p></div><span class="org-badge" [attr.data-status]="user.active?'ACTIVE':'INACTIVE'">{{user.active?'Activo':'Desactivado'}}</span></div>
@@ -26,7 +26,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
  @if(userForm.invalid&&userForm.touched){<p class="mt-4 text-sm text-red-700">Revisa el nombre, correo y contraseña.</p>}
  <div class="mt-6 flex flex-wrap gap-3"><button class="org-primary" [disabled]="busy()">{{busy()?'Guardando…':editingUser()?'Guardar cambios':'Crear usuario'}}</button>@if(editingUser()){<button type="button" class="org-secondary" (click)="resetUser()">Cancelar</button>}</div>
  </form></div>
- } @else {
+ } @else if(ready()) {
  <div class="grid gap-6 xl:grid-cols-[1fr_1.2fr]"><section class="org-card"><h2 class="mb-5 text-xl font-bold">Roles de la organización</h2>
  @if(!roles().length){<p class="py-8 text-slate-500">Aún no tienes roles personalizados. Crea uno para comenzar.</p>}
  @for(role of roles();track role.id){<article class="border-b border-slate-200 py-5 last:border-0"><h3 class="font-semibold">{{role.name}}</h3><p class="mt-1 text-sm text-slate-500">{{role.permissions.length}} permisos asignados</p><div class="mt-3 flex gap-4"><button class="org-link" [disabled]="busy()" (click)="editRole(role)">Editar rol</button><button class="text-sm font-semibold text-red-700" [disabled]="busy()" (click)="removeRole(role)">Eliminar rol</button></div></article>}
@@ -44,19 +44,19 @@ export class OrganizationTeamPage {
  private readonly api=inject(OrganizationApi);private readonly fb=inject(FormBuilder);private readonly dialog=inject(Dialog);
  readonly tab=signal<'users'|'roles'>('users');readonly users=signal<StaffUser[]>([]);readonly roles=signal<TenantRole[]>([]);
  readonly permissions=signal<string[]>([]);readonly permissionLabels=PERMISSION_LABELS;readonly selectedPermissions=signal<string[]>([]);
- readonly loading=signal(true);readonly busy=signal(false);readonly error=signal('');readonly notice=signal('');readonly editingUser=signal<string|null>(null);readonly editingRole=signal<string|null>(null);
+ readonly loading=signal(true);readonly ready=signal(false);readonly busy=signal(false);readonly error=signal('');readonly notice=signal('');readonly editingUser=signal<string|null>(null);readonly editingRole=signal<string|null>(null);
  readonly userForm=this.fb.nonNullable.group({fullName:['',[Validators.required,Validators.maxLength(180)]],email:['',[Validators.required,Validators.email,Validators.maxLength(180)]],password:['',[Validators.required,Validators.minLength(10),Validators.maxLength(72)]],roleIds:[[] as string[]]});
  readonly roleForm=this.fb.nonNullable.group({name:['',[Validators.required,Validators.maxLength(100)]]});
  constructor(){this.load();}
- load(){this.loading.set(true);this.error.set('');forkJoin({users:this.api.users(),roles:this.api.roles(),permissions:this.api.permissions()}).pipe(finalize(()=>this.loading.set(false))).subscribe({next:r=>{this.users.set(r.users);this.roles.set(r.roles);this.permissions.set(r.permissions);},error:e=>this.error.set(requestError(e))});}
+ load(){this.loading.set(true);this.ready.set(false);this.error.set('');forkJoin({users:this.api.users(),roles:this.api.roles(),permissions:this.api.permissions()}).pipe(finalize(()=>this.loading.set(false))).subscribe({next:r=>{this.users.set(r.users);this.roles.set(r.roles);this.permissions.set(r.permissions);this.ready.set(true);},error:e=>this.error.set(requestError(e))});}
  roleNames(user:StaffUser){return user.roleIds.map(id=>this.roles().find(r=>r.id===id)?.name).filter(Boolean).join(', ')||'Sin roles asignados';}
  editUser(u:StaffUser){this.resetUser();this.editingUser.set(u.id);this.userForm.controls.email.clearValidators();this.userForm.controls.password.clearValidators();this.userForm.patchValue({fullName:u.fullName??'',roleIds:u.roleIds});this.userForm.controls.email.updateValueAndValidity();this.userForm.controls.password.updateValueAndValidity();}
  resetUser(){this.editingUser.set(null);this.userForm.reset({roleIds:[]});this.userForm.controls.email.setValidators([Validators.required,Validators.email]);this.userForm.controls.password.setValidators([Validators.required,Validators.minLength(10),Validators.maxLength(72)]);this.userForm.controls.email.updateValueAndValidity();this.userForm.controls.password.updateValueAndValidity();}
- saveUser(){this.userForm.markAllAsTouched();if(this.userForm.invalid||this.busy())return;const v=this.userForm.getRawValue();const id=this.editingUser();this.run(id?this.api.updateUser(id,{fullName:v.fullName,roleIds:v.roleIds}):this.api.createUser(v),'Usuario guardado.',()=>this.resetUser());}
+ saveUser(){this.userForm.markAllAsTouched();if(this.userForm.invalid||this.busy()||!this.ready())return;const v=this.userForm.getRawValue();const id=this.editingUser();this.run(id?this.api.updateUser(id,{fullName:v.fullName,roleIds:v.roleIds}):this.api.createUser(v),'Usuario guardado.',()=>this.resetUser());}
  togglePermission(p:string,on:boolean){this.selectedPermissions.update(v=>on?[...v,p]:v.filter(x=>x!==p));}
  editRole(r:TenantRole){this.editingRole.set(r.id);this.roleForm.setValue({name:r.name});this.selectedPermissions.set([...r.permissions]);}
  resetRole(){this.editingRole.set(null);this.roleForm.reset();this.selectedPermissions.set([]);}
- saveRole(){this.roleForm.markAllAsTouched();if(this.roleForm.invalid||this.busy())return;this.run(this.api.saveRole(this.editingRole(),{name:this.roleForm.getRawValue().name,permissions:this.selectedPermissions()}),'Rol guardado. Los permisos ya están actualizados.',()=>this.resetRole());}
+ saveRole(){this.roleForm.markAllAsTouched();if(this.roleForm.invalid||this.busy()||!this.ready())return;this.run(this.api.saveRole(this.editingRole(),{name:this.roleForm.getRawValue().name,permissions:this.selectedPermissions()}),'Rol guardado. Los permisos ya están actualizados.',()=>this.resetRole());}
  private confirm(title:string,message:string,action:()=>void){this.dialog.open<boolean>(ConfirmDialogComponent,{data:{title,message},ariaLabelledBy:'confirm-title',autoFocus:'first-tabbable',restoreFocus:true}).closed.subscribe(confirmed=>{if(confirmed)action();});}
  disable(u:StaffUser){this.confirm('Desactivar usuario','Se bloqueará el acceso de '+(u.fullName||u.email)+'.',()=>this.run(this.api.disableUser(u.id),'Usuario desactivado.'));}
  removeRole(r:TenantRole){this.confirm('Eliminar rol','Se retirará el rol '+r.name+' de todos los usuarios que lo tienen asignado.',()=>this.run(this.api.deleteRole(r.id),'Rol eliminado.',()=>this.resetRole()));}

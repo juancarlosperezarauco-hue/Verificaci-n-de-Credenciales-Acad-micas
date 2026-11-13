@@ -10,6 +10,8 @@ import { OrganizationTeamPage } from './organization-team.page';
 import { PlatformOrganizationsPage } from './platform-organizations.page';
 import { buildDetailsForm } from './organization.form';
 import { OrganizationApi } from './organization.api';
+import { AccessLoginPage } from './access-login.page';
+import { InstitutionPage } from '../institution/institution.page';
 
 describe('Organization workflows',()=>{
  let http:HttpTestingController;let auth:{save:jasmine.Spy;isAuthenticated:()=>boolean;logout:jasmine.Spy};
@@ -61,5 +63,31 @@ describe('Organization workflows',()=>{
   http.expectOne('/api/platform/organizations').flush([{id:'1',name:'Colegio Norte',slug:'norte',institutionType:'COLEGIO',active:true,status:'ACTIVE'},{id:'2',name:'Universidad Sur',slug:'sur',institutionType:'UNIVERSIDAD',active:false,status:'PENDING_REVIEW'}]);
   fixture.detectChanges();page.status.set('PENDING_REVIEW');expect(page.filtered().length).toBe(1);expect(page.filtered()[0].name).toBe('Universidad Sur');
   page.query.set('norte');expect(page.filtered().length).toBe(0);
+ });
+ it('explains invalid login credentials without reporting an expired session',()=>{
+  const page=TestBed.createComponent(AccessLoginPage).componentInstance;
+  page.form.setValue({organizationSlug:'colegio-prueba',email:'docente@test.edu',password:'PasswordPrueba123!'});
+  page.submit();http.expectOne('/api/auth/login').flush({}, {status:401,statusText:'Unauthorized'});
+  expect(page.error()).toContain('datos de acceso');expect(page.loading()).toBeFalse();expect(auth.save).not.toHaveBeenCalled();
+ });
+ it('hides team mutation forms when the initial load fails and recovers on retry',()=>{
+  const fixture=TestBed.createComponent(OrganizationTeamPage);const page=fixture.componentInstance;
+  const users=http.expectOne('/api/access/users');const roles=http.expectOne('/api/access/roles');const permissions=http.expectOne('/api/access/permissions');
+  roles.flush([]);permissions.flush([]);users.flush({}, {status:503,statusText:'Unavailable'});fixture.detectChanges();
+  expect(page.ready()).toBeFalse();expect(fixture.nativeElement.querySelector('form')).toBeNull();
+  page.roleForm.setValue({name:'Docente'});page.saveRole();http.expectNone('/api/access/roles');
+  page.load();http.expectOne('/api/access/users').flush([]);http.expectOne('/api/access/roles').flush([]);http.expectOne('/api/access/permissions').flush([]);fixture.detectChanges();
+  expect(page.ready()).toBeTrue();expect(fixture.nativeElement.querySelector('form')).not.toBeNull();
+ });
+ it('allows institutional branding edits for a custom role with update permission',()=>{
+  const page=TestBed.createComponent(InstitutionPage).componentInstance;const api=TestBed.inject(OrganizationApi);
+  api.access.set({userId:'staff',tenantId:'tenant',role:'CUSTOM',permissions:['ORGANIZATION_VIEW']});expect(page.canEdit()).toBeFalse();
+  api.access.set({userId:'staff',tenantId:'tenant',role:'CUSTOM',permissions:['ORGANIZATION_VIEW','ORGANIZATION_UPDATE']});expect(page.canEdit()).toBeTrue();
+ });
+ it('selects multiple education levels with independent checkboxes',()=>{
+  const fixture=TestBed.createComponent(OrganizationRegisterPage);const page=fixture.componentInstance;fixture.detectChanges();
+  const inputs=fixture.nativeElement.querySelectorAll('input[type="checkbox"]') as NodeListOf<HTMLInputElement>;
+  inputs[0].click();inputs[2].click();expect(page.form.get('educationLevels')?.value).toEqual(['INICIAL','SECUNDARIA']);
+  inputs[0].click();expect(page.form.get('educationLevels')?.value).toEqual(['SECUNDARIA']);
  });
 });

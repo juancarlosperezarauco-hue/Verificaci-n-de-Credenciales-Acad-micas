@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -28,5 +29,7 @@ export class AccessLoginPage {
  (this.platform?this.api.platformLogin({email:v.email,password:v.password}):this.institution.login(v)).pipe(finalize(()=>this.loading.set(false))).subscribe({
  next:r=>{this.auth.save(r);this.form.controls.password.reset();this.api.me().subscribe({next:p=>{
  const destination=p.role==='SUPER_ADMIN'?'/superadmin/organizations':p.permissions.includes('ORGANIZATION_VIEW')?'/dashboard':p.permissions.includes('STUDENT_VIEW')?'/students':p.permissions.includes('CREDENTIAL_VIEW')?'/credentials':'/access-denied';
- void this.router.navigate([destination]);},error:e=>this.error.set(requestError(e))});},error:e=>this.error.set(requestError(e))});}
+ void this.router.navigate([destination]);},error:e=>this.error.set(requestError(e))});},error:e=>this.error.set(e instanceof HttpErrorResponse && e.status===401
+ ? 'Los datos de acceso no son correctos. Revisa el correo, la contraseña y, si corresponde, el identificador de la organización.'
+ : requestError(e))});}
 }

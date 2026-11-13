@@ -6,7 +6,7 @@ export const DETAIL_SECTIONS:{title:string; fields:OrgField[]}[] = [
  {title:'Identificación',fields:[
  {key:'legalName',label:'Nombre legal o razón social',max:160},
  {key:'institutionType',label:'Tipo de institución',options:[{value:'ESCUELA',label:'Escuela'},{value:'COLEGIO',label:'Colegio'},{value:'UNIVERSIDAD',label:'Universidad'},{value:'INSTITUTO',label:'Instituto'},{value:'INSTITUTO_TECNICO',label:'Instituto técnico'},{value:'ACADEMIA',label:'Academia'},{value:'CENTRO_FORMACION',label:'Centro de formación'},{value:'OTRO',label:'Otro'}]},
- {key:'educationLevels',label:'Niveles educativos',type:'multiple',hint:'Puedes seleccionar varios niveles con Ctrl o Command.',options:[{value:'INICIAL',label:'Inicial'},{value:'PRIMARIA',label:'Primaria'},{value:'SECUNDARIA',label:'Secundaria'},{value:'SUPERIOR',label:'Superior'},{value:'TECNICO',label:'Técnico'}]}]},
+ {key:'educationLevels',label:'Niveles educativos',type:'multiple',hint:'Selecciona todos los niveles que imparte tu institución.',options:[{value:'INICIAL',label:'Inicial'},{value:'PRIMARIA',label:'Primaria'},{value:'SECUNDARIA',label:'Secundaria'},{value:'SUPERIOR',label:'Superior'},{value:'TECNICO',label:'Técnico'}]}]},
  {title:'Ubicación y contacto',fields:[
  {key:'country',label:'País (código de dos letras)',hint:'Ejemplos: BO Bolivia, PE Perú, AR Argentina.',max:2},
  {key:'region',label:'Departamento o región',max:120},{key:'address',label:'Dirección física completa',max:500},
