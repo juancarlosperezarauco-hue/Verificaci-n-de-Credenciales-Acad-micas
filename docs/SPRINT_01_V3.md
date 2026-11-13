@@ -39,7 +39,10 @@ Límites: los objetos nuevos sin referencia después de un fallo necesitan una f
 reconciliación. El adaptador blockchain continúa en desarrollo; no se implementa
 firma criptográfica. No hay cambios visuales en este incremento.
 
-## Historias siguientes del sprint: planificadas, no implementadas
+## Continuación prioritaria
+
+SEC-01 y el núcleo de SEC-02 están implementados; ver
+[PRIORITY_01_DELIVERY.md](PRIORITY_01_DELIVERY.md). SEC-03 sigue pendiente.
 
 ### SEC-01 — Onboarding institucional restringido (T07 / M03)
 
@@ -47,7 +50,7 @@ Como solicitante, necesito completar mi organización mientras se revisa, sin po
 emitir credenciales antes de la aprobación del SUPER_ADMIN.
 
 - **Valor:** evita que un alta pública se habilite como emisor automáticamente.
-- **Prioridad:** P0. **Estado:** pendiente. **Estimación:** por refinar tras contrato.
+- **Prioridad:** P0. **Estado:** implementada y verificada. Contrato y UI entregados.
 - **Dependencias:** definir acceso de onboarding para PENDING_REVIEW/OBSERVED y
   política de compatibilidad de `/api/auth/register`; conservar organizaciones existentes.
 - **Subtareas:** contrato documentado primero; pruebas de las dos rutas de alta;
@@ -68,7 +71,8 @@ flujo restringido completo, no un cambio aislado del booleano.
 Como estudiante, necesito recuperar mi cuenta y que una cuenta desactivada pierda
 acceso, manteniendo la identidad global y mis credenciales históricas.
 
-- **Prioridad:** P0. **Estado:** pendiente. **Estimación:** por refinar.
+- **Prioridad:** P0. **Estado:** núcleo implementado y verificado; MFA y sesiones
+  individuales permanecen fuera de esta historia.
 - **Dependencias:** revisar, sin sobrescribir, los cambios locales de seguridad
   de estudiante en el otro checkout; V9/V10 y contratos existentes.
 - **Subtareas:** comparar parche/entidades con V9, proteger estado activo en login/JWT,

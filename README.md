@@ -4,23 +4,24 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 
 ## Estado verificado y plan de continuación
 
-Auditoría del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de referencia
-(11 backend + 24 web), se validaron V1–V13 en PostgreSQL 16 y se documentaron las
-funciones reales frente al prompt maestro. El incremento de integridad documental
-añade cinco pruebas backend y conserva las migraciones existentes.
+Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
+referencia y se comprobó V1–V13. La continuación entrega revisión previa de
+organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
+El estado actual valida **66 pruebas (30 backend + 36 web)** y Flyway **V1–V14**.
 
 - [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
 - [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
 - [Primer sprint y criterios de aceptación](docs/SPRINT_01_V3.md).
 - [Resultados y comandos de validación](docs/VALIDATION_V3.md).
+- [Entrega prioritaria actual, ejecución y límites](docs/PRIORITY_01_DELIVERY.md).
 
 Blockchain continúa con un adaptador de desarrollo; no existe firma digital
 criptográfica, OCR/anomalías ni aplicación Android implementados.
 
 ## Flujo funcional
 
-1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo.
-2. El administrador ingresa al espacio privado de su institución.
+1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo. Su solicitud queda pendiente de revisión.
+2. El administrador puede completar su perfil, logo y respaldo. El SUPER_ADMIN aprueba la organización antes de habilitar estudiantes, equipo y emisión; las observaciones se corrigen y reenvían desde el perfil.
 3. El estudiante crea una cuenta personal global con correo y contraseña en `/student/register`, accede en `/student/login` y completa o edita su perfil dentro de Mi expediente mediante un asistente de tres pasos: nombre y fecha de nacimiento, CI, y país/departamento.
 4. Después de completar el perfil, el estudiante comparte su código de búsqueda `EST-…`. La institución lo pega en Estudiantes → Buscar y registrar, consulta sus datos básicos y lo vincula a su padrón para emitirle documentos.
 5. Selecciona uno o varios estudiantes, genera el PDF con logo y colores institucionales o adjunta un PDF propio.
@@ -85,6 +86,16 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 ## Ejecución con Docker
 
 1. Copia `.env.example` como `.env` y cambia los secretos.
+   JWT_SECRET es obligatorio; no se aceptan las claves públicas de ejemplo. Para
+   generar y guardar uno sin imprimirlo, desde PowerShell 7 en la raíz:
+
+```powershell
+$localJwt = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$envFile = Join-Path (Get-Location) '.env'
+$envLines = (Get-Content -LiteralPath $envFile) -replace '^JWT_SECRET=.*$', ('JWT_SECRET=' + $localJwt)
+[System.IO.File]::WriteAllLines($envFile, $envLines, [System.Text.UTF8Encoding]::new($false))
+```
+
 2. Inicia Docker Desktop.
 3. Ejecuta:
 
@@ -137,7 +148,15 @@ Invoke-RestMethod -Method Post `
   -Body $body
 ```
 
-Después ingresa en la aplicación con el slug, correo y contraseña anteriores.
+Después ingresa con esos datos y completa el perfil institucional. El registro
+legacy también queda pendiente: no habilita emisión hasta la revisión del SUPER_ADMIN.
+
+## Seguridad de la cuenta estudiantil
+
+El estudiante accede a `/student/security` desde su expediente. Puede confirmar
+su correo, cambiar contraseña/correo y desactivar su cuenta sin borrar credenciales.
+Recuperación pública en `/student/recover`. Los enlaces se entregan en Mailpit
+durante desarrollo, no a correos externos. MFA y límites de intentos aún están pendientes.
 
 ## Ejecución sin contenedores de aplicación
 

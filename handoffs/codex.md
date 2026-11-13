@@ -1,5 +1,12 @@
 # Entrega Codex: RBAC, superadmin y onboarding
 
+## Entrega prioritaria más reciente
+
+SEC-01/SEC-02 y V14 están documentadas en
+[codex-priority-01.md](codex-priority-01.md): 30 backend + 36 frontend aprobadas,
+smokes y QA visual. El Docker principal ya ejecuta esta versión. Las secciones
+anteriores de V3 conservan su contexto histórico y no sustituyen esta actualización.
+
 ## Continuación V3
 
 La auditoría y el incremento posterior de integridad están en

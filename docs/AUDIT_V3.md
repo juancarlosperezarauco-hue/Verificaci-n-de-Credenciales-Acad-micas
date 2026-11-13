@@ -4,6 +4,10 @@ Fecha: 2026-11-13 (America/La_Paz). Base revisada: commit `0f72612`, rama
 `codex/rbac-superadmin`. El árbol de trabajo estaba limpio antes del incremento.
 No se modifica main ni el checkout ajeno con trabajo pendiente del estudiante.
 
+Esta auditoría conserva el diagnóstico inicial. La continuación SEC-01/SEC-02 ya
+implementa revisión previa, seguridad estudiantil y V14; el estado actual y las
+limitaciones están en [PRIORITY_01_DELIVERY.md](PRIORITY_01_DELIVERY.md).
+
 ## Resultado y alcance
 
 Se revisaron estructura, dependencias, rutas Angular, controladores, autorización,

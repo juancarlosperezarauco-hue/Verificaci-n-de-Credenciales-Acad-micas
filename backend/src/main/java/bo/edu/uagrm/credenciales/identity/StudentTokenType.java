@@ -5,4 +5,3 @@ public enum StudentTokenType {
     PASSWORD_RESET,
     EMAIL_CHANGE
 }
-

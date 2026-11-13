@@ -4,6 +4,10 @@ Fecha: 2026-11-13. Fuente: prompt maestro adjunto, auditoría de `0f72612` y el
 incremento de integridad documental de esta entrega. Evidencias: `AUDIT_V3.md`,
 `VALIDATION_V3.md`, contratos y pruebas del repositorio.
 
+Continuación prioritaria: SEC-01 y SEC-02 implementadas, V14 añadida. Detalle y
+límites actuales en PRIORITY_01_DELIVERY.md; el backlog conserva tareas parciales
+cuando aún faltan requisitos del módulo completo.
+
 Estados: **Verificada** = alcance de esa tarea comprobado; **Parcial** = hay base
 real pero falta alcance; **Pendiente** = no implementada. No hay tarea declarada
 bloqueada por una dependencia interna pendiente: la dependencia se muestra aparte.
@@ -15,14 +19,14 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | ID | Nombre | Módulo | Implementación existente | Estado | Dependencias | Riesgo | Prioridad | Próxima acción |
 |---|---|---|---|---|---|---|---|---|
 | T01 | Auditar arquitectura | Todos | Inventario de paquetes, clientes y contratos en AUDIT_V3. | Verificada | — | Bajo | P0 | Actualizar con cada incremento. |
-| T02 | PostgreSQL/Flyway | Transversal | V1–V13 instaladas/validadas; DER y restricciones documentados. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
+| T02 | PostgreSQL/Flyway | Transversal | V1–V14 instaladas/validadas; DER conservado, security_version añadido. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
 | T03 | Pruebas existentes | Transversal | Baseline reproducido: 11 backend + 24 web; builds correctos. | Verificada | T02 | Bajo | P0 | Conservar baseline y resultados nuevos separados. |
 | T04 | Inventario funcional | Todos | 18 módulos y matriz de 40 tareas revisados. | Verificada | T01–03 | Bajo | P0 | Usar esta matriz como estado, no dependencias instaladas. |
 | T05 | Aislamiento tenant | M02/M03/M04/M08 | Filtros tenant, FK compuestas RBAC y pruebas de acceso cruzado; incremento documental. | Parcial | T01–03 | Alto | P0 | Completar matriz de recursos/acciones, archivos e historial. |
 | T06 | Roles/permisos | M02 | SUPER_ADMIN sin tenant, TENANT_ADMIN, CUSTOM, catálogo, asignación y revocación inmediata. | Verificada | T05 base | Medio | P0 | Añadir permisos nuevos con cada módulo; no delegar administración protegida. |
-| T07 | Autenticación | M02 | Login JWT/BCrypt, usuarios internos desactivables; sin MFA/reset/sesiones. | Parcial | T06 | Alto | P0 | Revisar trabajo estudiantil pendiente e integrar recuperación/correo/sesiones por etapas. |
-| T08 | Identidad global | M04 | Registro correo/contraseña, perfil posterior y unicidad documental global. | Parcial | T07 | Alto | P1 | Validar estado activo/identidad y procedimiento de disputa de documentos. |
-| T09 | Vinculación | M04 | Código EST, canje temporal, historial, retiro y rotación; sin duplicar cuentas. | Parcial | T08 | Alto | P1 | Reforzar consentimiento explícito y prevenir exposición/abuso del buscador. |
+| T07 | Autenticación | M02 | JWT/BCrypt, onboarding restringido, correo/reset/cambio de credenciales/desactivación y cierre de sesiones por versión. | Parcial | T06 | Alto | P0 | MFA, límites de intentos, sesiones individuales y entrega durable de correo. |
+| T08 | Identidad global | M04 | Perfil global, unicidad, correo confirmado, cuenta activa/desactivada y preservación histórica. | Parcial | T07 | Alto | P1 | Revisión documental y procedimiento de disputa de identidades. |
+| T09 | Vinculación | M04 | Código EST, historial, retiro/rotación; desactivar retira accesos y bloquea nuevos canjes sin borrar historia. | Parcial | T08 | Alto | P1 | Reforzar consentimiento explícito y prevenir exposición/abuso del buscador. |
 | T10 | Expediente institucional | M03/M04/M05 | Identidad y vínculos; entidad students histórica conservada. | Parcial | T09 | Alto | P1 | Agregar expediente tenant y estructuras académicas configurables. |
 | T11 | Solicitudes | M06 | No hay agregado de solicitudes/requisitos. | Pendiente | T10 | Medio | P1 | Primer trámite con estados, propietario y adjuntos autorizados. |
 | T12 | Aprobaciones | M09 | Solo permiso de emisión directa. | Pendiente | T11/T06 | Alto | P1 | Definir revisión/autoridad y separación de funciones. |
@@ -40,7 +44,7 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | T24 | Dashboard tenant | M15 | Contadores locales y publicaciones/fechas del portal. | Parcial | T10/T14 | Medio | P2 | Agregaciones servidor por periodo/tenant y gráficos reales. |
 | T25 | Reportes | M15 | Permiso REPORT_VIEW y OpenPDF, sin reportes/exportación. | Pendiente | T24/T26 | Alto | P2 | Reporte filtrado PDF; justificar dependencia Excel cuando corresponda. |
 | T26 | Auditoría | M14 | Eventos de estado institucional y canjes con actor/fecha. | Parcial | T06 | Alto | P1 | Evento transversal de seguridad con acceso por ámbito y sin secretos. |
-| T27 | Notificaciones | M16 | Spring Mail/Mailpit configurables, sin bandeja/entrega. | Pendiente | T26/T11/T14 | Medio | P2 | Persistencia, bandeja personal y entrega por correo con reintentos. |
+| T27 | Notificaciones | M16 | Correos de seguridad operativos; sin bandeja ni avisos académicos. | Pendiente | T26/T11/T14 | Medio | P2 | Persistencia, bandeja personal y entrega académica con reintentos. |
 | T28 | Base Flutter | M17 | Sin proyecto móvil. | Pendiente | T07/T16 | Medio | P3 | Scaffold Flutter con navegación y configuración de API, sin duplicar backend. |
 | T29 | Integración Android | M17 | API web reutilizable; cliente no existe. | Pendiente | T28/T07/T09 | Alto | P3 | Login y expediente real con almacenamiento seguro de sesión. |
 | T30 | Android avanzado | M17 | Sin escáner/descargas/push/offline móvil. | Pendiente | T29/T27 | Alto | P3 | Escáner y descarga; offline siempre indica vigencia no actualizada. |
@@ -78,8 +82,8 @@ porcentaje de terminación del producto: las tareas difieren en tamaño y alcanc
 | T04.1 | Como responsable del producto, necesito saber qué falta realmente. | 18 módulos y 40 tareas clasificados sin llamar real a adaptadores simulados. Verificada. |
 | T05.1 | Como emisor, necesito que otro tenant no cambie ni lea mis archivos. | Pruebas negativas de upload/download no invocan almacenamiento; cubierto por este incremento. |
 | T06.1 | Como TENANT_ADMIN, necesito asignar roles propios sin escalar a SUPER_ADMIN. | Roles ajenos/permiso desconocido rechazados; JWT vigente pierde permisos revocados. Verificada. |
-| T07.1 | Como estudiante, necesito recuperar acceso sin revelar si mi correo existe. | Respuesta uniforme, token hasheado de uso único con vencimiento, prueba de replay y revocación de sesiones. Pendiente de revisar trabajo previo. |
-| T08.1 | Como estudiante, necesito que mi cuenta desactivada pierda acceso. | Login y JWT vigente rechazan active=false; otro estudiante no puede desactivarme. |
+| T07.1 | Como estudiante, necesito recuperar acceso sin revelar si mi correo existe. | Respuesta uniforme, token hasheado de uso único con vencimiento, replay y cierre de sesiones. Implementada. |
+| T08.1 | Como estudiante, necesito que mi cuenta desactivada pierda acceso. | Login/JWT rechazan active=false, se retiran vínculos y se conserva historia. Implementada. |
 | T09.1 | Como estudiante, necesito comprender y controlar la vinculación. | Consentimiento visible, alcance mínimo, historial y retiro bloquean nuevos accesos/emisiones sin borrar credenciales. |
 | T10.1 | Como TENANT_ADMIN, necesito una unidad académica que se adapte a mi organización. | Nombre/tipo configurables y CRUD limitado al tenant, sin obligar a usar facultades. |
 | T11.1 | Como estudiante vinculado, necesito solicitar un certificado. | Solicitud inicial con requisitos y consulta propia; tenant ajeno/otro estudiante no pueden verla. |

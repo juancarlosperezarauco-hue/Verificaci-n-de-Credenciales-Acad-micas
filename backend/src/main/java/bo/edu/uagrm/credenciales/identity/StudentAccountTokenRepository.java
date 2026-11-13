@@ -20,4 +20,3 @@ public interface StudentAccountTokenRepository extends JpaRepository<StudentAcco
     void invalidate(@Param("studentId") UUID studentId, @Param("type") StudentTokenType type,
                     @Param("usedAt") Instant usedAt);
 }
-

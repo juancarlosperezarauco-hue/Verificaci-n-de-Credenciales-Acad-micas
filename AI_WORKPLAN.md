@@ -1,5 +1,14 @@
 # Trabajo entre dos IAs
 
+## Prioridad 1 implementada (2026-11-13)
+
+SEC-01: revisión previa de nuevas organizaciones y acceso restringido para corregir.
+SEC-02: correo/reset/cambio de credenciales/desactivación y revocación de sesiones
+globales por versión. V14 añade solo security_version. Suites finales: 30 backend
+PG16 + 36 Angular; smokes reales de MinIO/Mailpit y QA de escritorio/móvil.
+Docker principal actualizado, sin limpieza de datos. Ver docs/PRIORITY_01_DELIVERY.md.
+MFA, rate limiting y sesiones individuales siguen pendientes. No se inició otro agente.
+
 ## Continuación auditada V3 (2026-11-13)
 
 Codex revisó el prompt maestro contra la arquitectura existente y reprodujo las

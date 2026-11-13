@@ -40,4 +40,3 @@ public class StudentAccountToken {
     public Instant getUsedAt() { return usedAt; }
     public void use() { usedAt = Instant.now(); }
 }
-
