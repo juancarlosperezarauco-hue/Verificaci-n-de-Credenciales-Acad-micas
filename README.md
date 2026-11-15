@@ -7,7 +7,7 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El incremento académico valida **208 pruebas (120 backend + 88 web)** y Flyway **V1–V21**.
+El estado actual valida **219 pruebas (120 backend + 99 web)** y Flyway **V1–V21**.
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
 Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
@@ -28,6 +28,7 @@ su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados de
 - [Revisión documental: alcance, pruebas y QA visual pendiente](docs/IDENTITY_REVIEW_DELIVERY.md).
 - [Menú lateral izquierdo y navegación por permisos](handoffs/codex-navigation.md).
 - [Ciclo académico 1–9: funciones, prueba manual y límites](docs/ACADEMIC_CYCLE_DELIVERY.md).
+- [Panel claro y servicios de credenciales separados](docs/WORKSPACE_POLISH.md).
 
 El ciclo incluye expedientes, solicitudes/requisitos, aprobación separada,
 plantillas versionadas, QR embebido, firma CMS, comparación pública de PDF,

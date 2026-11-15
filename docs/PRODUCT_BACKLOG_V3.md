@@ -13,7 +13,9 @@ límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
 PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
 SECURITY_02_DELIVERY.md. Ese incremento conserva su evidencia histórica.
 
-Estado actual: V21, con 208 pruebas (120 backend PostgreSQL 16 + 88 web).
+Estado actual: V21, con 219 pruebas (120 backend PostgreSQL 16 + 99 web).
+Panel claro, consulta de estudiantes paginada, estados de carga/errores y
+servicios de credenciales separados; detalle en WORKSPACE_POLISH.md.
 Los puntos 1–9 del ciclo académico tienen backend, UI y pruebas; ver
 ACADEMIC_CYCLE_DELIVERY.md para guía manual y límites de piloto.
 Navegación actual: panel lateral izquierdo desplegable con listas verticales,

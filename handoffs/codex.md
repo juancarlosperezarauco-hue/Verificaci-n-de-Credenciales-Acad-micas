@@ -2,6 +2,13 @@
 
 ## Entrega prioritaria más reciente
 
+Presentación y mantenibilidad: [WORKSPACE_POLISH.md](../docs/WORKSPACE_POLISH.md).
+Panel claro, iconos compartidos, resumen por permisos, búsqueda/páginas de
+estudiantes y separación de emisión/documentos/consulta pública.
+120 PostgreSQL + 99 Angular correctas (219); V21 sin migraciones nuevas.
+Principal actualizado y comprobado; smoke ampliado no completado por memoria
+del entorno y QA visual manual pendiente. Auditoría detenida al cerrar.
+
 Ciclo académico 1–9: [codex-academic.md](codex-academic.md).
 120 pruebas PostgreSQL + 88 Angular correctas (208), Flyway V1–V21.
 Expedientes, solicitudes/aprobación separada, plantillas, QR/firma CMS,
