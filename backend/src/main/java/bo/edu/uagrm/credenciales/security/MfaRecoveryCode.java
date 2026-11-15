@@ -7,4 +7,6 @@ class MfaRecoveryCode {
     @Column(name="user_id",nullable=false) UUID userId;
     @Column(name="code_hash",nullable=false,unique=true,length=64) String codeHash;
     @Column(nullable=false) boolean used;
+    @Column(name="used_at") java.time.Instant usedAt;
+    void use(){used=true;usedAt=java.time.Instant.now();}
 }

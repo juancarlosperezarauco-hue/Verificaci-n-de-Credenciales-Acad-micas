@@ -20,7 +20,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         boolean sensitive=LOGIN.contains(path)||REGISTER.contains(path)||path.startsWith("/api/auth/mfa/")
                 ||path.startsWith("/api/security/mfa")||path.startsWith("/api/auth/student/password-reset/")
                 ||path.equals("/api/auth/student/verify-email")||path.equals("/api/auth/student/email-change/confirm")
-                ||path.startsWith("/api/me/security/");
+                ||path.startsWith("/api/platform/security/")||path.startsWith("/api/me/security/");
         if(!limiter.enabled()||!Set.of("POST","DELETE").contains(request.getMethod())||!sensitive){chain.doFilter(request,response);return;}
         var ip=limiter.take("ip",request.getRemoteAddr(),120,60);
         if(!ip.allowed()){deny(response,ip.retryAfter());return;}

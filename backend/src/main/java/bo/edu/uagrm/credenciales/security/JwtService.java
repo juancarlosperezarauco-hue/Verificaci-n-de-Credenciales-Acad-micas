@@ -11,33 +11,32 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class JwtService {
-    private final Algorithm algorithm;
+    private final KeySet keys;
+    private final java.util.Map<String,Algorithm> algorithms=new java.util.HashMap<>();
     private final long expirationMinutes;
     private final SessionRegistry sessions;
 
-    public JwtService(@Value("${app.security.jwt-secret}") String secret,
-                      @Value("${app.security.jwt-expiration-minutes}") long expirationMinutes) {
-        this(secret,expirationMinutes,null);
-    }
+    public JwtService(String secret,long expirationMinutes){this(secret,expirationMinutes,null,"legacy","");}
+    public JwtService(String secret,long expirationMinutes,SessionRegistry sessions){this(secret,expirationMinutes,sessions,"legacy","");}
     @org.springframework.beans.factory.annotation.Autowired
-    public JwtService(@Value("${app.security.jwt-secret}") String secret,
-                      @Value("${app.security.jwt-expiration-minutes}") long expirationMinutes,SessionRegistry sessions) {
-        if (secret == null || secret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32
-                || java.util.Set.of("change-this-development-secret-with-at-least-32-characters",
-                    "replace-with-a-random-secret-of-at-least-32-characters").contains(secret)) {
-            throw new IllegalArgumentException("Configura JWT_SECRET con una clave privada aleatoria de al menos 32 bytes.");
+    public JwtService(@Value("${app.security.jwt-secret}") String secret,@Value("${app.security.jwt-expiration-minutes}") long expirationMinutes,SessionRegistry sessions,
+                      @Value("${app.security.jwt-key-id:legacy}") String id,@Value("${app.security.jwt-previous-keys:}") String previous){
+        keys=new KeySet(id,secret,previous);
+        for(String key:keys.ids()){
+            String value=keys.value(key);
+            if(value==null||value.getBytes(java.nio.charset.StandardCharsets.UTF_8).length<32||java.util.Set.of("change-this-development-secret-with-at-least-32-characters","replace-with-a-random-secret-of-at-least-32-characters").contains(value))throw new IllegalArgumentException("Configura JWT_SECRET con claves privadas aleatorias de al menos 32 bytes.");
+            algorithms.put(key,Algorithm.HMAC256(value));
         }
-        this.algorithm = Algorithm.HMAC256(secret);
-        this.expirationMinutes = expirationMinutes;
-        this.sessions=sessions;
+        this.expirationMinutes=expirationMinutes;this.sessions=sessions;
     }
+    public String currentId(){return keys.currentId();}
 
     public String create(UserPrincipal principal) {
         Instant now = Instant.now();
         Instant expires=now.plus(expirationMinutes,ChronoUnit.MINUTES);
         if(sessions==null)throw new IllegalStateException("Se requiere el registro de sesiones");
-        UUID session=sessions.open(principal,expires);
-        return JWT.create()
+        UUID session=sessions.open(principal,expires,keys.currentId());
+        return JWT.create().withKeyId(keys.currentId())
                 .withJWTId(session.toString())
                 .withIssuer("uagrm-credentials")
                 .withSubject(principal.userId().toString())
@@ -48,10 +47,12 @@ public class JwtService {
                 .withClaim("securityVersion", principal.securityVersion())
                 .withIssuedAt(now)
                 .withExpiresAt(expires)
-                .sign(algorithm);
+                .sign(algorithms.get(keys.currentId()));
     }
 
     public JwtIdentity verify(String token) {
+        String id=JWT.decode(token).getKeyId();if(id==null)id="legacy";
+        Algorithm algorithm=algorithms.get(id);if(algorithm==null)throw new com.auth0.jwt.exceptions.JWTVerificationException("Firma de acceso no disponible");
         DecodedJWT jwt = JWT.require(algorithm).withIssuer("uagrm-credentials").build().verify(token);
         return new JwtIdentity(UUID.fromString(jwt.getSubject()),
                 jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()),

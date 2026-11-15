@@ -10,6 +10,7 @@ class LoginSession {
     @Column(name="user_id") UUID userId;
     @Column(name="student_id") UUID studentId;
     @Column(name="tenant_id") UUID tenantId;
+    @Column(name="signing_key_id",nullable=false,length=40) String signingKeyId="legacy";
     @Column(name="security_version",nullable=false) long securityVersion;
     @Column(name="mfa_verified",nullable=false) boolean mfaVerified;
     @Column(nullable=false,length=100) String device;

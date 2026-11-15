@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    org.springframework.http.ResponseEntity<Map<String,Object>> status(org.springframework.web.server.ResponseStatusException exception){
+        String message=switch(exception.getStatusCode().value()){case 404->"El registro no está disponible.";case 403->"Tu cuenta no tiene acceso a esta operación.";case 409->"Los datos entran en conflicto con otro registro.";default->"No se pudo completar la solicitud.";};
+        return org.springframework.http.ResponseEntity.status(exception.getStatusCode()).body(error(message));
+    }
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     Map<String, Object> duplicate(org.springframework.dao.DataIntegrityViolationException exception) {

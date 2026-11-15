@@ -17,9 +17,10 @@ public class OrganizationOnboardingService {
  var d=r.profile();var session=auth.register(new AuthDtos.RegisterRequest(d.legalName(),r.organizationSlug(),d.institutionType(),d.representative().email(),r.password()));
  update(UUID.fromString(session.tenantId()),d);return session;
  }
+ @Transactional(readOnly=true)
  public OrganizationDtos.Details get(UUID tenant){return profiles.findById(tenant).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND)).details();}
  public OrganizationDtos.Details update(UUID tenant,OrganizationDtos.Details d){
-  var t=tenants.findById(tenant).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
+  var t=tenants.findLockedById(tenant).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
   var p=profiles.findById(tenant).orElseGet(()->new OrganizationProfile(tenant));p.update(d);
   t.updateIdentification(d.legalName().trim(),d.institutionType());profiles.saveAndFlush(p);audit.record(ORGANIZATION_UPDATED,tenant,ORGANIZATION,tenant);return p.details();
  }

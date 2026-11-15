@@ -46,6 +46,8 @@ springdoc:
 app:
   mail-outbox:
     encryption-key: ${MAIL_ENCRYPTION_KEY}
+    key-id: ${MAIL_KEY_ID:legacy}
+    previous-keys: ${MAIL_PREVIOUS_KEYS:}
     worker-enabled: ${MAIL_WORKER_ENABLED:true}
     max-attempts: 5
     retry-seconds: 30
@@ -54,6 +56,12 @@ app:
   frontend-url: ${APP_FRONTEND_URL:${ALLOWED_ORIGIN:http://localhost:4200}}
   security:
     jwt-secret: ${JWT_SECRET}
+    jwt-key-id: ${JWT_KEY_ID:legacy}
+    jwt-previous-keys: ${JWT_PREVIOUS_KEYS:}
+    mfa-key-id: ${MFA_KEY_ID:legacy}
+    mfa-previous-keys: ${MFA_PREVIOUS_KEYS:}
+    retention-days: ${SECURITY_RETENTION_DAYS:30}
+    maintenance-enabled: ${SECURITY_MAINTENANCE_ENABLED:true}
     mfa-encryption-key: ${MFA_ENCRYPTION_KEY}
     rate-limit-enabled: ${AUTH_RATE_LIMIT_ENABLED:true}
     jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}

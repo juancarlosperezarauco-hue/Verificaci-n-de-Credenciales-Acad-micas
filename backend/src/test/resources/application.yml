@@ -13,6 +13,7 @@ app:
     encryption-key: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=
     worker-enabled: false
   security:
+    maintenance-enabled: false
     jwt-secret: test-secret-that-is-long-enough-for-unit-testing-only
     jwt-expiration-minutes: 60
     mfa-encryption-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=

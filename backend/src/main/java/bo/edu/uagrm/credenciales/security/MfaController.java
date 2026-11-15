@@ -22,6 +22,12 @@ public class MfaController {
     MfaService.Setup setup(@AuthenticationPrincipal UserPrincipal principal,@Valid @RequestBody Password body){return service.setup(principal,body.password());}
     @PostMapping("/api/security/mfa/confirm") @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','ADMIN')")
     MfaService.Enabled confirm(@AuthenticationPrincipal UserPrincipal principal,@Valid @RequestBody Code body){return service.confirm(principal,body.code());}
+    @PostMapping("/api/security/mfa/replacement") @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','ADMIN')")
+    MfaService.Setup replacement(@AuthenticationPrincipal UserPrincipal p,@Valid @RequestBody Disable body){return service.replacement(p,body.password(),body.code()).orElseThrow(()->new BadCredentialsException("Código inválido o ya utilizado."));}
+    @PostMapping("/api/security/mfa/recovery-codes") @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','ADMIN')")
+    MfaService.Enabled regenerate(@AuthenticationPrincipal UserPrincipal p,@Valid @RequestBody Disable body){return service.regenerate(p,body.password(),body.code()).orElseThrow(()->new BadCredentialsException("Código inválido o ya utilizado."));}
+    @DeleteMapping("/api/security/mfa/pending") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','ADMIN')")
+    void cancel(@AuthenticationPrincipal UserPrincipal p){service.cancelPending(p);}
     @DeleteMapping("/api/security/mfa") @ResponseStatus(HttpStatus.NO_CONTENT) @PreAuthorize("hasAnyRole('SUPER_ADMIN','TENANT_ADMIN','ADMIN')")
     void disable(@AuthenticationPrincipal UserPrincipal principal,@Valid @RequestBody Disable body){if(!service.disable(principal,body.password(),body.code()))throw new BadCredentialsException("Código inválido o ya utilizado.");}
     @PostMapping("/api/auth/mfa/verify")

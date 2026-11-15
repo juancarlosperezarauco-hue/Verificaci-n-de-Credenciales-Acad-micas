@@ -18,6 +18,7 @@ class MailOutbox {
  @Column(name="expires_at",nullable=false) Instant expiresAt;
  @Column(name="claim_id") UUID claimId;
  @Column(name="lease_until") Instant leaseUntil;
+ @Column(name="terminal_at") Instant terminalAt;
  @Column(name="sent_at") Instant sentAt;
  @Column(name="last_error",length=40) String lastError;
  protected MailOutbox(){}

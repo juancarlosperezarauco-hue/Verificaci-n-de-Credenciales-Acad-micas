@@ -11,11 +11,12 @@ import org.springframework.transaction.annotation.*;
 @Service
 public class MailOutboxStore {
  private final EntityManager em;private final MailCipher cipher;private final StudentAccountTokenRepository tokens;private final Clock clock;
+ private final bo.edu.uagrm.credenciales.audit.AuditTrail audit;
  private final int maxAttempts;private final int retrySeconds;private final int leaseSeconds;
- public MailOutboxStore(EntityManager em,MailCipher cipher,StudentAccountTokenRepository tokens,Clock clock,
+ public MailOutboxStore(EntityManager em,MailCipher cipher,StudentAccountTokenRepository tokens,Clock clock,bo.edu.uagrm.credenciales.audit.AuditTrail audit,
   @Value("${app.mail-outbox.max-attempts:5}") int max,@Value("${app.mail-outbox.retry-seconds:30}") int retry,@Value("${app.mail-outbox.lease-seconds:120}") int lease){
   if(max<1||max>10||retry<1||lease<30)throw new IllegalArgumentException("Configuración de correo inválida");
-  this.em=em;this.cipher=cipher;this.tokens=tokens;this.clock=clock;maxAttempts=max;retrySeconds=retry;leaseSeconds=lease;
+  this.audit=audit;this.em=em;this.cipher=cipher;this.tokens=tokens;this.clock=clock;maxAttempts=max;retrySeconds=retry;leaseSeconds=lease;
  }
  @Transactional(propagation=Propagation.MANDATORY)
  public void enqueue(UUID student,UUID token,String kind,Instant expires,String to,String subject,String body){
@@ -48,5 +49,13 @@ public class MailOutboxStore {
   if(state==MailState.RETRY&&row.attempts<maxAttempts){row.state=MailState.RETRY;row.nextAttemptAt=clock.instant().plusSeconds(Math.min(900L,retrySeconds*(1L<<Math.min(10,row.attempts-1))));row.lastError=error;row.claimId=null;row.leaseUntil=null;}
   else{terminal(row,state==MailState.RETRY?MailState.FAILED:state,error);}
  }
- private void terminal(MailOutbox row,MailState state,String error){row.state=state;row.lastError=error;row.encryptedPayload=null;row.claimId=null;row.leaseUntil=null;if(state==MailState.SENT)row.sentAt=clock.instant();}
+ @Transactional(readOnly=true)
+ public long rotationPending(){return em.createQuery("select count(m) from MailOutbox m where "+cipher.oldPredicate("m.encryptedPayload"),Long.class).getSingleResult();}
+ @Transactional
+ public int reEncrypt(){
+  var rows=em.createQuery("select m from MailOutbox m where m.state<>:processing and "+cipher.oldPredicate("m.encryptedPayload")+" order by m.id",MailOutbox.class).setParameter("processing",MailState.PROCESSING).setMaxResults(50).setLockMode(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE).getResultList();
+  for(var row:rows){String old=cipher.keyId(row.encryptedPayload);row.encryptedPayload=cipher.encrypt(row.id,cipher.decrypt(row.id,row.encryptedPayload));audit.record(bo.edu.uagrm.credenciales.audit.AuditAction.SECRET_REENCRYPTED,null,bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.MAIL,row.id,bo.edu.uagrm.credenciales.audit.AuditTrail.Change.keyIds(old,cipher.currentId()));}
+  return rows.size();
+ }
+ private void terminal(MailOutbox row,MailState state,String error){row.state=state;row.terminalAt=clock.instant();row.lastError=error;row.encryptedPayload=null;row.claimId=null;row.leaseUntil=null;if(state==MailState.SENT)row.sentAt=clock.instant();}
 }

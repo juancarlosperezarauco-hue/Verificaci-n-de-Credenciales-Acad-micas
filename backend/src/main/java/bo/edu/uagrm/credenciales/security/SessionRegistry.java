@@ -20,10 +20,11 @@ public class SessionRegistry {
     public SessionRegistry(LoginSessionRepository sessions,AuditTrail audit) {this.sessions=sessions;this.audit=audit;}
     public record View(UUID id,String device,Instant createdAt,Instant lastSeenAt,Instant expiresAt,boolean current,boolean mfaVerified) {}
 
-    public UUID open(UserPrincipal principal,Instant expires) {
+    public UUID open(UserPrincipal principal,Instant expires){return open(principal,expires,"legacy");}
+    public UUID open(UserPrincipal principal,Instant expires,String keyId) {
         LoginSession session=new LoginSession();session.id=UUID.randomUUID();
         if(principal.role()==UserRole.STUDENT)session.studentId=principal.userId();else session.userId=principal.userId();
-        session.tenantId=principal.tenantId();session.securityVersion=principal.securityVersion();
+        session.signingKeyId=keyId;session.tenantId=principal.tenantId();session.securityVersion=principal.securityVersion();
         session.mfaVerified=principal.mfaVerified();session.device=device();
         session.createdAt=Instant.now();session.lastSeenAt=session.createdAt;session.expiresAt=expires;
         return sessions.save(session).id;
@@ -56,8 +57,8 @@ public class SessionRegistry {
                 .forEach(s->s.revokedAt=Instant.now());
         audit.record(OTHER_SESSIONS_REVOKED,principal.tenantId(),SESSION,principal.sessionId());
     }
-    public void revokeUser(UUID id) {sessions.findByUserIdOrderByCreatedAtDesc(id).forEach(s->s.revokedAt=Instant.now());}
-    public void revokeStudent(UUID id) {sessions.findByStudentIdOrderByCreatedAtDesc(id).forEach(s->s.revokedAt=Instant.now());}
+    public void revokeUser(UUID id) {sessions.findByUserIdOrderByCreatedAtDesc(id).stream().filter(s->s.revokedAt==null&&s.expiresAt.isAfter(Instant.now())).forEach(s->s.revokedAt=Instant.now());}
+    public void revokeStudent(UUID id) {sessions.findByStudentIdOrderByCreatedAtDesc(id).stream().filter(s->s.revokedAt==null&&s.expiresAt.isAfter(Instant.now())).forEach(s->s.revokedAt=Instant.now());}
     private List<LoginSession> ownedSessions(UserPrincipal principal) {
         return principal.role()==UserRole.STUDENT?sessions.findByStudentIdOrderByCreatedAtDesc(principal.userId())
                 :sessions.findByUserIdOrderByCreatedAtDesc(principal.userId());
