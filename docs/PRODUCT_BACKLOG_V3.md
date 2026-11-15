@@ -13,9 +13,9 @@ límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
 PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
 SECURITY_02_DELIVERY.md. Ese incremento conserva su evidencia histórica.
 
-Estado actual: V18, con 165 pruebas (96 backend PostgreSQL 16 + 69 web).
-Navegación horizontal reorganizada, sin franja recortada, con opciones agrupadas
-y menús adaptables al ancho; ver handoffs/codex-navigation.md.
+Estado actual: V18, con 166 pruebas (96 backend PostgreSQL 16 + 70 web).
+Navegación actual: panel lateral izquierdo desplegable con listas verticales,
+opciones por permisos y adaptación al ancho; ver handoffs/codex-navigation.md.
 Revisión documental institucional implementada: consentimiento específico, imágenes
 privadas, versiones del perfil, bandeja/decisión y retirada. QA visual pendiente por
 fallo de infraestructura de herramientas; ver IDENTITY_REVIEW_DELIVERY.md.
@@ -66,7 +66,7 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | T29 | Integración Android | M17 | API web reutilizable; cliente no existe. | Pendiente | T28/T07/T09 | Alto | P3 | Login y expediente real con almacenamiento seguro de sesión. |
 | T30 | Android avanzado | M17 | Sin escáner/descargas/push/offline móvil. | Pendiente | T29/T27 | Alto | P3 | Escáner y descarga; offline siempre indica vigencia no actualizada. |
 | T31 | APK/AAB | M17 | Sin compilación ni claves de publicación. | Pendiente | T30 | Alto | P3 | Preparar build reproducible y firma autorizada fuera de Git. |
-| T32 | Portal Angular | M01 | Landing clara, registro modular y verificador. | Parcial | T07/T16 | Medio | P2 | Accesibilidad y errores funcionales; conservar diseño claro y menú horizontal. |
+| T32 | Portal Angular | M01 | Landing clara, registro modular, verificador y menú lateral izquierdo. | Parcial | T07/T16 | Medio | P2 | Accesibilidad y errores funcionales; conservar diseño claro y navegación lateral. |
 | T33 | Paneles Angular | M02/M03/M15 | Organizaciones, equipo, roles, perfil y pantallas base. | Parcial | T06/T23/T24 | Medio | P2 | Paginación, filtros, errores y accesos consistentes; no crear paneles vacíos. |
 | T34 | Docker | M18 | Compose local operativo, volúmenes y builds multietapa/prebuilt. | Parcial | T02/T03 | Alto | P0/P3 | Health checks de todos los servicios y perfiles de despliegue sin fallbacks inseguros. |
 | T35 | CI/CD | M18 | No existe .github/workflows. | Pendiente | T03/T34 | Alto | P3 | CI de build y pruebas PG; mantener despliegue manual hasta preparar producción. |

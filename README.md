@@ -7,7 +7,7 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **165 pruebas (96 backend + 69 web)** y Flyway **V1–V18**.
+El estado actual valida **166 pruebas (96 backend + 70 web)** y Flyway **V1–V18**.
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
 Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
@@ -26,7 +26,7 @@ su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados de
 - [Seguridad y perfil institucional histórico](docs/SECURITY_POLISH_DELIVERY.md).
 - [Procedimiento de rotación de claves](docs/KEY_ROTATION_RUNBOOK.md).
 - [Revisión documental: alcance, pruebas y QA visual pendiente](docs/IDENTITY_REVIEW_DELIVERY.md).
-- [Barra horizontal y navegación por permisos](handoffs/codex-navigation.md).
+- [Menú lateral izquierdo y navegación por permisos](handoffs/codex-navigation.md).
 
 Blockchain continúa con un adaptador de desarrollo; no existe firma digital
 criptográfica, OCR/anomalías ni aplicación Android implementados.

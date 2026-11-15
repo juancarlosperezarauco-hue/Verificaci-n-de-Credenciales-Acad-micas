@@ -198,3 +198,16 @@ de ruta y retirada de permisos con menú abierto); build de producción correcto
 Backend/API/BD sin cambios; su última suite conserva 96 aprobadas, V18. Total 165.
 Frontend principal actualizado y bundle comprobado por HTTP. Herramienta visual
 vuelve a fallar al arrancar por kernel assets/ruta ausente; QA visual manual pendiente.
+
+## Corrección a menú lateral izquierdo — 2026-11-15
+
+La aclaración del usuario reemplaza la disposición horizontal anterior por un drawer
+izquierdo blanco con listas verticales, invocado desde Menú junto al logo.
+CDK Dialog gestiona foco, fondo modal, Escape y scroll; cierre por X/fondo/navegación.
+Permisos/rutas/logout existentes conservados. Escritorio y móvil usan el mismo panel.
+
+70 pruebas Angular correctas y build production. Casos del drawer comprueban x=0,
+enlaces apilados verticalmente en navegador, Escape/retorno de foco, cierre por fondo/
+navegación, permisos retirados y logout solo explícito. No hay captura visual manual.
+Backend intacto, última suite 96 aprobadas, total de referencia 166; Flyway V18.
+Frontend principal actualizado en 4300 con bundle verificado; API18080 UP.

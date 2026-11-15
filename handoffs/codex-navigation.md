@@ -1,36 +1,31 @@
-# Handoff — barra horizontal de módulos
+# Handoff — menú lateral izquierdo
 
-Fecha 2026-11-15, base 773b6b4, rama codex/rbac-superadmin.
+Fecha 2026-11-15, base c5fe166, rama codex/rbac-superadmin.
 
-Se corrige la barra que cortaba el primer módulo y superponía el nombre institucional.
-La marca queda a la izquierda, con ancho limitado/ellipsis y nombre completo en title;
-los módulos quedan alineados a la derecha. Se elimina overflow-x-auto de la navegación.
+La navegación actual es un panel lateral izquierdo con opciones en lista vertical.
+Sustituye la barra horizontal del incremento anterior tras aclaración del usuario.
+Botón Menú antes del logo/nombre institucional; panel blanco de hasta 320 px,
+altura de ventana, secciones Módulos/Organización o Administración/Mi cuenta.
+El contenido tiene scroll vertical independiente y Cerrar sesión queda en el pie.
 
-Accesos principales visibles; Organización agrupa revisión de identidad, perfil,
-imagen, equipo/roles y auditoría según permisos. SUPER_ADMIN usa Administración.
-Cuenta reúne seguridad/sesiones y cierre de sesión. Menos de 1100 px: botón Menú
-con todas las opciones autorizadas, sin franja horizontal ni nombre superpuesto.
-Se conservan los colores de cada pantalla y no se añade botón Inicio.
+Mismo comportamiento en escritorio y móvil: abrir/cerrar con botón, X, Escape,
+fondo exterior o al navegar. Angular CDK Dialog gestiona foco atrapado/restaurado,
+bloqueo de scroll del fondo y capa modal. Se conserva modelo de permisos y logout.
+El nombre institucional queda acotado; no se añade botón Inicio.
 
-La navegación se separa en componente y modelo; App conserva branding/logout.
-Disclosure con aria-expanded/controls, links normales, foco visible, Escape con
-retorno de foco, cierre por clic exterior/navegación y limpieza de suscripción.
-No cambia la arquitectura backend, RBAC, contratos API ni migraciones V1–V18.
+Validación: 70 pruebas Angular correctas y build production. Cuatro casos de drawer
+verifican posición izquierda real (x=0) y distribución vertical en ChromeHeadless,
+foco/Escape, clic exterior/navegación, permisos dinámicos y logout solo explícito.
+Backend sin cambios; última suite 96 correcta (total de referencia 166), V18.
+Frontend principal actualizado en localhost:4300, bundle comprobado; API18080 UP.
+Sin cambios de datos/volúmenes, migraciones, endpoints ni otros proyectos.
 
-Validación: 69 pruebas Angular correctas y build production. Tres nuevas comprueban
-Escape/foco, clic exterior/cambio de ruta y permisos retirados con menú abierto.
-Backend sin cambios; última suite 96 correcta, total de referencia 165.
-Principal frontend reconstruido/recreado, bundle verificado en localhost:4300;
-API 18080 permanece UP y no se modifica ningún registro/volumen ni otro proyecto.
+No hay capturas de revisión visual manual: las herramientas de interfaz fallaron
+al iniciar en intentos previos. No se equiparan las pruebas de geometría/DOM a QA visual.
 
-QA visual no ejecutada: herramienta integrada falla al iniciar con `failed to write
-kernel assets`/ruta no encontrada. No se presentan tests como captura visual.
-
-Archivos: frontend/src/app/app.ts, core/navigation/navigation.model.ts,
-navigation.component.ts, navigation.component.spec.ts; README.md,
+Archivos: frontend/src/app/app.ts, core/navigation/navigation.component.ts,
+navigation-drawer.component.ts, navigation.component.spec.ts; README.md,
 docs/PRODUCT_BACKLOG_V3.md, docs/VALIDATION_V3.md y handoffs/codex*.md.
-Logs navigation-build.log, frontend/navigation-test.log y navigation-runtime.log
-ignorados; no se incluyen secretos. Sin migraciones ni endpoints nuevos.
-
-Commit final: `git log -1 --format=%H -- handoffs/codex-navigation.md` y descripción
-del PR #1. Publicar solo codex/rbac-superadmin; no integrar automáticamente a main.
+Logs sidebar-test.log, sidebar-build.log y sidebar-runtime.log ignorados.
+Commit final: git log -1 --format=%H -- handoffs/codex-navigation.md y PR #1.
+Publicar únicamente codex/rbac-superadmin, sin integrar automáticamente a main.
