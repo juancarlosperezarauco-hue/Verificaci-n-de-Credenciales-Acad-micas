@@ -11,14 +11,14 @@ import { BrandingStyle, InstitutionProfile } from '../../core/models';
   template: `
     <section class="mx-auto max-w-7xl px-6 py-12">
       <div class="flex flex-wrap items-end justify-between gap-5">
-        <div><p class="brand-text text-sm font-semibold">Identidad institucional</p><h1 class="mt-2 text-4xl font-black">Logo, colores y respaldo</h1><p class="mt-3 max-w-3xl text-slate-400">Este diseño se aplica al portal y a los certificados generados por la institución.</p></div>
-        @if (!canEdit()) { <span class="rounded-full bg-amber-400/10 px-4 py-2 text-sm text-amber-200">Tu cuenta tiene acceso de lectura</span> }
+        <div><p class="brand-text text-sm font-semibold">Identidad institucional</p><h1 class="mt-2 text-4xl font-black">Logo, colores y respaldo</h1><p class="mt-3 max-w-3xl text-slate-500">Este diseño se aplica al portal y a los certificados generados por la institución.</p></div>
+        @if (!canEdit()) { <span class="rounded-full bg-amber-400/10 px-4 py-2 text-sm text-amber-800">Tu cuenta tiene acceso de lectura</span> }
       </div>
 
-      @if (loading()) { <p class="mt-10 text-slate-400">Cargando configuración…</p> }
+      @if (loading()) { <p class="mt-10 text-slate-500">Cargando configuración…</p> }
       @if (!loading() && profile()) {
         <div class="mt-10 grid gap-8 lg:grid-cols-[1fr_420px]">
-          <form [formGroup]="form" (ngSubmit)="save()" class="rounded-3xl border border-white/10 bg-slate-900/90 p-7">
+          <form [formGroup]="form" (ngSubmit)="save()" class="rounded-3xl border border-slate-200 bg-white p-7">
             <h2 class="text-xl font-bold">Esquema visual</h2>
             <div class="mt-6 grid gap-5 sm:grid-cols-3">
               <label class="text-sm">Color principal<div class="mt-2 flex gap-2"><input type="color" formControlName="primaryColor" class="h-12 w-14 rounded-lg border-0 bg-transparent"><input formControlName="primaryColor" class="field !mt-0"></div></label>
@@ -28,11 +28,11 @@ import { BrandingStyle, InstitutionProfile } from '../../core/models';
               <label class="text-sm sm:col-span-3">Nombre de quien firma<input formControlName="signatoryName" class="field" placeholder="Ej. Dra. Ana Pérez"></label>
               <label class="text-sm sm:col-span-3">Cargo de quien firma<input formControlName="signatoryTitle" class="field" placeholder="Ej. Rectora / Director académico"></label>
             </div>
-            <button [disabled]="form.invalid || saving() || !canEdit()" class="brand-bg mt-6 rounded-xl px-5 py-3 font-bold text-slate-950 disabled:opacity-40">{{ saving() ? 'Guardando…' : 'Guardar identidad visual' }}</button>
+            <button [disabled]="form.invalid || saving() || !canEdit()" class="brand-bg mt-6 rounded-xl px-5 py-3 font-bold disabled:opacity-40">{{ saving() ? 'Guardando…' : 'Guardar identidad visual' }}</button>
           </form>
 
           <aside class="space-y-6">
-            <div class="rounded-3xl border border-white/10 bg-slate-900 p-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-6">
               <h2 class="font-bold">Logo o escudo</h2>
               <div class="mt-5 grid min-h-36 place-items-center rounded-2xl bg-white p-5">
                 @if (logoPreview() || profile()?.logoUrl) { <img [src]="logoPreview() || profile()?.logoUrl" alt="Logo institucional" class="max-h-28 max-w-full object-contain"> }
@@ -43,25 +43,25 @@ import { BrandingStyle, InstitutionProfile } from '../../core/models';
               <p class="mt-3 text-xs text-slate-500">PNG, JPG o WebP · máximo 2 MB.</p>
             </div>
 
-            <div class="rounded-3xl border border-white/10 bg-slate-900 p-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-6">
               <h2 class="font-bold">Respaldo de la organización</h2>
-              <p class="mt-2 text-sm text-slate-400">Adjunta la resolución, acreditación o documento que verifica a la institución.</p>
+              <p class="mt-2 text-sm text-slate-500">Adjunta la resolución, acreditación o documento que verifica a la institución.</p>
               @if (profile()?.verificationDocumentName) {
                 <div class="mt-4 rounded-xl bg-emerald-400/10 p-4 text-sm text-emerald-200"><p class="font-semibold">{{ profile()?.verificationDocumentName }}</p><p class="mt-1 truncate font-mono text-xs opacity-70">SHA-256: {{ profile()?.verificationDocumentHash }}</p></div>
-                <button (click)="downloadVerification()" class="mt-3 rounded-lg border border-white/15 px-3 py-2 text-sm">Descargar respaldo</button>
+                <button (click)="downloadVerification()" class="mt-3 rounded-lg border border-slate-200 px-3 py-2 text-sm">Descargar respaldo</button>
               }
-              <label class="mt-4 block cursor-pointer rounded-xl border border-white/15 px-4 py-3 text-center text-sm">Seleccionar PDF o imagen<input type="file" accept="application/pdf,image/png,image/jpeg" class="hidden" [disabled]="!canEdit()" (change)="selectVerification($event)"></label>
-              @if (verificationFile()) { <p class="mt-3 text-sm text-slate-300">{{ verificationFile()?.name }}</p><button (click)="uploadVerification()" [disabled]="uploadingVerification()" class="brand-bg mt-3 w-full rounded-xl px-4 py-3 font-bold text-slate-950">{{ uploadingVerification() ? 'Subiendo…' : 'Guardar respaldo' }}</button> }
+              <label class="mt-4 block cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-center text-sm">Seleccionar PDF o imagen<input type="file" accept="application/pdf,image/png,image/jpeg" class="hidden" [disabled]="!canEdit()" (change)="selectVerification($event)"></label>
+              @if (verificationFile()) { <p class="mt-3 text-sm text-slate-600">{{ verificationFile()?.name }}</p><button (click)="uploadVerification()" [disabled]="uploadingVerification()" class="brand-bg mt-3 w-full rounded-xl px-4 py-3 font-bold text-slate-950">{{ uploadingVerification() ? 'Subiendo…' : 'Guardar respaldo' }}</button> }
             </div>
           </aside>
         </div>
 
         <div class="brand-gradient mt-8 rounded-3xl p-[2px]">
-          <div class="rounded-[calc(1.5rem-2px)] bg-slate-950 p-8 text-center">
+          <div class="rounded-[calc(1.5rem-2px)] bg-slate-50 p-8 text-center">
             @if (profile()?.logoUrl) { <img [src]="profile()?.logoUrl" alt="Logo" class="mx-auto h-16 max-w-40 object-contain"> }
             <p class="brand-text mt-4 text-sm font-bold uppercase tracking-[.22em]">Vista previa</p>
             <h2 class="mt-2 text-3xl font-black">{{ profile()?.name }}</h2>
-            <p class="mt-2 text-slate-400">{{ styleLabel(form.controls.brandingStyle.value) }} · Certificados y portal personalizados</p>
+            <p class="mt-2 text-slate-500">{{ styleLabel(form.controls.brandingStyle.value) }} · Certificados y portal personalizados</p>
           </div>
         </div>
       }

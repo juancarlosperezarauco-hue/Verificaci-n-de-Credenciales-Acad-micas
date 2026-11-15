@@ -8,21 +8,21 @@ import { StudentAccountApi } from './student-account.api';
  imports:[ReactiveFormsModule,RouterLink],
  template:`
  <section class="mx-auto max-w-2xl px-6 py-12">
-  <p class="text-cyan-300">Cuenta personal del estudiante</p>
+  <p class="text-blue-700">Cuenta personal del estudiante</p>
   <h1 class="mt-3 text-3xl font-bold">{{registering ? 'Crea tu cuenta' : 'Ingresa a tu cuenta'}}</h1>
-  <p class="mt-3 text-slate-400">{{registering ? 'Comienza con tu correo y contraseña. Completarás tu perfil dentro de tu cuenta.' : 'Accede a tu perfil y a tus reconocimientos académicos.'}}</p>
-  @if(passwordChanged){<p role="status" class="mt-5 rounded-xl bg-emerald-400/10 p-4 text-emerald-300">Tu contraseña fue actualizada. Inicia sesión con la nueva contraseña.</p>}
-  @if(logoutUnconfirmed){<p role="status" class="mt-5 rounded-xl bg-amber-400/10 p-4 text-amber-200">La sesión local se cerró, pero no se pudo confirmar el cierre en el servidor. Revisa tus sesiones al volver a ingresar.</p>}
-  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6 space-y-5">
+  <p class="mt-3 text-slate-500">{{registering ? 'Comienza con tu correo y contraseña. Completarás tu perfil dentro de tu cuenta.' : 'Accede a tu perfil y a tus reconocimientos académicos.'}}</p>
+  @if(passwordChanged){<p role="status" class="mt-5 rounded-xl bg-emerald-400/10 p-4 text-emerald-800">Tu contraseña fue actualizada. Inicia sesión con la nueva contraseña.</p>}
+  @if(logoutUnconfirmed){<p role="status" class="mt-5 rounded-xl bg-amber-400/10 p-4 text-amber-800">La sesión local se cerró, pero no se pudo confirmar el cierre en el servidor. Revisa tus sesiones al volver a ingresar.</p>}
+  <form [formGroup]="form" (ngSubmit)="submit()" class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
    <label class="block">Correo electrónico<input class="field" formControlName="email" type="email" autocomplete="email"></label>
    <label class="block">Contraseña<input class="field" formControlName="password" type="password" [autocomplete]="registering ? 'new-password' : 'current-password'"></label>
-   @if(registering){<p class="text-sm text-slate-400">Usa por lo menos 10 caracteres. Después podrás completar tus datos personales en pasos separados.</p>}
-   @if(error()){<p role="alert" class="text-red-300">{{error()}}</p>}
-   <button class="w-full rounded-xl bg-cyan-400 p-3 font-bold text-slate-950 disabled:opacity-50" [disabled]="busy() || form.invalid">{{busy() ? 'Procesando…' : registering ? 'Crear mi cuenta' : 'Ingresar'}}</button>
+   @if(registering){<p class="text-sm text-slate-500">Usa por lo menos 10 caracteres. Después podrás completar tus datos personales en pasos separados.</p>}
+   @if(error()){<p role="alert" class="text-red-700">{{error()}}</p>}
+   <button class="w-full rounded-xl bg-blue-600 text-white p-3 font-bold disabled:opacity-50" [disabled]="busy() || form.invalid">{{busy() ? 'Procesando…' : registering ? 'Crear mi cuenta' : 'Ingresar'}}</button>
   </form>
-  @if(!registering){<a routerLink="/student/recover" class="mt-5 inline-block text-cyan-300">Olvidé mi contraseña</a>}
-  <p class="mt-6">@if(registering){<a routerLink="/student/login" class="text-cyan-300">Ya tengo cuenta</a>}@else{<a routerLink="/student/register" class="text-cyan-300">Registrarme como estudiante</a>}</p>
-  <a routerLink="/login" class="mt-5 block text-sm text-slate-400">Acceso de instituciones</a>
+  @if(!registering){<a routerLink="/student/recover" class="mt-5 inline-block text-blue-700">Olvidé mi contraseña</a>}
+  <p class="mt-6">@if(registering){<a routerLink="/student/login" class="text-blue-700">Ya tengo cuenta</a>}@else{<a routerLink="/student/register" class="text-blue-700">Registrarme como estudiante</a>}</p>
+  <a routerLink="/login" class="mt-5 block text-sm text-slate-500">Acceso de instituciones</a>
  </section>`
 })
 export class StudentAccessPage {

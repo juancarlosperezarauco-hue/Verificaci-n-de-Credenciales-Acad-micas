@@ -1,0 +1,60 @@
+<div class="landing-shell app-shell" [class.public-shell]="!auth.isAuthenticated()">
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+  <header class="app-header">
+    <div class="header-content">
+      <app-navigation class="header-navigation" [light]="true" (logout)="logout()" />
+      <a routerLink="/" class="header-brand">
+        @if (branding.profile()?.logoUrl) {
+          <img
+            [src]="branding.profile()?.logoUrl"
+            alt="Logo institucional"
+            class="header-logo object-contain"
+          />
+        } @else {
+          <span class="header-logo brand-bg">VC</span>
+        }
+        <span class="brand-copy"
+          ><span
+            class="header-name"
+            [title]="branding.profile()?.name ?? 'Credenciales Académicas'"
+            >{{ branding.profile()?.name ?? 'Credenciales Académicas' }}</span
+          ><span class="brand-subtitle">{{
+            auth.isAuthenticated() ? 'Espacio académico' : 'Identidad · Trayectoria · Confianza'
+          }}</span></span
+        >
+      </a>
+      @if (auth.isAuthenticated()) {
+        <div class="header-context">
+          <span class="context-divider"></span><span>{{ currentModule() }}</span>
+        </div>
+        <div class="header-actions">
+          <a routerLink="/verify" class="header-verify"
+            ><app-ui-icon name="shield" [size]="17" /><span>Verificar</span></a
+          >
+          <a
+            [routerLink]="
+              auth.current()?.role === 'STUDENT' ? '/student/security' : '/account/security'
+            "
+            class="account-chip"
+            aria-label="Abrir seguridad de mi cuenta"
+          >
+            <span class="account-avatar">{{ initials() }}</span
+            ><span class="account-copy"
+              ><strong>{{ roleLabel() }}</strong
+              ><small>{{ auth.current()?.email }}</small></span
+            >
+          </a>
+        </div>
+      } @else {
+        <div class="header-actions">
+          <a routerLink="/login" class="header-signin">Ingresar</a
+          ><a routerLink="/register" class="org-primary header-register">Registrar institución</a>
+        </div>
+      }
+    </div>
+  </header>
+  <main id="main-content" tabindex="-1"><router-outlet /></main>
+  <footer class="app-footer">
+    <span>Credenciales Académicas</span><span>Una identidad. Toda tu trayectoria.</span>
+  </footer>
+</div>

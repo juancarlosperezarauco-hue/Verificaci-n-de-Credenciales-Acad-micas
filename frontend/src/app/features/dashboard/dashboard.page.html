@@ -1,0 +1,350 @@
+<section class="org-page">
+  <div class="page-heading">
+    <div>
+      <p class="org-eyebrow">Portal institucional</p>
+      <h1 class="org-title">Resumen de tu institución</h1>
+      <p class="org-description">
+        Tu actividad académica, tus documentos y las próximas tareas en un solo lugar.
+      </p>
+    </div>
+    <div class="heading-actions">
+      <button class="org-secondary" [disabled]="loading()" (click)="load()">
+        <app-ui-icon name="refresh" [size]="16" />Actualizar
+      </button>
+      @if (access.can('CREDENTIAL_VIEW') && access.can('CREDENTIAL_CREATE')) {
+        <a routerLink="/credentials" class="org-primary"
+          ><app-ui-icon name="plus" [size]="17" />Nueva credencial</a
+        >
+      }
+    </div>
+  </div>
+  @if (loadErrors().length) {
+    <div role="alert" class="org-error mt-6">
+      No se pudieron cargar {{ loadErrors().join(', ') }}. Puedes volver a consultar con Actualizar;
+      los datos no disponibles se muestran con una raya.
+    </div>
+  }
+  @if (portalError()) {
+    <p role="alert" class="org-error mt-5">{{ portalError() }}</p>
+  }
+  <div class="metrics">
+    @if (access.can('STUDENT_VIEW')) {
+      <article class="metric">
+        <div class="metric-top">
+          <span>Estudiantes vinculados</span
+          ><span class="metric-symbol"><app-ui-icon name="users" [size]="19" /></span>
+        </div>
+        <strong>{{ studentsReady() ? students().length : '—' }}</strong>
+        <p>Identidades autorizadas en tu institución</p>
+      </article>
+    }
+    @if (access.can('CREDENTIAL_VIEW')) {
+      <article class="metric">
+        <div class="metric-top">
+          <span>Credenciales registradas</span
+          ><span class="metric-symbol"><app-ui-icon name="document" [size]="19" /></span>
+        </div>
+        <strong>{{ credentialsReady() ? credentials().length : '—' }}</strong>
+        <p>Todos los documentos de tu institución</p>
+      </article>
+      <article class="metric">
+        <div class="metric-top">
+          <span>Documentos emitidos</span
+          ><span class="metric-symbol success"><app-ui-icon name="shield" [size]="19" /></span>
+        </div>
+        <strong>{{ credentialsReady() ? issued() : '—' }}</strong>
+        <p>Disponibles en el expediente del estudiante</p>
+      </article>
+      <article class="metric">
+        <div class="metric-top">
+          <span>Borradores por completar</span
+          ><span class="metric-symbol pending"><app-ui-icon name="clock" [size]="19" /></span>
+        </div>
+        <strong>{{ credentialsReady() ? drafts() : '—' }}</strong>
+        <p>Pendientes de preparación o emisión</p>
+      </article>
+    }
+  </div>
+  <div class="workspace-heading">
+    <div>
+      <h2>Tu espacio de trabajo</h2>
+      <p>Continúa con el módulo que necesitas.</p>
+    </div>
+    @if (updatedAt()) {
+      <span class="updated">Última consulta {{ updatedAt() | date: 'HH:mm' }}</span>
+    }
+  </div>
+  <div class="module-grid">
+    @if (access.can('STUDENT_VIEW')) {
+      <a routerLink="/students" class="module-card"
+        ><span class="module-icon"><app-ui-icon name="users" /></span>
+        <div>
+          <strong>Estudiantes</strong>
+          <p>Vincula y consulta tu padrón.</p>
+        </div>
+        <app-ui-icon name="arrow" [size]="16"
+      /></a>
+    }
+    @if (access.can('ACADEMIC_VIEW')) {
+      <a routerLink="/organization/academic" class="module-card"
+        ><span class="module-icon"><app-ui-icon name="academic" /></span>
+        <div>
+          <strong>Expedientes académicos</strong>
+          <p>Programas, periodos y matrículas.</p>
+        </div>
+        <app-ui-icon name="arrow" [size]="16"
+      /></a>
+    }
+    @if (access.can('REQUEST_VIEW')) {
+      <a routerLink="/organization/requests" class="module-card"
+        ><span class="module-icon"><app-ui-icon name="inbox" /></span>
+        <div>
+          <strong>Solicitudes</strong>
+          <p>Revisa requisitos y aprobaciones.</p>
+        </div>
+        <app-ui-icon name="arrow" [size]="16"
+      /></a>
+    }
+    @if (access.can('CREDENTIAL_VIEW')) {
+      <a routerLink="/credentials" class="module-card"
+        ><span class="module-icon"><app-ui-icon name="document" /></span>
+        <div>
+          <strong>Credenciales</strong>
+          <p>Prepara, firma y emite documentos.</p>
+        </div>
+        <app-ui-icon name="arrow" [size]="16"
+      /></a>
+    }
+  </div>
+  @if (access.can('CREDENTIAL_VIEW')) {
+    <section class="org-card mt-7 !p-0 overflow-hidden">
+      <div class="section-heading">
+        <div>
+          <h2>Últimas credenciales</h2>
+          <p>Los cinco documentos registrados más recientemente.</p>
+        </div>
+        <a routerLink="/credentials" class="org-link"
+          >Ver documentos <span aria-hidden="true">→</span></a
+        >
+      </div>
+      @if (loading()) {
+        <p role="status" class="empty-state">Cargando documentos…</p>
+      } @else if (!credentialsReady()) {
+        <p class="empty-state">Los documentos no están disponibles en esta consulta.</p>
+      } @else if (!credentials().length) {
+        <div class="empty-state">
+          <span class="empty-icon"><app-ui-icon name="document" [size]="26" /></span>
+          <h3>Todavía no hay credenciales</h3>
+          <p>Los borradores y documentos emitidos aparecerán aquí.</p>
+          @if (access.can('CREDENTIAL_CREATE')) {
+            <a routerLink="/credentials" class="org-link mt-4 inline-block"
+              >Crear el primer borrador →</a
+            >
+          }
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="org-table">
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Estudiante</th>
+                <th>Estado</th>
+                <th>Registro</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of credentials().slice(0, 5); track item.id) {
+                <tr>
+                  <td>
+                    <strong class="block text-sm font-semibold">{{ item.title }}</strong
+                    ><span class="text-xs text-slate-500">{{ item.credentialType }}</span>
+                  </td>
+                  <td>{{ item.holderName }}</td>
+                  <td>
+                    <span class="org-badge" [attr.data-status]="item.status">{{
+                      statusLabel(item.status)
+                    }}</span>
+                  </td>
+                  <td class="whitespace-nowrap text-xs text-slate-500">
+                    {{ item.createdAt | date: 'dd MMM yyyy' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+  <div class="mt-7 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
+    <section class="org-card">
+      <div class="section-heading !px-0 !pt-0">
+        <div>
+          <h2>Avisos institucionales</h2>
+          <p>Información para el equipo de {{ auth.current()?.institutionName }}.</p>
+        </div>
+        @if (canManage()) {
+          <button class="org-secondary whitespace-nowrap" (click)="toggleEditor()">
+            <app-ui-icon name="plus" [size]="15" />{{ showEditor() ? 'Cerrar editor' : 'Publicar' }}
+          </button>
+        }
+      </div>
+      @if (showEditor()) {
+        <form
+          [formGroup]="portalForm"
+          (ngSubmit)="publish()"
+          class="mb-6 rounded-xl border border-blue-100 bg-blue-50/40 p-5"
+        >
+          <h3 class="font-semibold">Nueva publicación</h3>
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            <label class="org-label"
+              >Tipo<select class="org-input" formControlName="itemType">
+                <option value="ANNOUNCEMENT">Aviso</option>
+                <option value="DEADLINE">Fecha importante</option>
+                <option value="RESOURCE">Recurso</option>
+              </select></label
+            ><label class="org-label"
+              >Prioridad<select class="org-input" formControlName="priority">
+                <option [ngValue]="0">Normal</option>
+                <option [ngValue]="5">Importante</option>
+                <option [ngValue]="10">Urgente</option>
+              </select></label
+            ><label class="org-label sm:col-span-2"
+              >Título<input class="org-input" formControlName="title" maxlength="180" /></label
+            ><label class="org-label sm:col-span-2"
+              >Descripción<textarea
+                class="org-input min-h-24"
+                formControlName="description"
+                maxlength="1200"
+              ></textarea></label
+            ><label class="org-label"
+              >Fecha y hora<input
+                type="datetime-local"
+                class="org-input"
+                formControlName="eventAt" /></label
+            ><label class="org-label"
+              >Enlace opcional<input
+                class="org-input"
+                formControlName="link"
+                maxlength="500"
+                placeholder="https://…"
+            /></label>
+          </div>
+          <button class="org-primary mt-5" [disabled]="portalForm.invalid || publishing()">
+            {{ publishing() ? 'Publicando…' : 'Publicar contenido' }}
+          </button>
+        </form>
+      }
+      @if (!loading() && portalReady() && !announcements().length) {
+        <div class="empty-state compact">
+          <app-ui-icon name="mail" [size]="26" />
+          <h3>Todo al día</h3>
+          <p>No hay avisos publicados en este momento.</p>
+        </div>
+      }
+      @for (item of announcements(); track item.id) {
+        <article class="notice-row">
+          <div>
+            <span class="notice-label" [class.urgent]="item.priority >= 10">{{
+              item.priority >= 10 ? 'Urgente' : item.priority >= 5 ? 'Importante' : 'Aviso'
+            }}</span
+            ><time>{{ item.createdAt | date: 'dd MMM yyyy' }}</time>
+          </div>
+          <h3>{{ item.title }}</h3>
+          @if (item.description) {
+            <p>{{ item.description }}</p>
+          }
+          <div class="mt-3 flex flex-wrap justify-between gap-4">
+            @if (item.link) {
+              <a [href]="item.link" class="org-link">Abrir información →</a>
+            }
+            @if (canManage()) {
+              <button
+                class="text-xs text-slate-500 hover:text-red-700"
+                [disabled]="!!removing()"
+                (click)="remove(item)"
+              >
+                Eliminar aviso
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </section>
+    <aside class="org-card">
+      <div class="section-heading !px-0 !pt-0">
+        <div>
+          <h2>Próximas fechas</h2>
+          <p>Agenda de tu institución.</p>
+        </div>
+        <span class="text-slate-400"><app-ui-icon name="clock" /></span>
+      </div>
+      @if (!loading() && portalReady() && !deadlines().length) {
+        <div class="empty-state compact">
+          <app-ui-icon name="clock" [size]="26" />
+          <h3>Tu agenda está libre</h3>
+          <p>Las fechas que publiques se mostrarán aquí.</p>
+        </div>
+      }
+      @for (item of deadlines(); track item.id) {
+        <article class="deadline-row">
+          <div class="date-tile">
+            <span>{{ item.eventAt | date: 'MMM' }}</span
+            ><strong>{{ item.eventAt | date: 'dd' }}</strong>
+          </div>
+          <div>
+            <h3>{{ item.title }}</h3>
+            @if (item.description) {
+              <p>{{ item.description }}</p>
+            }
+            <time>{{ item.eventAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+            @if (canManage()) {
+              <button
+                class="mt-2 block text-xs text-slate-500 hover:text-red-700"
+                [disabled]="!!removing()"
+                (click)="remove(item)"
+              >
+                Eliminar fecha
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </aside>
+  </div>
+  @if (resources().length) {
+    <section class="mt-7">
+      <div class="workspace-heading">
+        <div>
+          <h2>Recursos de la institución</h2>
+          <p>Documentación y enlaces para tu equipo.</p>
+        </div>
+      </div>
+      <div class="module-grid">
+        @for (item of resources(); track item.id) {
+          <article class="module-card">
+            <span class="module-icon"><app-ui-icon name="folder" /></span>
+            <div>
+              @if (item.link) {
+                <a class="org-link" [href]="item.link">{{ item.title }}</a>
+              } @else {
+                <strong>{{ item.title }}</strong>
+              }
+              <p>{{ item.description }}</p>
+              @if (canManage()) {
+                <button
+                  class="mt-2 text-xs text-slate-500 hover:text-red-700"
+                  (click)="remove(item)"
+                  [disabled]="!!removing()"
+                >
+                  Eliminar recurso
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+</section>

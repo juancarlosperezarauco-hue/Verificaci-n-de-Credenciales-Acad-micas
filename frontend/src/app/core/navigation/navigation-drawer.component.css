@@ -1,0 +1,138 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  color-scheme: light;
+  color: #334155;
+  font-size: 0.875rem;
+}
+.drawer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #fff;
+  border-right: 1px solid #e2e8f0;
+  box-shadow: 12px 0 40px #0f172a14;
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.eyebrow {
+  margin: 0 0 7px;
+  color: #64748b;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.close-button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+}
+.drawer-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 12px 24px;
+}
+.section-label {
+  margin: 0;
+  padding: 12px 14px 9px;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.drawer-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  margin: 3px 0;
+  padding: 11px 14px;
+  border-radius: 8px;
+  line-height: 1.4;
+  text-decoration: none;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+.item-marker {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid #94a3b8;
+  border-radius: 2px;
+}
+.drawer-link:hover,
+.close-button:hover {
+  background: #f1f5f9;
+}
+.drawer-active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 650;
+}
+.drawer-active .item-marker {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+.divider {
+  height: 1px;
+  margin: 15px 10px 5px;
+  background: #e2e8f0;
+}
+.drawer-footer {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.drawer-footer p {
+  margin: 12px 0 0;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+.sign-out {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #be123c;
+  font: inherit;
+  font-weight: 600;
+}
+.sign-out:hover {
+  background: #fff1f2;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}

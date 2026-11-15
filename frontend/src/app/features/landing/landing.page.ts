@@ -34,7 +34,7 @@ import { RouterLink } from '@angular/router';
             <div class="rounded-[2rem] border border-slate-200 bg-white/95 p-5 shadow-2xl shadow-slate-200/70 backdrop-blur sm:p-7">
               <div class="flex items-center justify-between border-b border-slate-200 pb-5">
                 <div><p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">Trayectoria digital</p><p class="mt-1 font-bold text-slate-900">Expediente del estudiante</p></div>
-                <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300">Verificado</span>
+                <span class="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-800">Verificado</span>
               </div>
               <div class="mt-6 flex items-center gap-4">
                 <div class="brand-bg grid size-14 shrink-0 place-items-center rounded-2xl text-lg font-black text-slate-950">EP</div>

@@ -11,31 +11,31 @@ import { requiresMfa } from '../../core/models';
   imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="mx-auto grid min-h-[calc(100vh-73px)] max-w-7xl place-items-center px-6 py-16">
-      <div class="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl lg:grid-cols-2">
+      <div class="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl lg:grid-cols-2">
         <div class="hidden bg-gradient-to-br from-cyan-400 to-blue-600 p-12 text-slate-950 lg:block">
           <p class="text-sm font-bold uppercase tracking-[.25em]">Acceso institucional</p>
           <h1 class="mt-5 text-4xl font-black leading-tight">Emite credenciales verificables y resistentes a alteraciones.</h1>
           <p class="mt-6 text-lg text-slate-900/75">Cada organización mantiene sus usuarios y documentos separados.</p>
         </div>
         <form [formGroup]="form" (ngSubmit)="submit()" class="p-8 sm:p-12">
-          <p class="text-sm font-semibold text-cyan-300">Bienvenido</p>
+          <p class="text-sm font-semibold text-blue-700">Bienvenido</p>
           <h2 class="mt-2 text-3xl font-bold">Inicia sesión</h2>
           <div class="mt-8 space-y-5">
             <label class="block text-sm">Organización
-              <input formControlName="organizationSlug" placeholder="universidad-demo" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400">
+              <input formControlName="organizationSlug" placeholder="universidad-demo" class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-cyan-400">
             </label>
             <label class="block text-sm">Correo electrónico
-              <input formControlName="email" type="email" placeholder="admin@universidad.edu" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400">
+              <input formControlName="email" type="email" placeholder="admin@universidad.edu" class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-cyan-400">
             </label>
             <label class="block text-sm">Contraseña
-              <input formControlName="password" type="password" class="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400">
+              <input formControlName="password" type="password" class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-cyan-400">
             </label>
           </div>
-          @if (error()) { <p class="mt-5 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{{ error() }}</p> }
-          <button [disabled]="form.invalid || loading()" class="mt-7 w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 disabled:opacity-50">
+          @if (error()) { <p class="mt-5 rounded-xl bg-red-500/10 p-3 text-sm text-red-700">{{ error() }}</p> }
+          <button [disabled]="form.invalid || loading()" class="mt-7 w-full rounded-xl bg-blue-600 text-white px-4 py-3 font-bold disabled:opacity-50">
             {{ loading() ? 'Ingresando…' : 'Ingresar' }}
           </button>
-          <p class="mt-5 text-center text-sm text-slate-400">¿Tu institución aún no está registrada? <a routerLink="/register" class="font-semibold text-cyan-300">Crear cuenta</a></p>
+          <p class="mt-5 text-center text-sm text-slate-500">¿Tu institución aún no está registrada? <a routerLink="/register" class="font-semibold text-blue-700">Crear cuenta</a></p>
         </form>
       </div>
     </section>
