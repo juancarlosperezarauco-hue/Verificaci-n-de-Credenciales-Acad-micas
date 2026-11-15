@@ -5,4 +5,3 @@ public enum CredentialStatus {
     ISSUED,
     REVOKED
 }
-
