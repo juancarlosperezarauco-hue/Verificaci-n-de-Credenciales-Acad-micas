@@ -13,7 +13,10 @@ límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
 PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
 SECURITY_02_DELIVERY.md. Ese incremento conserva su evidencia histórica.
 
-Estado actual: V17, con 138 pruebas (82 backend PostgreSQL 16 + 56 web).
+Estado actual: V18, con 162 pruebas (96 backend PostgreSQL 16 + 66 web).
+Revisión documental institucional implementada: consentimiento específico, imágenes
+privadas, versiones del perfil, bandeja/decisión y retirada. QA visual pendiente por
+fallo de infraestructura de herramientas; ver IDENTITY_REVIEW_DELIVERY.md.
 Seguridad y registro histórico completan reemplazo/respaldos MFA, retención técnica,
 soporte de rotación/recifrado y perfil institucional legado. Ver
 SECURITY_POLISH_DELIVERY.md y KEY_ROTATION_RUNBOOK.md. T07/T26 permanecen parciales:
@@ -31,13 +34,13 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | ID | Nombre | Módulo | Implementación existente | Estado | Dependencias | Riesgo | Prioridad | Próxima acción |
 |---|---|---|---|---|---|---|---|---|
 | T01 | Auditar arquitectura | Todos | Inventario de paquetes, clientes y contratos en AUDIT_V3. | Verificada | — | Bajo | P0 | Actualizar con cada incremento. |
-| T02 | PostgreSQL/Flyway | Transversal | V1–V17 instaladas/validadas; upgrade V16→V17 conserva datos y sesiones. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
+| T02 | PostgreSQL/Flyway | Transversal | V1–V18 instaladas/validadas; upgrade V17→V18 conserva datos. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
 | T03 | Pruebas existentes | Transversal | Baseline reproducido: 11 backend + 24 web; builds correctos. | Verificada | T02 | Bajo | P0 | Conservar baseline y resultados nuevos separados. |
 | T04 | Inventario funcional | Todos | 18 módulos y matriz de 40 tareas revisados. | Verificada | T01–03 | Bajo | P0 | Usar esta matriz como estado, no dependencias instaladas. |
 | T05 | Aislamiento tenant | M02/M03/M04/M08 | Filtros tenant, FK compuestas RBAC y pruebas de acceso cruzado; incremento documental. | Parcial | T01–03 | Alto | P0 | Completar matriz de recursos/acciones, archivos e historial. |
 | T06 | Roles/permisos | M02 | SUPER_ADMIN sin tenant, TENANT_ADMIN, CUSTOM, catálogo, asignación y revocación inmediata. | Verificada | T05 base | Medio | P0 | Añadir permisos nuevos con cada módulo; no delegar administración protegida. |
 | T07 | Autenticación | M02 | JWT/BCrypt, onboarding, correo/reset/cambios, sesiones, MFA con reemplazo/respaldos, límites, outbox, retención técnica y rotación/recifrado compatibles. | Parcial | T06 | Alto | P0 | Recuperación humana sin factores, proxy confiable/HTTPS y custodia productiva de claves. |
-| T08 | Identidad global | M04 | Perfil global, unicidad, correo confirmado, cuenta activa/desactivada y preservación histórica. | Parcial | T07 | Alto | P1 | Revisión documental y procedimiento de disputa de identidades. |
+| T08 | Identidad global | M04 | Perfil global, unicidad/correo, revisión documental por institución/consentimiento, versiones y retirada sin duplicar cuenta. | Parcial | T07 | Alto | P1 | QA visual, disputa de identidades, retención de imágenes y avatar independiente. |
 | T09 | Vinculación | M04 | Código EST, historial, retiro/rotación; desactivar retira accesos y bloquea nuevos canjes sin borrar historia. | Parcial | T08 | Alto | P1 | Reforzar consentimiento explícito y prevenir exposición/abuso del buscador. |
 | T10 | Expediente institucional | M03/M04/M05 | Identidad y vínculos; entidad students histórica conservada. | Parcial | T09 | Alto | P1 | Agregar expediente tenant y estructuras académicas configurables. |
 | T11 | Solicitudes | M06 | No hay agregado de solicitudes/requisitos. | Pendiente | T10 | Medio | P1 | Primer trámite con estados, propietario y adjuntos autorizados. |

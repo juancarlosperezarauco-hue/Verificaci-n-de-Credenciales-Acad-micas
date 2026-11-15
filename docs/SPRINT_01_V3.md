@@ -1,5 +1,12 @@
 # Sprint 01 V3 — integridad y acceso seguro
 
+Actualización 2026-11-15: revisión documental de identidad por institución entregada
+en V18; 162 pruebas correctas (96 backend + 66 web), smoke con MinIO/Mailpit reales.
+QA visual pendiente por fallo de infraestructura de herramientas; T08 sigue parcial
+por disputas/retención y avatar global. Ver IDENTITY_REVIEW_DELIVERY.md. La siguiente
+prioridad funcional es expediente institucional y solicitudes/aprobaciones.
+Los apartados posteriores conservan su contexto histórico.
+
 Último incremento, 2026-11-14: V17 y 138 pruebas correctas (82 backend + 56 web).
 Reemplazo y renovación de respaldos MFA, retención de metadatos terminales,
 rotación compatible/recifrado y corrección del perfil legado están entregados.

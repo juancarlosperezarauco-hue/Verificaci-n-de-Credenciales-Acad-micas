@@ -7,12 +7,14 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **138 pruebas (82 backend + 56 web)** y Flyway **V1–V17**.
+El estado actual valida **162 pruebas (96 backend + 66 web)** y Flyway **V1–V18**.
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
 Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
 de registros técnicos y soporte de rotación de claves con recifrado por lotes.
 Los registros institucionales antiguos pueden completar su perfil sin recrear cuentas.
+El estudiante puede enviar documentos privados a una institución vinculada y consultar
+su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados del tenant.
 
 - [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
 - [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
@@ -21,8 +23,9 @@ Los registros institucionales antiguos pueden completar su perfil sin recrear cu
 - [Entrega prioritaria actual, ejecución y límites](docs/PRIORITY_01_DELIVERY.md).
 - [MFA, sesiones y límites de acceso](docs/SECURITY_02_DELIVERY.md).
 - [Auditoría y correo durable: alcance, pruebas y límites](docs/AUDIT_MAIL_DELIVERY.md).
-- [Última entrega: seguridad y perfil institucional histórico](docs/SECURITY_POLISH_DELIVERY.md).
+- [Seguridad y perfil institucional histórico](docs/SECURITY_POLISH_DELIVERY.md).
 - [Procedimiento de rotación de claves](docs/KEY_ROTATION_RUNBOOK.md).
+- [Revisión documental: alcance, pruebas y QA visual pendiente](docs/IDENTITY_REVIEW_DELIVERY.md).
 
 Blockchain continúa con un adaptador de desarrollo; no existe firma digital
 criptográfica, OCR/anomalías ni aplicación Android implementados.
@@ -150,7 +153,7 @@ docker compose -f docker-compose.yml -f compose.prebuilt.yml up --build -d
 ```
 
 Los puertos alternativos de este equipo están en el archivo local `.env` (excluido de Git).
-En este equipo: web 4300, MinIO 9100/9101 y Mailpit 1125/8125.
+En este equipo: web 4300, API 18080 (8080 ocupado por otro proyecto), MinIO 9100/9101 y Mailpit 1125/8125.
 Las copias de seguridad locales se excluyen de Git en `.local-backups/`.
 
 ## Crear la primera organización
@@ -225,7 +228,8 @@ docker-compose.yml
 
 El detalle y estado están en [PRODUCT_BACKLOG_V3.md](docs/PRODUCT_BACKLOG_V3.md).
 La base de seguridad, revisión inicial y auditoría de acciones críticas está implementada.
-Sigue la validación documental de identidad y los controles productivos pendientes.
+La revisión documental por institución funciona; quedan disputas de identidad,
+retención física de imágenes, QA visual y los controles productivos pendientes.
 Después: expedientes, solicitudes/aprobaciones, plantillas,
 firma y verificación; luego reportes/notificaciones, blockchain, IA y Android.
 No se reconstruyen los usuarios, roles y permisos ya implementados. Pagos/Stripe

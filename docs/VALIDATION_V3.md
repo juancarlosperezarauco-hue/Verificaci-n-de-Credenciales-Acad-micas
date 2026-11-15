@@ -164,3 +164,24 @@ handoffs/codex-audit-mail.md. Las entregas anteriores conservan contexto histór
 
 Contrato, límites, configuración y comandos: SECURITY_POLISH_CONTRACT.md,
 KEY_ROTATION_RUNBOOK.md y SECURITY_POLISH_DELIVERY.md. V1–V16 intactas.
+
+## Revisión documental institucional — 2026-11-15
+
+- Maven verify: 96 pruebas, cero fallos/errores/omitidas; PostgreSQL 16.15 nuevo,
+  identity_final_20261115141442, Flyway V1–V18 y Hibernate validate. JAR correcto.
+- Angular: 66 pruebas ChromeHeadless y build production correctos. Total distinto 162.
+- Se agregan 12 casos de revisión/autorización/concurrencia, dos de rate limit
+  multipart y diez de frontend (consentimiento, envío/errores, retirada, decisiones,
+  blobs privados/liberación). Se conservan las 138 pruebas anteriores.
+- smoke-identity-review.ps1 correcto con PostgreSQL/MinIO/Mailpit reales: carga
+  3.6 MB por Nginx, imágenes normalizadas, permisos, acceso cruzado, SUPER_ADMIN
+  denegado, rechazo, replay, aprobación, retirada y reenvío. Incluye regresión
+  completa del script de organizaciones/roles/vínculo/emisión/verificación/revocación.
+- Upgrade aislado/principal V17→V18; web 4300 con bundle nuevo y API 18080 UP;
+  cantidades de registros académicos conservadas y respaldo previo comprobado.
+- QA visual **no ejecutada**: las dos herramientas de interfaz no arrancan por
+  fallo `failed to write kernel assets`/ruta no encontrada. No hay capturas nuevas.
+  No se presenta la prueba de componentes como QA visual ni E2E de navegador.
+
+Detalles/límites: IDENTITY_REVIEW_CONTRACT.md, IDENTITY_REVIEW_DELIVERY.md y
+handoffs/codex-identity-review.md. Migraciones V1–V17 intactas.

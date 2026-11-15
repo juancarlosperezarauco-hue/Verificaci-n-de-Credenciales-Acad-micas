@@ -2,6 +2,10 @@
 
 ## Entrega prioritaria más reciente
 
+Revisión documental por institución, V18: [codex-identity-review.md](codex-identity-review.md).
+96 backend PostgreSQL 16 + 66 Angular (162), smoke PostgreSQL/MinIO/Mailpit real.
+Web 4300/API 18080 con datos conservados. QA visual pendiente por fallo de herramientas.
+
 Seguridad y perfil legado, V17: [codex-security-polish.md](codex-security-polish.md).
 82 backend PostgreSQL 16 + 56 web aprobadas (138), smokes HTTP, upgrade compatible
 y QA escritorio/móvil. Docker principal actualizado con datos y claves conservados.
