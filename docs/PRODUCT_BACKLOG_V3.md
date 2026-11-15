@@ -1,12 +1,18 @@
 # Product Backlog V3 — estado basado en código
 
-Fecha: 2026-11-13. Fuente: prompt maestro adjunto, auditoría de `0f72612` y el
+Fecha: 2026-11-14. Fuente: prompt maestro adjunto, auditoría de `0f72612` y el
 incremento de integridad documental de esta entrega. Evidencias: `AUDIT_V3.md`,
 `VALIDATION_V3.md`, contratos y pruebas del repositorio.
 
 Continuación prioritaria: SEC-01 y SEC-02 implementadas, V14 añadida. Detalle y
 límites actuales en PRIORITY_01_DELIVERY.md; el backlog conserva tareas parciales
 cuando aún faltan requisitos del módulo completo.
+
+Continuación Seguridad 02: MFA administrativo optativo, sesiones individuales y
+límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
+PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
+SECURITY_02_DELIVERY.md. T07 permanece parcial: entrega durable de correo,
+auditoría de seguridad y preparación productiva siguen pendientes.
 
 Estados: **Verificada** = alcance de esa tarea comprobado; **Parcial** = hay base
 real pero falta alcance; **Pendiente** = no implementada. No hay tarea declarada
@@ -19,12 +25,12 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | ID | Nombre | Módulo | Implementación existente | Estado | Dependencias | Riesgo | Prioridad | Próxima acción |
 |---|---|---|---|---|---|---|---|---|
 | T01 | Auditar arquitectura | Todos | Inventario de paquetes, clientes y contratos en AUDIT_V3. | Verificada | — | Bajo | P0 | Actualizar con cada incremento. |
-| T02 | PostgreSQL/Flyway | Transversal | V1–V14 instaladas/validadas; DER conservado, security_version añadido. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
+| T02 | PostgreSQL/Flyway | Transversal | V1–V15 instaladas/validadas; DER conservado, sesiones/MFA/límites añadidos. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
 | T03 | Pruebas existentes | Transversal | Baseline reproducido: 11 backend + 24 web; builds correctos. | Verificada | T02 | Bajo | P0 | Conservar baseline y resultados nuevos separados. |
 | T04 | Inventario funcional | Todos | 18 módulos y matriz de 40 tareas revisados. | Verificada | T01–03 | Bajo | P0 | Usar esta matriz como estado, no dependencias instaladas. |
 | T05 | Aislamiento tenant | M02/M03/M04/M08 | Filtros tenant, FK compuestas RBAC y pruebas de acceso cruzado; incremento documental. | Parcial | T01–03 | Alto | P0 | Completar matriz de recursos/acciones, archivos e historial. |
 | T06 | Roles/permisos | M02 | SUPER_ADMIN sin tenant, TENANT_ADMIN, CUSTOM, catálogo, asignación y revocación inmediata. | Verificada | T05 base | Medio | P0 | Añadir permisos nuevos con cada módulo; no delegar administración protegida. |
-| T07 | Autenticación | M02 | JWT/BCrypt, onboarding restringido, correo/reset/cambio de credenciales/desactivación y cierre de sesiones por versión. | Parcial | T06 | Alto | P0 | MFA, límites de intentos, sesiones individuales y entrega durable de correo. |
+| T07 | Autenticación | M02 | JWT/BCrypt, onboarding, correo/reset/cambio/desactivación, sesiones individuales revocables, MFA administrativo y límites persistidos. | Parcial | T06 | Alto | P0 | Entrega durable de correo, auditoría de seguridad, retención y proxy confiable para producción. |
 | T08 | Identidad global | M04 | Perfil global, unicidad, correo confirmado, cuenta activa/desactivada y preservación histórica. | Parcial | T07 | Alto | P1 | Revisión documental y procedimiento de disputa de identidades. |
 | T09 | Vinculación | M04 | Código EST, historial, retiro/rotación; desactivar retira accesos y bloquea nuevos canjes sin borrar historia. | Parcial | T08 | Alto | P1 | Reforzar consentimiento explícito y prevenir exposición/abuso del buscador. |
 | T10 | Expediente institucional | M03/M04/M05 | Identidad y vínculos; entidad students histórica conservada. | Parcial | T09 | Alto | P1 | Agregar expediente tenant y estructuras académicas configurables. |

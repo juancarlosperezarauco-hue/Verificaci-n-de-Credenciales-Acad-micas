@@ -116,3 +116,13 @@ aleatorios locales y no confirmar ese archivo en Git.
   rollback. No hay firma digital ni transacción distribuida ni blockchain real.
 - **Siguiente trabajo:** onboarding con revisión previa y seguridad estudiantil,
   según SPRINT_01_V3.md. Las 40 tareas no están terminadas.
+
+## Continuación Seguridad 02 — 2026-11-14
+
+Resultados actuales: 51 pruebas backend PostgreSQL 16.15 y 43 web correctas,
+builds correctos, Flyway V1–V15 y upgrade V14→V15 comprobados. Smokes HTTP de
+MFA/sesiones/límites, organizaciones/roles/credenciales, integridad documental y
+seguridad estudiantil Mailpit correctos. QA 1280×900 y 390×844 sin overflow.
+El entorno principal sirve la versión nueva en localhost:4300 y API health UP;
+se conservan datos/volúmenes y hay backup previo. Detalles, comandos y límites
+en SECURITY_02_API.md, SECURITY_02_DELIVERY.md y handoffs/codex-security-02.md.

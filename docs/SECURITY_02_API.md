@@ -60,8 +60,8 @@ Límites iniciales: IP 120/minuto; login por ruta + slug + correo normalizados
 10/15 minutos; recuperación 3/15 minutos por correo; registros 30/15 minutos por
 IP; códigos/acciones sensibles 10/5 minutos por propietario o IP. Tamaño máximo
 del JSON de autenticación: 8192 bytes. Los intentos exitosos también cuentan.
-La ventana es fija y los contadores se limpian una hora después de conservar
-como mínimo 24 horas adicionales desde su vencimiento. Bajo concurrencia pueden
+La ventana es fija; cada hora se limpian contadores vencidos hace más de 24 horas.
+Bajo concurrencia pueden
 denegarse solicitudes anticipadamente; no se pierden incrementos.
 
 V15 añade sesiones, configuración/desafíos/códigos MFA y contadores de intentos.

@@ -87,6 +87,11 @@ acceso, manteniendo la identidad global y mis credenciales históricas.
 
 ### SEC-03 — Bitácora mínima de acciones críticas (T26.1)
 
+Actualización 2026-11-14: el incremento Seguridad 02 completó sesiones por
+dispositivo, MFA administrativo optativo y límites persistidos de intentos en V15
+(94 pruebas, contrato/entrega SECURITY_02_API.md y SECURITY_02_DELIVERY.md).
+SEC-03 es la siguiente prioridad; no se declara completada por esos controles.
+
 Como auditor autorizado, necesito reconstruir cambios de permisos y emisiones sin
 acceder a secretos ni a registros privados de otra organización.
 

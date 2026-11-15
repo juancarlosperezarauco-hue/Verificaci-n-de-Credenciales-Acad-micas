@@ -7,13 +7,15 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **66 pruebas (30 backend + 36 web)** y Flyway **V1–V14**.
+El estado actual valida **94 pruebas (51 backend + 43 web)** y Flyway **V1–V15**.
+Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 
 - [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
 - [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
 - [Primer sprint y criterios de aceptación](docs/SPRINT_01_V3.md).
 - [Resultados y comandos de validación](docs/VALIDATION_V3.md).
 - [Entrega prioritaria actual, ejecución y límites](docs/PRIORITY_01_DELIVERY.md).
+- [MFA, sesiones y límites de acceso](docs/SECURITY_02_DELIVERY.md).
 
 Blockchain continúa con un adaptador de desarrollo; no existe firma digital
 criptográfica, OCR/anomalías ni aplicación Android implementados.
@@ -86,15 +88,23 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 ## Ejecución con Docker
 
 1. Copia `.env.example` como `.env` y cambia los secretos.
-   JWT_SECRET es obligatorio; no se aceptan las claves públicas de ejemplo. Para
-   generar y guardar uno sin imprimirlo, desde PowerShell 7 en la raíz:
+   JWT_SECRET y MFA_ENCRYPTION_KEY son obligatorios e independientes. La segunda
+   debe contener exactamente 32 bytes en base64 y conservarse para restaurar MFA.
+   No se aceptan las claves JWT públicas de ejemplo. Para generar ambas claves
+   en una instalación nueva sin imprimirlas, desde PowerShell 7 en la raíz:
 
 ```powershell
 $localJwt = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$localMfa = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 $envFile = Join-Path (Get-Location) '.env'
 $envLines = (Get-Content -LiteralPath $envFile) -replace '^JWT_SECRET=.*$', ('JWT_SECRET=' + $localJwt)
+$envLines = $envLines -replace '^MFA_ENCRYPTION_KEY=.*$', ('MFA_ENCRYPTION_KEY=' + $localMfa)
 [System.IO.File]::WriteAllLines($envFile, $envLines, [System.Text.UTF8Encoding]::new($false))
 ```
+
+En una instalación existente, conserva las claves configuradas: no ejecutes el
+generador para reemplazarlas. Al actualizar a V15 es necesario volver a iniciar
+sesión una vez, porque los JWT antiguos no tienen una sesión persistida.
 
 2. Inicia Docker Desktop.
 3. Ejecuta:

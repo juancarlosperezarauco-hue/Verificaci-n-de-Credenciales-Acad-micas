@@ -2,6 +2,11 @@
 
 ## Entrega prioritaria más reciente
 
+Seguridad 02 y V15: [codex-security-02.md](codex-security-02.md). MFA optativo,
+sesiones individuales y límites de intentos; 51 backend PostgreSQL 16 + 43 web
+aprobadas, smokes reales y QA visual. El Docker principal ejecuta esta versión.
+El detalle anterior se conserva como historial:
+
 SEC-01/SEC-02 y V14 están documentadas en
 [codex-priority-01.md](codex-priority-01.md): 30 backend + 36 frontend aprobadas,
 smokes y QA visual. El Docker principal ya ejecuta esta versión. Las secciones
