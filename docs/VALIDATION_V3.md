@@ -139,3 +139,28 @@ QA de escritorio/móvil de auditoría/monitor, filtros y acceso por ámbito. Pri
 actualizado con backup previo y cantidades de registros conservadas. Contrato,
 resultados, límites y handoff: AUDIT_MAIL_CONTRACT.md, AUDIT_MAIL_DELIVERY.md y
 handoffs/codex-audit-mail.md. Las entregas anteriores conservan contexto histórico.
+
+## Seguridad y perfil legado — 2026-11-14
+
+- Maven verify completo: **82 pruebas**, cero fallos/errores/omitidas, PostgreSQL
+  16.15 en base nueva `polish_final_20261114222509`, Flyway V1–V17 y Hibernate validate.
+- Angular ChromeHeadless: **56 pruebas**, cero fallos; build de producción correcto.
+- Total distinto: **138**, frente a 115 anteriores. Las nuevas cubren rotación
+  compatible, rechazo de claves/firmas inválidas, recifrado con rollback, retención
+  sin borrar registros vigentes, MFA/replay/reemplazo y perfil institucional legado.
+- Upgrade real V16→V17: el JWT emitido antes del upgrade sigue autenticando;
+  mantenimiento SUPER_ADMIN funciona y el administrador tenant recibe 403.
+- `smoke-security-polish.ps1`: perfil faltante 404 JSON, completar sin duplicar,
+  acceso operativo pendiente bloqueado, MFA/respaldos/reemplazo/cancelación correctos.
+- Regresiones HTTP correctas: `smoke-organization.ps1`,
+  `smoke-document-integrity.ps1`, `smoke-student-security.ps1`,
+  `smoke-sessions-mfa.ps1`; PostgreSQL/MinIO/Mailpit reales, datos ficticios aislados.
+- QA visual 1280×900 y 390×844: perfil legado, recuperación MFA y mantenimiento;
+  formularios exclusivos, campos sin datos inventados, sin claves privadas expuestas
+  ni desbordamiento horizontal. Evidencias en `docs/evidence/`.
+- Docker principal: web 4300 con bundle nuevo, API 8080 UP, Flyway 17 y cantidades
+  de tenants/estudiantes/credenciales/usuarios conservadas. Backup verificado con
+  `pg_restore -l`; esto no sustituye un ensayo integral de restauración.
+
+Contrato, límites, configuración y comandos: SECURITY_POLISH_CONTRACT.md,
+KEY_ROTATION_RUNBOOK.md y SECURITY_POLISH_DELIVERY.md. V1–V16 intactas.

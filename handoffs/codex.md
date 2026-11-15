@@ -2,6 +2,11 @@
 
 ## Entrega prioritaria más reciente
 
+Seguridad y perfil legado, V17: [codex-security-polish.md](codex-security-polish.md).
+82 backend PostgreSQL 16 + 56 web aprobadas (138), smokes HTTP, upgrade compatible
+y QA escritorio/móvil. Docker principal actualizado con datos y claves conservados.
+Las siguientes secciones documentan entregas históricas.
+
 SEC-03 y correo durable, V16: [codex-audit-mail.md](codex-audit-mail.md).
 66 backend PostgreSQL 16 + 49 web aprobadas (115), smokes de fallo SMTP/reinicio
 y QA de auditoría/monitor. El Docker principal ejecuta esta versión.

@@ -1,5 +1,9 @@
 # SEC-03 y correo durable — entrega
 
+Documento histórico de V16. El estado actual V17 (138 pruebas), retención técnica,
+rotación/recifrado y recuperación MFA está en [SECURITY_POLISH_DELIVERY.md](SECURITY_POLISH_DELIVERY.md).
+Los límites señalados abajo describen el momento de esta entrega; no sustituyen esa actualización.
+
 Fecha: 2026-11-14. Base c79b963. Rama codex/rbac-superadmin.
 
 ## Qué cambia

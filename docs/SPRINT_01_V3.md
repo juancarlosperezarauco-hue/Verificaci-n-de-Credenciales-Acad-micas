@@ -1,5 +1,11 @@
 # Sprint 01 V3 — integridad y acceso seguro
 
+Último incremento, 2026-11-14: V17 y 138 pruebas correctas (82 backend + 56 web).
+Reemplazo y renovación de respaldos MFA, retención de metadatos terminales,
+rotación compatible/recifrado y corrección del perfil legado están entregados.
+Ver SECURITY_POLISH_DELIVERY.md. La siguiente prioridad funcional es la revisión
+documental de identidad (T08); los controles productivos de T07 siguen parciales.
+
 ## Objetivo
 
 Conservar documentos emitidos y cerrar los controles de acceso prioritarios antes

@@ -7,9 +7,12 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **115 pruebas (66 backend + 49 web)** y Flyway **V1–V16**.
+El estado actual valida **138 pruebas (82 backend + 56 web)** y Flyway **V1–V17**.
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
+Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
+de registros técnicos y soporte de rotación de claves con recifrado por lotes.
+Los registros institucionales antiguos pueden completar su perfil sin recrear cuentas.
 
 - [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
 - [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
@@ -18,6 +21,8 @@ La auditoría de acciones críticas y la cola cifrada de correos con reintentos 
 - [Entrega prioritaria actual, ejecución y límites](docs/PRIORITY_01_DELIVERY.md).
 - [MFA, sesiones y límites de acceso](docs/SECURITY_02_DELIVERY.md).
 - [Auditoría y correo durable: alcance, pruebas y límites](docs/AUDIT_MAIL_DELIVERY.md).
+- [Última entrega: seguridad y perfil institucional histórico](docs/SECURITY_POLISH_DELIVERY.md).
+- [Procedimiento de rotación de claves](docs/KEY_ROTATION_RUNBOOK.md).
 
 Blockchain continúa con un adaptador de desarrollo; no existe firma digital
 criptográfica, OCR/anomalías ni aplicación Android implementados.
@@ -110,8 +115,10 @@ $envLines = $envLines -replace '^MAIL_ENCRYPTION_KEY=.*$', ('MAIL_ENCRYPTION_KEY
 ```
 
 En una instalación existente, conserva las claves configuradas: no ejecutes el
-generador para reemplazarlas. Al actualizar a V15 es necesario volver a iniciar
-sesión una vez, porque los JWT antiguos no tienen una sesión persistida.
+generador para reemplazarlas. La actualización desde versiones anteriores a V15
+requiere iniciar sesión una vez, porque esos JWT no tienen sesión persistida.
+V17 conserva los JWT y datos cifrados anteriores mediante la clave `legacy`;
+para una rotación planificada, sigue el procedimiento enlazado arriba.
 
 2. Inicia Docker Desktop.
 3. Ejecuta:
@@ -173,7 +180,20 @@ legacy también queda pendiente: no habilita emisión hasta la revisión del SUP
 El estudiante accede a `/student/security` desde su expediente. Puede confirmar
 su correo, cambiar contraseña/correo y desactivar su cuenta sin borrar credenciales.
 Recuperación pública en `/student/recover`. Los enlaces se entregan en Mailpit
-durante desarrollo, no a correos externos. MFA y límites de intentos aún están pendientes.
+durante desarrollo, no a correos externos. Los límites de intentos están activos;
+MFA es optativo para cuentas administrativas y todavía no se ofrece a estudiantes.
+
+## Seguridad administrativa
+
+En Seguridad de la cuenta se pueden consultar/cerrar sesiones, configurar MFA,
+cambiar autenticador o renovar los códigos de respaldo. Estas dos últimas acciones
+requieren contraseña y segundo factor vigente; la nueva semilla solo sustituye a
+la anterior después de confirmar. Los respaldos se muestran una vez.
+
+SUPER_ADMIN dispone de `/superadmin/security` para consultar política de retención,
+identificadores públicos de claves y pendientes; puede ejecutar limpieza o recifrado
+con confirmación. La UI no recibe ni muestra claves privadas. La retención predeterminada
+es de 30 días para registros técnicos terminales; no borra cuentas, documentos ni auditoría.
 
 ## Ejecución sin contenedores de aplicación
 
@@ -204,8 +224,9 @@ docker-compose.yml
 ## Próximos módulos
 
 El detalle y estado están en [PRODUCT_BACKLOG_V3.md](docs/PRODUCT_BACKLOG_V3.md).
-Primero: seguridad de cuentas, revisión inicial de organizaciones, auditoría y
-validación documental. Después: expedientes, solicitudes/aprobaciones, plantillas,
+La base de seguridad, revisión inicial y auditoría de acciones críticas está implementada.
+Sigue la validación documental de identidad y los controles productivos pendientes.
+Después: expedientes, solicitudes/aprobaciones, plantillas,
 firma y verificación; luego reportes/notificaciones, blockchain, IA y Android.
 No se reconstruyen los usuarios, roles y permisos ya implementados. Pagos/Stripe
 no forman parte del alcance de las 40 tareas del prompt maestro V3.
