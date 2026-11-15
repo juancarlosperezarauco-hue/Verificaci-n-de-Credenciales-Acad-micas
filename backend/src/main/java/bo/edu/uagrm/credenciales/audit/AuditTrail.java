@@ -11,7 +11,7 @@ import org.springframework.web.context.request.*;
 
 @Service @Transactional(propagation=Propagation.MANDATORY)
 public class AuditTrail {
- public enum Resource {ORGANIZATION,ROLE,USER,CREDENTIAL,ACCOUNT,MFA,SESSION,MAIL,SECURITY,IDENTITY_REVIEW}
+ public enum Resource {ORGANIZATION,ROLE,USER,CREDENTIAL,ACCOUNT,MFA,SESSION,MAIL,SECURITY,IDENTITY_REVIEW,ACADEMIC,REQUEST,TEMPLATE,SIGNER,STORAGE,IDENTITY_DISPUTE}
  private final EntityManager em;private final Clock clock;
  public AuditTrail(EntityManager em,Clock clock){this.em=em;this.clock=clock;}
  public void record(AuditAction action,UUID tenant,Resource type,UUID resource){record(action,tenant,type,resource,null);}

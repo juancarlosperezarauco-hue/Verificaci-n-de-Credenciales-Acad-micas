@@ -24,6 +24,9 @@ public class StudentAccount {
     @Column(name="deactivated_at") private Instant deactivatedAt;
     @Column(name="security_version", nullable=false) private long securityVersion;
     @Column(name="identity_revision",nullable=false) private long identityRevision;
+    @Column(name="photo_object_key",length=500) private String avatarKey;
+    @Column(name="photo_name",length=255) private String avatarName;
+    @Column(name="photo_content_type",length=120) private String avatarContentType;
     protected StudentAccount() {}
     public StudentAccount(String name, String country, String type, String document, LocalDate dateOfBirth,
                           String department, String email, String hash) {
@@ -49,6 +52,10 @@ public class StudentAccount {
     public boolean isEmailVerified() { return emailVerified; }
     public long getSecurityVersion() { return securityVersion; }
     public long getIdentityRevision() { return identityRevision; }
+    public String getAvatarKey(){return avatarKey;}
+    public String getAvatarContentType(){return avatarContentType;}
+    public void avatar(String key){avatarKey=key;avatarName=key==null?null:"foto-perfil.jpg";avatarContentType=key==null?null:"image/jpeg";}
+    public void invalidateSessions(){securityVersion++;}
     public void verifyEmail() { emailVerified = true; }
     public void changePasswordHash(String hash) { passwordHash = hash; securityVersion++; }
     public void changeEmail(String email) { this.email=email; emailVerified=true; securityVersion++; }

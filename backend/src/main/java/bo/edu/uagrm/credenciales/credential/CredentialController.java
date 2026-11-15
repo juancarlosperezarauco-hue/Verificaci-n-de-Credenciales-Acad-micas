@@ -65,26 +65,25 @@ public class CredentialController {
     @PostMapping("/{id}/generate-document")
     @PreAuthorize("hasAuthority('CREDENTIAL_CREATE')")
     CredentialDtos.Response generateDocument(@AuthenticationPrincipal UserPrincipal principal,
-                                              @PathVariable UUID id) {
-        return credentialService.generateDocument(principal.tenantId(), id);
+                                              @PathVariable UUID id,@RequestBody(required=false) GenerateOptions options) {
+        return credentialService.generateDocument(principal.tenantId(), id,options==null?null:options.templateVersionId());
     }
+    public record GenerateOptions(UUID templateVersionId){}
+    @PostMapping("/{id}/sign") @PreAuthorize("hasAuthority('CREDENTIAL_SIGN')")
+    CredentialDtos.Response sign(@AuthenticationPrincipal UserPrincipal p,@PathVariable UUID id){return credentialService.sign(p.tenantId(),id);}
 
     @GetMapping("/{id}/document")
     @PreAuthorize("hasAuthority('CREDENTIAL_VIEW')")
     ResponseEntity<byte[]> downloadDocument(@AuthenticationPrincipal UserPrincipal principal,
                                             @PathVariable UUID id) {
         var document = credentialService.document(principal.tenantId(), id);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(document.contentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment().filename(document.name(), StandardCharsets.UTF_8).build().toString())
-                .body(document.content());
+        return bo.edu.uagrm.credenciales.shared.PrivateDownloads.of(document);
     }
 
     @PatchMapping("/{id}/issue")
     @PreAuthorize("hasAuthority('CREDENTIAL_ISSUE')")
-    CredentialDtos.Response issue(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id) {
-        return credentialService.issue(principal.tenantId(), id);
+    CredentialDtos.Response issue(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id,@org.springframework.web.bind.annotation.RequestHeader(value="Idempotency-Key",required=false) String key) {
+        return credentialService.issue(principal.tenantId(), id,key);
     }
 
     @PatchMapping("/{id}/revoke")
@@ -94,4 +93,3 @@ public class CredentialController {
         return credentialService.revoke(principal.tenantId(), id, request.reason());
     }
 }
-

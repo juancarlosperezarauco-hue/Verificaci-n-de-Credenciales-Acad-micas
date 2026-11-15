@@ -55,6 +55,15 @@ public class Credential {
     @Column(name = "revocation_reason", length = 500) private String revocationReason;
     @Column(name = "created_at", nullable = false) private Instant createdAt;
     @Column(name = "updated_at", nullable = false) private Instant updatedAt;
+    @Column(name="source_request_id",unique=true) private UUID sourceRequestId;
+    @Column(name="template_version_id") private UUID templateVersionId;
+    @Column(name="signer_fingerprint",length=64) private String signerFingerprint;
+    @Column(name="signing_certificate",columnDefinition="text") private String signingCertificate;
+    @Column(name="signed_at") private Instant signedAt;
+    @Column(name="signature_test_only",nullable=false) private boolean signatureTestOnly;
+    @Column(name="issue_operation_key",length=100) private String issueOperationKey;
+    @Column(name="replaces_id") private UUID replacesId;
+    @Column(name="replaced_by_id") private UUID replacedById;
 
     protected Credential() {}
 
@@ -77,6 +86,7 @@ public class Credential {
         this.documentName = name;
         this.documentContentType = contentType;
         this.documentHash = hash;
+        this.signerFingerprint=null;this.signingCertificate=null;this.signedAt=null;this.signatureTestOnly=false;
         this.updatedAt = Instant.now();
     }
 
@@ -125,5 +135,19 @@ public class Credential {
     public String getRevocationReason() { return revocationReason; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public UUID getSourceRequestId(){return sourceRequestId;}
+    public UUID getTemplateVersionId(){return templateVersionId;}
+    public String getSignerFingerprint(){return signerFingerprint;}
+    public String getSigningCertificate(){return signingCertificate;}
+    public Instant getSignedAt(){return signedAt;}
+    public boolean isSignatureTestOnly(){return signatureTestOnly;}
+    public String getIssueOperationKey(){return issueOperationKey;}
+    public UUID getReplacesId(){return replacesId;}
+    public UUID getReplacedById(){return replacedById;}
+    public void configureRequest(UUID request,UUID template){if(status!=CredentialStatus.DRAFT)throw new IllegalStateException("Solo borradores.");sourceRequestId=request;templateVersionId=template;}
+    public void selectTemplate(UUID template){if(status!=CredentialStatus.DRAFT)throw new IllegalStateException("Solo borradores.");if(sourceRequestId!=null&&!java.util.Objects.equals(templateVersionId,template))throw new IllegalArgumentException("Usa la plantilla aprobada en la solicitud.");templateVersionId=template;}
+    public void signed(String fingerprint,String certificate,Instant at,boolean test){if(status!=CredentialStatus.DRAFT)throw new IllegalStateException("Solo borradores.");signerFingerprint=fingerprint;signingCertificate=certificate;signedAt=at;signatureTestOnly=test;}
+    public void operationKey(String key){issueOperationKey=key;}
+    public void replaces(UUID oldId){replacesId=oldId;}
+    public void replacedBy(UUID newId){replacedById=newId;}
 }
-

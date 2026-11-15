@@ -37,8 +37,8 @@ class CredentialDocumentIntegrityIntegrationTests {
     @MockitoBean BlockchainAnchorPort blockchain;
 
     private final Map<String, byte[]> files = new ConcurrentHashMap<>();
-    private static final byte[] ORIGINAL = "%PDF-original-document".getBytes(StandardCharsets.UTF_8);
-    private static final byte[] REPLACEMENT = "%PDF-replacement-document".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] ORIGINAL = TestPdfs.create("Original document");
+    private static final byte[] REPLACEMENT = TestPdfs.create("Replacement document");
     private static final String PASSWORD = "IntegrityTestPassword123!";
 
     @BeforeEach
@@ -151,13 +151,14 @@ class CredentialDocumentIntegrityIntegrationTests {
     void storageWriteThenFailureCannotOverwritePreviouslyCommittedDocument() throws Exception {
         Fixture f = draft();
         String originalKey = files.keySet().iterator().next();
+        byte[] originalEncrypted=files.get(originalKey).clone();
         doAnswer(call -> {
             files.put(call.getArgument(0), call.getArgument(1));
             throw new IllegalStateException("Fallo simulado después de escribir");
         }).when(storage).store(any(), any(), any());
         upload(f.credentialId(), f.token(), REPLACEMENT, 400);
         assertEquals(2, files.size(), "La carga debe escribir un objeto nuevo incluso con el mismo nombre");
-        assertArrayEquals(ORIGINAL, files.get(originalKey));
+        assertArrayEquals(originalEncrypted, files.get(originalKey));
         originalCanBeDownloaded(f);
     }
 

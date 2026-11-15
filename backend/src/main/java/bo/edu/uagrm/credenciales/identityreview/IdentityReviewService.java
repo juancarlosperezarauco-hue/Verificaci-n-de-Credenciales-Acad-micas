@@ -5,7 +5,7 @@ import bo.edu.uagrm.credenciales.consent.ConsentRepository;
 import bo.edu.uagrm.credenciales.identity.*;
 import bo.edu.uagrm.credenciales.platform.*;
 import bo.edu.uagrm.credenciales.security.UserPrincipal;
-import bo.edu.uagrm.credenciales.storage.DocumentStoragePort;
+import bo.edu.uagrm.credenciales.storage.ManagedStorage;
 import bo.edu.uagrm.credenciales.tenant.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,7 +27,7 @@ public class IdentityReviewService {
     private final ConsentRepository consents;
     private final TenantRepository tenants;
     private final GovernanceRepository governance;
-    private final DocumentStoragePort storage;
+    private final ManagedStorage storage;
     private final IdentityImages images;
     private final ObjectMapper json;
     private final Clock clock;
@@ -35,7 +35,7 @@ public class IdentityReviewService {
 
     public IdentityReviewService(IdentitySubmissionRepository submissions,StudentAccountRepository accounts,
         ConsentRepository consents,TenantRepository tenants,GovernanceRepository governance,
-        DocumentStoragePort storage,IdentityImages images,ObjectMapper json,Clock clock,AuditTrail audit) {
+        ManagedStorage storage,IdentityImages images,ObjectMapper json,Clock clock,AuditTrail audit) {
         this.submissions=submissions;this.accounts=accounts;this.consents=consents;this.tenants=tenants;
         this.governance=governance;this.storage=storage;this.images=images;this.json=json;this.clock=clock;this.audit=audit;
     }
@@ -71,11 +71,11 @@ public class IdentityReviewService {
         row.status=IdentitySubmission.Status.PENDING;row.profileJson=snapshot;row.profileHash=fingerprint;
         row.submittedAt=clock.instant();row.acceptedAt=row.submittedAt;
         String prefix="private/identity/"+studentId+"/"+row.id+"/";
-        row.frontKey=store(prefix+"front.jpg",cleanFront);row.frontHash=IdentityImages.hash(cleanFront);
-        row.backKey=store(prefix+"back.jpg",cleanBack);row.backHash=IdentityImages.hash(cleanBack);
-        if(cleanPhoto!=null){row.photoKey=store(prefix+"photo.jpg",cleanPhoto);row.photoHash=IdentityImages.hash(cleanPhoto);}
+        row.frontKey=store(tenantId,row.id,cleanFront);row.frontHash=IdentityImages.hash(cleanFront);
+        row.backKey=store(tenantId,row.id,cleanBack);row.backHash=IdentityImages.hash(cleanBack);
+        if(cleanPhoto!=null){row.photoKey=store(tenantId,row.id,cleanPhoto);row.photoHash=IdentityImages.hash(cleanPhoto);}
         // Superseded pending requests release the unique slot, retaining their history.
-        for(var old:previous)if(old.status==IdentitySubmission.Status.PENDING){old.withdrawnAt=clock.instant();}
+        for(var old:previous)if(old.status==IdentitySubmission.Status.PENDING){old.withdrawnAt=clock.instant();if(old.retiredAt==null)old.retiredAt=old.withdrawnAt;}
         submissions.flush();submissions.saveAndFlush(row);
         audit.record(AuditAction.IDENTITY_SUBMITTED,tenantId,AuditTrail.Resource.IDENTITY_REVIEW,row.id);
         return view(row,student);
@@ -84,7 +84,7 @@ public class IdentityReviewService {
     public void withdraw(UUID studentId,UUID id) {
         account(studentId,true);
         var row=submissions.findByIdAndStudentId(id,studentId).orElseThrow(IdentityReviewService::missing);
-        if(row.withdrawnAt==null){row.withdrawnAt=clock.instant();audit.record(AuditAction.IDENTITY_WITHDRAWN,row.tenantId,AuditTrail.Resource.IDENTITY_REVIEW,row.id);}
+        if(row.withdrawnAt==null){row.withdrawnAt=clock.instant();if(row.retiredAt==null)row.retiredAt=row.withdrawnAt;audit.record(AuditAction.IDENTITY_WITHDRAWN,row.tenantId,AuditTrail.Resource.IDENTITY_REVIEW,row.id);}
     }
 
     @Transactional(readOnly=true)
@@ -108,7 +108,7 @@ public class IdentityReviewService {
         if(decision.status()==IdentitySubmission.Status.REJECTED&&(reason==null||reason.length()<10))
             throw new IllegalArgumentException("Explica el rechazo con al menos 10 caracteres.");
         row.status=decision.status();row.reason=row.status==IdentitySubmission.Status.REJECTED?reason:null;
-        row.reviewerId=p.userId();row.reviewedAt=clock.instant();
+        row.reviewerId=p.userId();row.reviewedAt=clock.instant();if(row.status==IdentitySubmission.Status.REJECTED)row.retiredAt=row.reviewedAt;
         audit.record(row.status==IdentitySubmission.Status.VERIFIED?AuditAction.IDENTITY_VERIFIED:AuditAction.IDENTITY_REJECTED,tenant,AuditTrail.Resource.IDENTITY_REVIEW,row.id);
         return view(row,student);
     }
@@ -132,8 +132,8 @@ public class IdentityReviewService {
         if(!IdentityImages.hash(bytes).equals(hash))throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);
         return bytes;
     }
-    private String store(String key,byte[] bytes) {
-        try{storage.store(key,bytes,"image/jpeg");return key;}
+    private String store(UUID tenant,UUID owner,byte[] bytes) {
+        try{return storage.store(tenant,owner,"IDENTITY",bytes,"image/jpeg");}
         catch(RuntimeException failed){throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE);}
     }
     private UUID tenant(UserPrincipal p) {if(p.tenantId()==null||!p.permissions().contains("IDENTITY_REVIEW"))throw new ResponseStatusException(HttpStatus.FORBIDDEN);return p.tenantId();}
@@ -154,7 +154,7 @@ public class IdentityReviewService {
     }
     private boolean active(Tenant t) {return t.isActive()&&governance.findById(t.getId()).map(g->g.getStatus()==OrganizationStatus.ACTIVE).orElse(true);}
     private String fingerprint(StudentAccount account){return IdentityImages.hash((encode(IdentityReviewDtos.Snapshot.from(account))+":"+account.getIdentityRevision()).getBytes(StandardCharsets.UTF_8));}
-    private boolean current(IdentitySubmission row,StudentAccount account) {return row.profileHash.equals(fingerprint(account));}
+    boolean current(IdentitySubmission row,StudentAccount account) {return row.profileHash.equals(fingerprint(account));}
     private String encode(Object value) {try{return json.writeValueAsString(value);}catch(JsonProcessingException e){throw new IllegalStateException("No se pudo preparar la revisión.");}}
     private IdentityReviewDtos.Item view(IdentitySubmission row,StudentAccount student) {
         var tenant=tenants.findById(row.tenantId).orElseThrow(IdentityReviewService::missing);
@@ -162,7 +162,7 @@ public class IdentityReviewService {
         boolean sharing=row.withdrawnAt==null&&active(tenant)&&consents.findById(row.consentId).map(c->c.getUsedAt()!=null&&c.getRevokedAt()==null).orElse(false);
         IdentityReviewDtos.Snapshot profile;
         try{profile=json.readValue(row.profileJson,IdentityReviewDtos.Snapshot.class);}catch(JsonProcessingException e){throw new IllegalStateException("No se pudo leer la revisión.");}
-        return new IdentityReviewDtos.Item(row.id,row.studentId,row.tenantId,tenant.getName(),row.status.name(),changed||!sharing?"UNVERIFIED":row.status.name(),profile,changed,sharing,row.photoKey!=null,row.submittedAt,row.reviewedAt,row.withdrawnAt,row.reason);
+        return new IdentityReviewDtos.Item(row.id,row.studentId,row.tenantId,tenant.getName(),row.status.name(),changed||!sharing?"UNVERIFIED":row.status.name(),profile,changed,sharing,row.photoKey!=null,row.submittedAt,row.reviewedAt,row.withdrawnAt,row.reason,row.frontKey!=null&&row.backKey!=null);
     }
     private static ResponseStatusException missing(){return new ResponseStatusException(HttpStatus.NOT_FOUND);}
 }

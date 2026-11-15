@@ -45,4 +45,5 @@ public class MinioDocumentStorageAdapter implements DocumentStoragePort {
             throw new IllegalStateException("No se pudo recuperar el documento", exception);
         }
     }
+    @Override public void delete(String objectKey){try{client.removeObject(io.minio.RemoveObjectArgs.builder().bucket(bucket).object(objectKey).build());}catch(Exception failure){throw new IllegalStateException("No se pudo retirar el archivo del almacenamiento");}}
 }

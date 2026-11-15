@@ -69,7 +69,7 @@ class AuditIntegrationTests {
   mvc.perform(delete("/api/access/roles/{id}",foreign).header("Authorization","Bearer "+a.token)).andExpect(status().isNotFound());assertEquals(1,events(b.token,"/api/audit/tenant",foreign).get("total").asInt());
  }
  @Test void issuanceRevocationAndDocumentEventsAreAtomicAndDoNotLogTheDocument()throws Exception{
-  var a=tenant();when(storage.store(any(),any(),any())).thenAnswer(call->call.getArgument(0));when(blockchain.anchor(any(),any(),any())).thenReturn("pending:audit");
+  var a=tenant();var blobs=new java.util.concurrent.ConcurrentHashMap<String,byte[]>();when(storage.store(any(),any(),any())).thenAnswer(call->{blobs.put(call.getArgument(0),call.getArgument(1));return call.getArgument(0);});when(storage.load(any())).thenAnswer(call->blobs.get(call.<String>getArgument(0)));when(blockchain.anchor(any(),any(),any())).thenReturn("pending:audit");
   var s=postJson("/api/auth/student/register","",Map.of("fullName","Private Student","country","BO","documentType","CI","documentNumber",UUID.randomUUID().toString(),"dateOfBirth","2001-05-12","department","La Paz","email",UUID.randomUUID()+"@test.example","password",password),201);
   var profile=json.readTree(mvc.perform(get("/api/me/profile").header("Authorization","Bearer "+s.get("token").asText())).andExpect(status().isOk()).andReturn().getResponse().getContentAsString());postJson("/api/students/redeem",a.token,Map.of("code",profile.get("searchCode").asText()),200);
   UUID id=UUID.fromString(postJson("/api/credentials",a.token,Map.of("studentId",profile.get("id").asText(),"credentialType","CERTIFICADO","title","Private Title"),201).get("id").asText());postJson("/api/credentials/"+id+"/generate-document",a.token,Map.of(),200);

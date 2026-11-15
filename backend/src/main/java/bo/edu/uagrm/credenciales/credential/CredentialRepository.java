@@ -18,5 +18,7 @@ public interface CredentialRepository extends JpaRepository<Credential, UUID> {
     Optional<Credential> findLockedByIdAndTenantId(@Param("id") UUID id, @Param("tenantId") UUID tenantId);
     Optional<Credential> findByVerificationCode(String verificationCode);
     boolean existsByVerificationCode(String verificationCode);
+    Optional<Credential> findBySourceRequestId(UUID requestId);
+    @Query("select c.studentAccount.id from Credential c where c.id=:id and c.tenant.id=:tenant")
+    Optional<UUID> studentOwner(@Param("id") UUID id,@Param("tenant") UUID tenant);
 }
-

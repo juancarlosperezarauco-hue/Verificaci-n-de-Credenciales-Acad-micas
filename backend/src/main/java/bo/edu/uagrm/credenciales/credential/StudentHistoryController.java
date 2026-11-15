@@ -12,4 +12,5 @@ public class StudentHistoryController {
     List<CredentialDtos.PublicVerification> list(@AuthenticationPrincipal UserPrincipal p){
         return service.personalHistory(p.userId());
     }
+    @GetMapping("/{id}/document") org.springframework.http.ResponseEntity<byte[]> document(@AuthenticationPrincipal UserPrincipal p,@PathVariable java.util.UUID id){return bo.edu.uagrm.credenciales.shared.PrivateDownloads.of(service.personalDocument(p.userId(),id));}
 }

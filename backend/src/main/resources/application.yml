@@ -44,6 +44,15 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  evidence:
+    encryption-key: ${EVIDENCE_ENCRYPTION_KEY:}
+    key-id: ${EVIDENCE_KEY_ID:legacy}
+    previous-keys: ${EVIDENCE_PREVIOUS_KEYS:}
+    retention-days: ${EVIDENCE_RETENTION_DAYS:90}
+    cleanup-enabled: ${EVIDENCE_CLEANUP_ENABLED:false}
+  signing:
+    encryption-key: ${SIGNING_ENCRYPTION_KEY:}
+    allow-demo: ${SIGNING_ALLOW_DEMO:false}
   mail-outbox:
     encryption-key: ${MAIL_ENCRYPTION_KEY}
     key-id: ${MAIL_KEY_ID:legacy}
@@ -71,4 +80,3 @@ app:
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}
     bucket: ${MINIO_BUCKET:credentials}
-

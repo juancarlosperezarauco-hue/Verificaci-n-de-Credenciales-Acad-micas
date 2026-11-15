@@ -9,6 +9,13 @@ spring:
     hibernate:
       ddl-auto: create-drop
 app:
+  evidence:
+    encryption-key: AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=
+    cleanup-enabled: false
+    retention-days: 90
+  signing:
+    encryption-key: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM=
+    allow-demo: true
   mail-outbox:
     encryption-key: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=
     worker-enabled: false
@@ -24,4 +31,3 @@ app:
     access-key: test
     secret-key: test-secret
     bucket: test-credentials
-

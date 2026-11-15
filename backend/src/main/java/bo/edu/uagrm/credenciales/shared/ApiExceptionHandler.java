@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler({org.springframework.orm.ObjectOptimisticLockingFailureException.class,jakarta.persistence.OptimisticLockException.class,org.springframework.dao.PessimisticLockingFailureException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    Map<String,Object> concurrentUpdate(RuntimeException failure){return error("El registro cambió durante la operación. Actualiza e inténtalo otra vez.");}
     @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     Map<String,Object> uploadTooLarge(){return error("El envío supera el tamaño permitido. Reduce las imágenes e inténtalo de nuevo.");}
@@ -49,4 +52,3 @@ public class ApiExceptionHandler {
         return Map.of("timestamp", Instant.now(), "message", message == null ? "Error inesperado" : message);
     }
 }
-

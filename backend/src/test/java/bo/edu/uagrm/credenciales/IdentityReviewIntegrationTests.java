@@ -85,8 +85,8 @@ class IdentityReviewIntegrationTests {
         mvc.perform(get(path(row)+"/files/FRONT")).andExpect(status().isForbidden());
         mvc.perform(get(path(row)+"/files/FRONT").header("Authorization","Bearer "+s.token)).andExpect(status().isForbidden());
         mvc.perform(get(path(row)+"/files/UNKNOWN").header("Authorization","Bearer "+a.token)).andExpect(status().isNotFound());
-        String key=objects.keySet().iterator().next();objects.put(key,"tampered".getBytes());
-        String part=key.endsWith("front.jpg")?"FRONT":"BACK";
+        String key=jdbc.queryForObject("select front_key from identity_review_submissions where id=?",String.class,UUID.fromString(id));objects.put(key,"tampered".getBytes());
+        String part="FRONT";
         mvc.perform(get(path(row)+"/files/"+part).header("Authorization","Bearer "+a.token)).andExpect(status().isServiceUnavailable());
     }
     @Test void permissionChangesApplyToExistingReviewerToken()throws Exception {
@@ -148,7 +148,7 @@ class IdentityReviewIntegrationTests {
     @Test void storageFailurePreservesPreviousRequestAndNeverCommitsHalfSubmission()throws Exception {
         var a=org();var s=student(true,true);link(s,a);var row=submit(s,a);
         var updated=new HashMap<>(s.profile);updated.put("fullName","Nombre actualizado");edit(s,updated);
-        doThrow(new IllegalStateException("private storage details")).when(storage).store(endsWith("back.jpg"),any(),anyString());
+        var calls=new java.util.concurrent.atomic.AtomicInteger();doAnswer(i->{if(calls.incrementAndGet()==2)throw new IllegalStateException("private storage details");objects.put(i.getArgument(0),i.getArgument(1));return i.getArgument(0);}).when(storage).store(anyString(),any(),anyString());
         upload(s,a,true,image("front")).andExpect(status().isServiceUnavailable());
         assertEquals(1,jdbc.queryForObject("select count(*) from identity_review_submissions where student_id=?",Integer.class,UUID.fromString(s.id)));
         assertNull(jdbc.queryForObject("select withdrawn_at from identity_review_submissions where id=?",Object.class,UUID.fromString(row.get("id").asText())));

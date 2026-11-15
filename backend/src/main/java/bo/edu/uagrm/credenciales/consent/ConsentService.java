@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ConsentService {
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.context.ApplicationEventPublisher events;
     private final ConsentRepository consents;
     private final IdentityService identities;
     private final TenantRepository tenants;
@@ -66,9 +67,11 @@ public class ConsentService {
     }
     @Transactional
     public void revoke(UUID studentId,UUID id) {
+        identities.requireLocked(studentId);
         StudentConsent c=consents.findByIdAndStudentId(id,studentId)
             .orElseThrow(() -> new IllegalArgumentException("Autorización no encontrada"));
         c.revoke(Instant.now());
+        events.publishEvent(new bo.edu.uagrm.credenciales.identityreview.EvidenceEvents.ConsentWithdrawn(c.getId()));
     }
     @Transactional(readOnly=true)
     public List<IdentityDtos.Profile> linked(UUID tenantId) {

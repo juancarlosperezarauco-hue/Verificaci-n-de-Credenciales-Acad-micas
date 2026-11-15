@@ -11,6 +11,7 @@ public class MinioConfiguration {
     MinioClient minioClient(@Value("${app.storage.endpoint}") String endpoint,
                             @Value("${app.storage.access-key}") String accessKey,
                             @Value("${app.storage.secret-key}") String secretKey) {
-        return MinioClient.builder().endpoint(endpoint).credentials(accessKey, secretKey).build();
+        var http=new okhttp3.OkHttpClient.Builder().callTimeout(java.time.Duration.ofSeconds(120)).build();
+        return MinioClient.builder().endpoint(endpoint).credentials(accessKey, secretKey).httpClient(http).build();
     }
 }

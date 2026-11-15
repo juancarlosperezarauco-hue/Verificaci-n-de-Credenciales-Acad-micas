@@ -27,18 +27,23 @@ public class CredentialService {
     private final TenantRepository tenantRepository;
     private final bo.edu.uagrm.credenciales.consent.ConsentService consents;
     private final BlockchainAnchorPort blockchain;
-    private final DocumentStoragePort storage;
+    private final bo.edu.uagrm.credenciales.storage.ManagedStorage storage;
+    private final bo.edu.uagrm.credenciales.template.TemplateService templates;
+    private final bo.edu.uagrm.credenciales.signing.SigningService signing;
+    private final bo.edu.uagrm.credenciales.workflow.RequestIssuancePolicy requests;
+    private final PdfSafety safety;
+    private final bo.edu.uagrm.credenciales.platform.GovernanceRepository governance;
     private final CredentialPdfService pdfService;
 
     public CredentialService(CredentialRepository credentialRepository, TenantRepository tenantRepository,
                              bo.edu.uagrm.credenciales.consent.ConsentService consents, BlockchainAnchorPort blockchain,
-                             DocumentStoragePort storage, CredentialPdfService pdfService,AuditTrail audit) {
+                             bo.edu.uagrm.credenciales.storage.ManagedStorage storage, CredentialPdfService pdfService,AuditTrail audit, bo.edu.uagrm.credenciales.template.TemplateService templates, bo.edu.uagrm.credenciales.signing.SigningService signing, bo.edu.uagrm.credenciales.workflow.RequestIssuancePolicy requests, PdfSafety safety, bo.edu.uagrm.credenciales.platform.GovernanceRepository governance) {
         this.audit=audit;this.credentialRepository = credentialRepository;
         this.tenantRepository = tenantRepository;
         this.consents = consents;
         this.blockchain = blockchain;
         this.storage = storage;
-        this.pdfService = pdfService;
+        this.pdfService = pdfService; this.templates=templates;this.signing=signing;this.requests=requests;this.safety=safety;this.governance=governance;
     }
 
     @Transactional(readOnly = true)
@@ -78,13 +83,13 @@ public class CredentialService {
         }
         if (file.isEmpty()) throw new IllegalArgumentException("El documento está vacío");
         try {
-            byte[] content = file.getBytes();
+            byte[] content = file.getBytes(); safety.validate(content); requests.approved(credential);
             String originalName = file.getOriginalFilename() == null ? "documento.pdf" : file.getOriginalFilename();
             String safeName = originalName.replaceAll("[^a-zA-Z0-9._-]", "_");
             // Object storage is not rolled back with PostgreSQL. Never overwrite a committed object.
             String objectKey = tenantId + "/" + id + "/uploads/" + UUID.randomUUID() + "/" + safeName;
             String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
-            String storedKey = storage.store(objectKey, content, contentType);
+            String storedKey = storage.store(tenantId,id,"CREDENTIAL",content,"application/pdf");contentType="application/pdf";
             credential.attachDocument(storedKey, originalName, contentType, sha256(content));
             audit.record(DOCUMENT_ATTACHED,tenantId,CREDENTIAL,id);
             return CredentialDtos.Response.from(credential);
@@ -94,8 +99,13 @@ public class CredentialService {
     }
 
     @Transactional
-    public CredentialDtos.Response issue(UUID tenantId, UUID id) {
+    public CredentialDtos.Response issue(UUID tenantId, UUID id) {return issue(tenantId,id,null);}
+
+    @Transactional
+    public CredentialDtos.Response issue(UUID tenantId, UUID id,String operationKey) {
         Credential credential = findOwnedForUpdate(id, tenantId);
+        if(operationKey!=null&&!operationKey.matches("[A-Za-z0-9_-]{16,100}"))throw new IllegalArgumentException("Clave de idempotencia inválida.");
+        if(operationKey!=null&&operationKey.equals(credential.getIssueOperationKey())&&credential.getStatus()!=CredentialStatus.DRAFT)return CredentialDtos.Response.from(credential);
         if (credential.getStatus() != CredentialStatus.DRAFT) {
             throw new IllegalStateException("Solo una credencial en borrador puede emitirse");
         }
@@ -107,24 +117,34 @@ public class CredentialService {
         if (credential.getDocumentHash() == null) {
             throw new IllegalStateException("Debe adjuntar el documento antes de emitir la credencial");
         }
+        requests.approved(credential);
+        byte[] bytes=checkedDocument(credential);safety.validate(bytes);
+        if(signing.status(tenantId).required()&&credential.getSignedAt()==null)throw new IllegalArgumentException("La institución exige firma digital antes de emitir.");
+        if(credential.getSignedAt()!=null){var check=signing.verify(bytes,credential.getSignerFingerprint());if(!check.cryptographicValid()||!check.coversWholeDocument()||!check.signerMatches()||!check.certificateCurrentlyValid())throw new IllegalArgumentException("La firma del documento no es válida o el certificado está vencido.");}
         String transactionId = blockchain.anchor(tenantId, id, credential.getDocumentHash());
-        credential.issue(code, transactionId);
+        credential.issue(code, transactionId);credential.operationKey(operationKey);requests.fulfilled(credential);
         audit.record(CREDENTIAL_ISSUED,tenantId,CREDENTIAL,id);
         return CredentialDtos.Response.from(credential);
     }
 
     @Transactional
-    public CredentialDtos.Response generateDocument(UUID tenantId, UUID id) {
+    public CredentialDtos.Response generateDocument(UUID tenantId, UUID id) {return generateDocument(tenantId,id,null);}
+
+    @Transactional
+    public CredentialDtos.Response generateDocument(UUID tenantId, UUID id,UUID templateId) {
         Credential credential = findOwnedForUpdate(id, tenantId);
         if (credential.getStatus() != CredentialStatus.DRAFT) {
             throw new IllegalStateException("Solo se puede generar el documento de un borrador");
         }
-        credential.prepareVerificationCode(uniqueVerificationCode());
-        byte[] content = pdfService.generate(credential);
+        requests.approved(credential);
+        if(credential.getSourceRequestId()!=null&&templateId!=null&&!templateId.equals(credential.getTemplateVersionId()))throw new IllegalArgumentException("La plantilla fue fijada en la solicitud aprobada.");
+        if(templateId!=null){templates.require(tenantId,templateId,credential.getCredentialType(),true);credential.selectTemplate(templateId);}
+        if(credential.getVerificationCode()==null)credential.prepareVerificationCode(uniqueVerificationCode());
+        byte[] content = pdfService.generate(credential,credential.getTemplateVersionId()==null?null:templates.require(tenantId,credential.getTemplateVersionId(),credential.getCredentialType(),false),requests.programName(credential),false);safety.validate(content);
         String fileName = credential.getCredentialType().toLowerCase() + "-"
                 + credential.getHolderName().replaceAll("[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+", "-") + ".pdf";
         String objectKey = tenantId + "/" + id + "/generated/" + UUID.randomUUID() + "/" + fileName;
-        storage.store(objectKey, content, "application/pdf");
+        objectKey=storage.store(tenantId,id,"CREDENTIAL",content,"application/pdf");
         credential.attachDocument(objectKey, fileName, "application/pdf", sha256(content));
         audit.record(DOCUMENT_GENERATED,tenantId,CREDENTIAL,id);
         return CredentialDtos.Response.from(credential);
@@ -136,7 +156,7 @@ public class CredentialService {
         if (credential.getDocumentObjectKey() == null) {
             throw new IllegalArgumentException("La credencial no tiene un documento adjunto");
         }
-        return new CredentialDtos.StoredDocument(storage.load(credential.getDocumentObjectKey()),
+        return new CredentialDtos.StoredDocument(checkedDocument(credential),
                 credential.getDocumentContentType(), credential.getDocumentName());
     }
 
@@ -152,7 +172,7 @@ public class CredentialService {
     public CredentialDtos.PublicVerification verify(String code) {
         return credentialRepository.findByVerificationCode(code.trim().toUpperCase())
                 .filter(credential -> credential.getStatus() != CredentialStatus.DRAFT)
-                .map(CredentialDtos.PublicVerification::from)
+                .map(this::publicView)
                 .orElseThrow(() -> new IllegalArgumentException("Credencial no encontrada"));
     }
 
@@ -162,6 +182,7 @@ public class CredentialService {
     }
 
     private Credential findOwnedForUpdate(UUID id, UUID tenantId) {
+        requests.lockOwner(tenantId,id);
         return credentialRepository.findLockedByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Credencial no encontrada"));
     }
@@ -170,17 +191,27 @@ public class CredentialService {
     public List<CredentialDtos.PublicVerification> personalHistory(UUID studentId) {
         return credentialRepository.findAllByStudentAccountIdOrderByCreatedAtDesc(studentId).stream()
             .filter(c -> c.getStatus() != CredentialStatus.DRAFT)
-            .map(CredentialDtos.PublicVerification::from).toList();
+            .map(this::publicView).toList();
     }
 
     private String uniqueVerificationCode() {
         String code;
         do {
-            code = "UAGRM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            code = "CRED-" + UUID.randomUUID().toString().replace("-", "").toUpperCase();
         } while (credentialRepository.existsByVerificationCode(code));
         return code;
     }
 
+    @Transactional
+    public CredentialDtos.Response sign(UUID tenant,UUID id){var c=findOwnedForUpdate(id,tenant);if(c.getStatus()!=CredentialStatus.DRAFT)throw new IllegalArgumentException("Solo se firman borradores.");requests.approved(c);byte[] bytes=checkedDocument(c);safety.validate(bytes);var result=signing.sign(tenant,bytes);safety.validate(result.bytes());String key=storage.store(tenant,id,"CREDENTIAL",result.bytes(),"application/pdf");c.attachDocument(key,c.getDocumentName(),"application/pdf",sha256(result.bytes()));c.signed(result.fingerprint(),result.certificate(),java.time.Instant.now(),result.testOnly());audit.record(CREDENTIAL_SIGNED,tenant,CREDENTIAL,id);return CredentialDtos.Response.from(c);}
+    @Transactional(readOnly=true)
+    public CredentialDtos.StoredDocument personalDocument(UUID student,UUID id){var c=credentialRepository.findById(id).filter(x->x.getStudentAccount()!=null&&x.getStudentAccount().getId().equals(student)&&x.getStatus()!=CredentialStatus.DRAFT).orElseThrow(()->new IllegalArgumentException("Documento no encontrado."));return new CredentialDtos.StoredDocument(checkedDocument(c),"application/pdf",c.getDocumentName());}
+    public record DocumentCheck(boolean hashMatches,bo.edu.uagrm.credenciales.signing.SigningService.Check signature,String registryStatus,String issuerStatus,boolean testSignature){}
+    @Transactional(readOnly=true)
+    public DocumentCheck checkDocument(String code,MultipartFile file){var c=credentialRepository.findByVerificationCode(code.strip().toUpperCase(java.util.Locale.ROOT)).filter(x->x.getStatus()!=CredentialStatus.DRAFT).orElseThrow(()->new IllegalArgumentException("Credencial no encontrada."));try{byte[] bytes=file.getBytes();safety.validate(bytes);return new DocumentCheck(sha256(bytes).equals(c.getDocumentHash()),signing.verify(bytes,c.getSignerFingerprint()),c.getStatus().name(),issuerStatus(c),c.isSignatureTestOnly());}catch(IOException e){throw new IllegalArgumentException("No se pudo leer el documento.");}}
+    private byte[] checkedDocument(Credential c){if(c.getDocumentObjectKey()==null)throw new IllegalArgumentException("Adjunta o genera el PDF primero.");byte[] bytes=storage.load(c.getDocumentObjectKey());if(bytes==null||!sha256(bytes).equals(c.getDocumentHash()))throw new IllegalStateException("La integridad del archivo almacenado no coincide.");return bytes;}
+    private String issuerStatus(Credential c){return governance.findById(c.getTenant().getId()).map(g->g.getStatus().name()).orElse(c.getTenant().isActive()?"ACTIVE":"INACTIVE");}
+    private CredentialDtos.PublicVerification publicView(Credential c){return CredentialDtos.PublicVerification.from(c).withDetails(issuerStatus(c),c.getReplacesId()==null?null:credentialRepository.findById(c.getReplacesId()).map(Credential::getVerificationCode).orElse(null),c.getReplacedById()==null?null:credentialRepository.findById(c.getReplacedById()).map(Credential::getVerificationCode).orElse(null));}
     private String sha256(byte[] value) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
@@ -189,4 +220,3 @@ public class CredentialService {
         }
     }
 }
-

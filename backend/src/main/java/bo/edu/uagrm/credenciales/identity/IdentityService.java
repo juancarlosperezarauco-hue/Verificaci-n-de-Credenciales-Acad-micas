@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class IdentityService {
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.context.ApplicationEventPublisher events;
     private final StudentAccountRepository accounts;
     private final PasswordEncoder passwords;
     private final JwtService jwt;
@@ -59,8 +60,10 @@ public class IdentityService {
         String country = normalizeCountry(request.country());
         String number = normalizeDocument(request.documentNumber());
         ensureIdentityAvailable(id, country, request.documentType(), number);
+        long before=student.getIdentityRevision();
         student.updateProfile(request.fullName().strip(), country, request.documentType(), number,
                 request.dateOfBirth(), request.department().strip());
+        if(student.getIdentityRevision()!=before)events.publishEvent(new bo.edu.uagrm.credenciales.identityreview.EvidenceEvents.ProfileChanged(id,false));
         return IdentityDtos.OwnProfile.from(student);
     }
     @Transactional
@@ -81,6 +84,9 @@ public class IdentityService {
     }
     public StudentAccount require(UUID id) {
         return accounts.findById(id).filter(StudentAccount::isActive).orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado"));
+    }
+    public StudentAccount requireLocked(UUID id) {
+        return accounts.findLockedById(id).filter(StudentAccount::isActive).orElseThrow(() -> new IllegalArgumentException("Estudiante no encontrado"));
     }
     public StudentAccount requireComplete(UUID id) {
         StudentAccount student = require(id);

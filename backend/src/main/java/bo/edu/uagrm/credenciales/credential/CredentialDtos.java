@@ -25,13 +25,13 @@ public final class CredentialDtos {
 
     public record Response(UUID id, UUID studentId, String holderName, String credentialType, String title,
                            CredentialStatus status, String verificationCode, String documentName, String documentHash,
-                           String blockchainTxId, Instant issuedAt, Instant createdAt) {
+                           String blockchainTxId, Instant issuedAt, Instant createdAt,UUID sourceRequestId,UUID templateVersionId,Instant signedAt,boolean testSignature,UUID replacesId,UUID replacedById) {
         static Response from(Credential c) {
             return new Response(c.getId(), c.getStudentAccount() != null ? c.getStudentAccount().getId()
                     : c.getStudent() == null ? null : c.getStudent().getId(),
                     c.getHolderName(), c.getCredentialType(), c.getTitle(),
                     c.getStatus(), c.getVerificationCode(), c.getDocumentName(), c.getDocumentHash(), c.getBlockchainTxId(),
-                    c.getIssuedAt(), c.getCreatedAt());
+                    c.getIssuedAt(), c.getCreatedAt(),c.getSourceRequestId(),c.getTemplateVersionId(),c.getSignedAt(),c.isSignatureTestOnly(),c.getReplacesId(),c.getReplacedById());
         }
     }
 
@@ -39,7 +39,7 @@ public final class CredentialDtos {
                                      String primaryColor, String secondaryColor, String holderName, String credentialType,
                                      String title, CredentialStatus status, String verificationCode,
                                      String documentHash, Instant issuedAt, Instant revokedAt,
-                                     String revocationReason) {
+                                     String revocationReason,UUID credentialId,String documentName,String issuerStatus,String integrityStatus,String signatureStatus,boolean testSignature,Instant signedAt,String replacesCode,String replacedByCode) {
         static PublicVerification from(Credential c) {
             String logoUrl = c.getTenant().getLogoObjectKey() == null ? null
                     : "/api/public/institutions/" + c.getTenant().getId() + "/logo?v="
@@ -48,10 +48,10 @@ public final class CredentialDtos {
                     logoUrl, c.getTenant().getPrimaryColor(), c.getTenant().getSecondaryColor(),
                     c.getHolderName(), c.getCredentialType(),
                     c.getTitle(), c.getStatus(), c.getVerificationCode(), c.getDocumentHash(),
-                    c.getIssuedAt(), c.getRevokedAt(), c.getRevocationReason());
+                    c.getIssuedAt(), c.getRevokedAt(), c.getRevocationReason(),c.getId(),c.getDocumentName(),c.getTenant().isActive()?"ACTIVE":"INACTIVE","NOT_CHECKED",c.getSignedAt()==null?"UNSIGNED":"REGISTERED",c.isSignatureTestOnly(),c.getSignedAt(),null,null);
         }
+        PublicVerification withDetails(String issuer,String replaces,String replacedBy){return new PublicVerification(organization,institutionType,institutionLogoUrl,primaryColor,secondaryColor,holderName,credentialType,title,status,verificationCode,documentHash,issuedAt,revokedAt,revocationReason,credentialId,documentName,issuer,integrityStatus,signatureStatus,testSignature,signedAt,replaces,replacedBy);}
     }
 
     public record StoredDocument(byte[] content, String contentType, String name) {}
 }
-

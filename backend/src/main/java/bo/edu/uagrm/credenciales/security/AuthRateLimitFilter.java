@@ -16,6 +16,10 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     public AuthRateLimitFilter(AuthRateLimiter limiter,ObjectMapper json){this.limiter=limiter;this.json=json;}
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain)throws IOException,ServletException {
         String path=request.getRequestURI().substring(request.getContextPath().length());
+        if(path.startsWith("/api/public/credentials/")&&limiter.enabled()){
+            var budget=limiter.take("public-document:"+request.getMethod(),request.getRemoteAddr(),request.getMethod().equals("POST")?10:60,request.getMethod().equals("POST")?300:60);
+            if(!budget.allowed()){deny(response,budget.retryAfter());return;}chain.doFilter(request,response);return;
+        }
         if(path.equals("/api/me/identity-verifications")&&request.getMethod().equals("POST")&&limiter.enabled()){
             var authentication=SecurityContextHolder.getContext().getAuthentication();
             if(authentication!=null&&authentication.getPrincipal() instanceof UserPrincipal p&&p.role()==bo.edu.uagrm.credenciales.user.UserRole.STUDENT){
@@ -28,10 +32,14 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             chain.doFilter(request,response);return;
         }
         boolean reset=path.equals("/api/auth/student/password-reset/request");
+        if(limiter.enabled()&&request.getMethod().equals("POST")&&request.getContentType()!=null&&request.getContentType().startsWith("multipart/")){
+            var authentication=SecurityContextHolder.getContext().getAuthentication();String owner=authentication!=null&&authentication.getPrincipal() instanceof UserPrincipal p?p.userId().toString():request.getRemoteAddr();
+            var budget=limiter.take("private-upload",owner,20,3600);if(!budget.allowed()){deny(response,budget.retryAfter());return;}chain.doFilter(request,response);return;
+        }
         boolean sensitive=LOGIN.contains(path)||REGISTER.contains(path)||path.startsWith("/api/auth/mfa/")
                 ||path.startsWith("/api/security/mfa")||path.startsWith("/api/auth/student/password-reset/")
                 ||path.equals("/api/auth/student/verify-email")||path.equals("/api/auth/student/email-change/confirm")
-                ||path.startsWith("/api/platform/security/")||path.startsWith("/api/me/security/");
+                ||path.startsWith("/api/platform/security/")||path.startsWith("/api/me/security/")||path.startsWith("/api/institution/signing-key")||path.startsWith("/api/platform/storage/")||path.startsWith("/api/platform/identity-disputes/")||path.startsWith("/api/me/credential-requests")||path.startsWith("/api/me/credentials/");
         if(!limiter.enabled()||!Set.of("POST","DELETE").contains(request.getMethod())||!sensitive){chain.doFilter(request,response);return;}
         var ip=limiter.take("ip",request.getRemoteAddr(),120,60);
         if(!ip.allowed()){deny(response,ip.retryAfter());return;}

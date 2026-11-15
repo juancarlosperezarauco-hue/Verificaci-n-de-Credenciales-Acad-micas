@@ -118,6 +118,7 @@ public class StudentSecurityService {
         StudentAccount account=lockAccount(id);
         requirePassword(account, currentPassword);
         account.deactivate();
+        events.publishEvent(new bo.edu.uagrm.credenciales.identityreview.EvidenceEvents.ProfileChanged(id,true));
         invalidateAll(id);
         consents.revokeAllByStudent(id, Instant.now());
         audit.record(ACCOUNT_DEACTIVATED,null,ACCOUNT,id);
