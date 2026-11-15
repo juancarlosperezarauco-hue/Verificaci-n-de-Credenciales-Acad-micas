@@ -30,12 +30,15 @@ public class StudentSecurityService {
     private final ApplicationEventPublisher events;
     private final ConsentRepository consents;
     private final String frontendUrl;
+    private final bo.edu.uagrm.credenciales.security.SessionRegistry sessions;
 
     public StudentSecurityService(StudentAccountRepository accounts, StudentAccountTokenRepository tokens,
                                   PasswordEncoder passwords, ApplicationEventPublisher events, ConsentRepository consents,
-                                  @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl) {
+                                  @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl,
+                                  bo.edu.uagrm.credenciales.security.SessionRegistry sessions) {
         this.accounts=accounts; this.tokens=tokens; this.passwords=passwords;
         this.events=events; this.consents=consents; this.frontendUrl=frontendUrl.replaceAll("/+$", "");
+        this.sessions=sessions;
     }
 
     @Transactional(readOnly=true)
@@ -132,6 +135,7 @@ public class StudentSecurityService {
     }
 
     private void invalidateAll(UUID id) {
+        sessions.revokeStudent(id);
         for (var type:StudentTokenType.values()) tokens.invalidate(id, type, Instant.now());
     }
 

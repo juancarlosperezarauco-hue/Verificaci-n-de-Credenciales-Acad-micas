@@ -13,9 +13,15 @@ import org.springframework.stereotype.Service;
 public class JwtService {
     private final Algorithm algorithm;
     private final long expirationMinutes;
+    private final SessionRegistry sessions;
 
     public JwtService(@Value("${app.security.jwt-secret}") String secret,
                       @Value("${app.security.jwt-expiration-minutes}") long expirationMinutes) {
+        this(secret,expirationMinutes,null);
+    }
+    @org.springframework.beans.factory.annotation.Autowired
+    public JwtService(@Value("${app.security.jwt-secret}") String secret,
+                      @Value("${app.security.jwt-expiration-minutes}") long expirationMinutes,SessionRegistry sessions) {
         if (secret == null || secret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32
                 || java.util.Set.of("change-this-development-secret-with-at-least-32-characters",
                     "replace-with-a-random-secret-of-at-least-32-characters").contains(secret)) {
@@ -23,11 +29,16 @@ public class JwtService {
         }
         this.algorithm = Algorithm.HMAC256(secret);
         this.expirationMinutes = expirationMinutes;
+        this.sessions=sessions;
     }
 
     public String create(UserPrincipal principal) {
         Instant now = Instant.now();
+        Instant expires=now.plus(expirationMinutes,ChronoUnit.MINUTES);
+        if(sessions==null)throw new IllegalStateException("Se requiere el registro de sesiones");
+        UUID session=sessions.open(principal,expires);
         return JWT.create()
+                .withJWTId(session.toString())
                 .withIssuer("uagrm-credentials")
                 .withSubject(principal.userId().toString())
                 .withClaim("tenantId", principal.tenantId() == null ? null : principal.tenantId().toString())
@@ -36,7 +47,7 @@ public class JwtService {
                 .withClaim("accountType", principal.role() == bo.edu.uagrm.credenciales.user.UserRole.STUDENT ? "STUDENT" : "USER")
                 .withClaim("securityVersion", principal.securityVersion())
                 .withIssuedAt(now)
-                .withExpiresAt(now.plus(expirationMinutes, ChronoUnit.MINUTES))
+                .withExpiresAt(expires)
                 .sign(algorithm);
     }
 
@@ -46,9 +57,10 @@ public class JwtService {
                 jwt.getClaim("tenantId").asString() == null ? null : UUID.fromString(jwt.getClaim("tenantId").asString()),
                 "USER".equals(jwt.getClaim("accountType").asString()),
                 jwt.getClaim("securityVersion").isMissing() || jwt.getClaim("securityVersion").isNull()
-                        ? 0 : jwt.getClaim("securityVersion").asLong());
+                        ? 0 : jwt.getClaim("securityVersion").asLong(),
+                jwt.getId()==null?null:UUID.fromString(jwt.getId()));
     }
 
-    public record JwtIdentity(UUID userId, UUID tenantId, boolean userAccount, long securityVersion) {}
+    public record JwtIdentity(UUID userId, UUID tenantId, boolean userAccount, long securityVersion,UUID sessionId) {}
 }
 

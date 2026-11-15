@@ -31,6 +31,7 @@ public class OnboardingAccessFilter extends OncePerRequestFilter {
     }
 
     private boolean allowed(String method, String path) {
+        if(path.equals("/api/security/sessions")||path.startsWith("/api/security/sessions/")||path.equals("/api/security/mfa")||path.startsWith("/api/security/mfa/"))return true;
         if (path.startsWith("/api/auth/")) return true;
         if (method.equals("GET") && (path.startsWith("/api/public/") || path.equals("/actuator/health"))) return true;
         return switch (method) {

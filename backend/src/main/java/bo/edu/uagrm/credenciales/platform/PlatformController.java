@@ -11,16 +11,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 @RestController
 public class PlatformController {
- private final PlatformService service;private final AppUserRepository users;private final PasswordEncoder encoder;private final JwtService jwt;
- public PlatformController(PlatformService service,AppUserRepository users,PasswordEncoder encoder,JwtService jwt){this.service=service;this.users=users;this.encoder=encoder;this.jwt=jwt;}
+ private final PlatformService service;private final AppUserRepository users;private final PasswordEncoder encoder;private final MfaService mfa;
+ public PlatformController(PlatformService service,AppUserRepository users,PasswordEncoder encoder,MfaService mfa){this.service=service;this.users=users;this.encoder=encoder;this.mfa=mfa;}
  public record Login(@NotBlank @Email String email,@NotBlank String password){}
  public record StatusChange(@NotNull OrganizationStatus status,@NotBlank @Size(max=500) String reason){}
  @PostMapping("/api/auth/platform/login")
- public Map<String,Object> login(@Valid @RequestBody Login req){
+ public bo.edu.uagrm.credenciales.auth.AuthDtos.LoginResult login(@Valid @RequestBody Login req){
   var user=users.findByTenantIsNullAndEmail(req.email().trim().toLowerCase(Locale.ROOT)).filter(u->u.getRole()==UserRole.SUPER_ADMIN&&u.isActive())
     .orElseThrow(()->new BadCredentialsException("Credenciales inválidas"));
   if(!encoder.matches(req.password(),user.getPasswordHash()))throw new BadCredentialsException("Credenciales inválidas");
-  return Map.of("token",jwt.create(UserPrincipal.from(user)),"tokenType","Bearer","role","SUPER_ADMIN","email",user.getEmail());
+  return mfa.beginLogin(user,UserPrincipal.from(user));
  }
  @GetMapping("/api/platform/organizations") @PreAuthorize("hasRole('SUPER_ADMIN')")
  public List<PlatformService.Organization> list(){return service.list();}

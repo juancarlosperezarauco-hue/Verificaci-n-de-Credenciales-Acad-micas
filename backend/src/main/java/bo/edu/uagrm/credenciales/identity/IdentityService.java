@@ -42,7 +42,7 @@ public class IdentityService {
         security.onRegistered(account.getId());
         return session(account);
     }
-    @Transactional(readOnly=true)
+    @Transactional
     public AuthDtos.AuthResponse login(IdentityDtos.Login r) {
         StudentAccount s=accounts.findByEmail(r.email().strip().toLowerCase(Locale.ROOT))
             .filter(StudentAccount::isActive)

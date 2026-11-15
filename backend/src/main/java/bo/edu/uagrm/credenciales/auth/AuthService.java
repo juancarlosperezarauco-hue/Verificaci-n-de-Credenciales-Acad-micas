@@ -21,17 +21,20 @@ public class AuthService {
     private final JwtService jwtService;
     private final bo.edu.uagrm.credenciales.rbac.AccessService access;
     private final bo.edu.uagrm.credenciales.platform.GovernanceRepository governance;
+    private final bo.edu.uagrm.credenciales.security.MfaService mfa;
 
     public AuthService(TenantRepository tenantRepository, AppUserRepository userRepository,
                        PasswordEncoder passwordEncoder, JwtService jwtService,
                        bo.edu.uagrm.credenciales.rbac.AccessService access,
-                       bo.edu.uagrm.credenciales.platform.GovernanceRepository governance) {
+                       bo.edu.uagrm.credenciales.platform.GovernanceRepository governance,
+                       bo.edu.uagrm.credenciales.security.MfaService mfa) {
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.access = access;
         this.governance = governance;
+        this.mfa=mfa;
     }
 
     @Transactional
@@ -50,8 +53,8 @@ public class AuthService {
         return response(user);
     }
 
-    @Transactional(readOnly = true)
-    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
+    @Transactional
+    public AuthDtos.LoginResult login(AuthDtos.LoginRequest request) {
         Tenant tenant = tenantRepository.findBySlug(normalizeSlug(request.organizationSlug()))
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
         AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().trim().toLowerCase(Locale.ROOT))
@@ -60,7 +63,7 @@ public class AuthService {
         if (!access.principal(user).enabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
-        return response(user);
+        return mfa.beginLogin(user,access.principal(user));
     }
 
     private AuthDtos.AuthResponse response(AppUser user) {

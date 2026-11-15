@@ -47,6 +47,8 @@ app:
   frontend-url: ${APP_FRONTEND_URL:${ALLOWED_ORIGIN:http://localhost:4200}}
   security:
     jwt-secret: ${JWT_SECRET}
+    mfa-encryption-key: ${MFA_ENCRYPTION_KEY}
+    rate-limit-enabled: ${AUTH_RATE_LIMIT_ENABLED:true}
     jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     allowed-origin: ${ALLOWED_ORIGIN:http://localhost:4200}
   storage:

@@ -18,7 +18,17 @@ public record UserPrincipal(
         boolean enabled,
         java.util.Set<String> permissions,
         boolean onboarding,
-        long securityVersion) implements UserDetails {
+        long securityVersion,
+        UUID sessionId,
+        boolean mfaVerified) implements UserDetails {
+
+    public UserPrincipal(UUID userId,UUID tenantId,String email,String password,UserRole role,boolean enabled,
+                         java.util.Set<String> permissions,boolean onboarding,long securityVersion) {
+        this(userId,tenantId,email,password,role,enabled,permissions,onboarding,securityVersion,null,false);
+    }
+    public UserPrincipal withSession(UUID sessionId,boolean mfaVerified) {
+        return new UserPrincipal(userId,tenantId,email,password,role,enabled,permissions,onboarding,securityVersion,sessionId,mfaVerified);
+    }
 
     public UserPrincipal(UUID userId, UUID tenantId, String email, String password, UserRole role, boolean enabled,
                          java.util.Set<String> permissions) {

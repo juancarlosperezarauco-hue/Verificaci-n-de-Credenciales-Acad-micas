@@ -12,6 +12,8 @@ app:
   security:
     jwt-secret: test-secret-that-is-long-enough-for-unit-testing-only
     jwt-expiration-minutes: 60
+    mfa-encryption-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    rate-limit-enabled: false
     allowed-origin: http://localhost:4200
   storage:
     endpoint: http://localhost:9000

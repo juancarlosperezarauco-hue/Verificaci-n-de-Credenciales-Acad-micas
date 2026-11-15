@@ -18,9 +18,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
+@org.springframework.scheduling.annotation.EnableScheduling
 public class SecurityConfig {
+    @Bean java.time.Clock securityClock(){return java.time.Clock.systemUTC();}
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,AuthRateLimiter rateLimiter,
+                                           com.fasterxml.jackson.databind.ObjectMapper json) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
@@ -34,6 +37,7 @@ public class SecurityConfig {
                             .hasAnyRole("ADMIN", "TENANT_ADMIN", "CUSTOM", "ISSUER", "AUDITOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new AuthRateLimitFilter(rateLimiter,json), JwtAuthenticationFilter.class)
                 .addFilterAfter(new OnboardingAccessFilter(), JwtAuthenticationFilter.class)
                 .build();
     }
