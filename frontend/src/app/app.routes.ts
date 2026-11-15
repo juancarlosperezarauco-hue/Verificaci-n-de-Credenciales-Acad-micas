@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { studentGuard, permissionGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {path:'student/identity',canActivate:[studentGuard],loadComponent:()=>import('./features/identity-review/student-identity.page').then(m=>m.StudentIdentityPage)},
+  {path:'organization/identity',canActivate:[permissionGuard],data:{permission:'IDENTITY_REVIEW'},loadComponent:()=>import('./features/identity-review/institution-identity.page').then(m=>m.InstitutionIdentityPage)},
   {path:'superadmin/security',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/account-security/maintenance.page').then(m=>m.MaintenancePage)},
   {path:'organization/audit',canActivate:[permissionGuard],data:{permission:'AUDIT_VIEW'},loadComponent:()=>import('./features/audit/audit.page').then(m=>m.AuditPage)},
   {path:'superadmin/audit',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN'],global:true},loadComponent:()=>import('./features/audit/audit.page').then(m=>m.AuditPage)},

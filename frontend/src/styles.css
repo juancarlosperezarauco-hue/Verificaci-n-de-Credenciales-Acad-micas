@@ -39,8 +39,8 @@ button { cursor: pointer; }
   .org-success { @apply rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800; }
   .org-info { @apply rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800; }
   .org-badge { @apply inline-flex whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600; }
-  .org-badge[data-status="ACTIVE"] { @apply bg-emerald-50 text-emerald-800; }
-  .org-badge[data-status="PENDING_REVIEW"], .org-badge[data-status="OBSERVED"] { @apply bg-amber-50 text-amber-800; }
+  .org-badge[data-status="ACTIVE"], .org-badge[data-status="VERIFIED"] { @apply bg-emerald-50 text-emerald-800; }
+  .org-badge[data-status="PENDING_REVIEW"], .org-badge[data-status="PENDING"], .org-badge[data-status="OBSERVED"] { @apply bg-amber-50 text-amber-800; }
   .org-badge[data-status="SUSPENDED"], .org-badge[data-status="REJECTED"] { @apply bg-red-50 text-red-800; }
   .org-table { @apply w-full text-left text-sm; }
   .org-table th { @apply border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500; }
