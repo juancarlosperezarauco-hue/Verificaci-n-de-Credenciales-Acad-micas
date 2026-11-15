@@ -30,6 +30,7 @@ import { AccountSecurityApi } from './core/account-security.api';
                 <a routerLink="/superadmin/organizations" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organizaciones</a>
                 <a routerLink="/superadmin/audit" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Auditoría</a>
                 <a routerLink="/superadmin/mail" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Correos</a>
+                <a routerLink="/superadmin/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mantenimiento</a>
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else {
                 @if(access.can('ORGANIZATION_VIEW')&&!access.access()?.onboarding){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}

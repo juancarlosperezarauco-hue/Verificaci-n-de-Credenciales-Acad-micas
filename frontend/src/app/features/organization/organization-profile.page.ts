@@ -17,7 +17,7 @@ import { STATUS_LABELS, OrganizationSummary } from './organization.models';
  @if(organization()?.status==='OBSERVED'){<button type="button" class="org-primary" [disabled]="reviewing()||form.dirty||form.invalid" (click)="submitReview()">Enviar correcciones a revisión</button>}</div>
  @if(organization()?.status==='OBSERVED'&&form.dirty){<p class="mt-3 text-sm">Guarda los cambios antes de reenviar la solicitud.</p>}</section>}
  @if(loading()){<p role="status" class="org-card mt-6">Cargando organización…</p>}
- @if(missing()){<p class="org-info mt-6">Tu organización aún no completó sus datos legales. Completa el formulario para registrarlos.</p>}
+ @if(missing()){<p class="org-info mt-6">Tu organización aún no completó sus datos legales. Recuperamos el nombre y el tipo de institución; completa los campos restantes y guarda el formulario.</p>}
  @if(error()){<p class="org-error mt-6" role="alert">{{error()}} <button class="org-link" (click)="load()">Reintentar</button></p>}
  @if(!loading() && !failed()){
  <form [formGroup]="form" (ngSubmit)="save()" class="mt-6"><fieldset [disabled]="!api.can('ORGANIZATION_UPDATE')||saving()">
@@ -29,15 +29,16 @@ import { STATUS_LABELS, OrganizationSummary } from './organization.models';
  </form>}
  </section>`})
 export class OrganizationProfilePage {
- readonly api=inject(OrganizationApi);readonly sections=DETAIL_SECTIONS;readonly labels=STATUS_LABELS;readonly form=buildDetailsForm();
+ readonly api=inject(OrganizationApi);readonly sections=DETAIL_SECTIONS.map(section=>({...section,fields:section.fields.map(field=>field.key==='representativeEmail'?{...field,label:'Correo del representante',hint:'Contacto institucional; no cambia el correo de acceso de la cuenta.'}:field)}));readonly labels=STATUS_LABELS;readonly form=buildDetailsForm();
  readonly loading=signal(true);readonly saving=signal(false);readonly missing=signal(false);readonly failed=signal(false);readonly error=signal('');readonly notice=signal('');
  readonly organization=signal<OrganizationSummary|null>(null);readonly reviewing=signal(false);
  isAdmin(){return !this.api.access()?.onboarding&&['TENANT_ADMIN','ADMIN'].includes(this.api.access()?.role??'');}
  constructor(){this.load();}
  load(){this.loading.set(true);this.error.set('');this.failed.set(false);this.missing.set(false);
- this.api.myOrganization().subscribe({next:o=>this.organization.set(o),error:e=>this.error.set(requestError(e))});
+ this.api.myOrganization().subscribe({next:o=>{this.organization.set(o);if(this.missing())this.prefillKnown();},error:e=>this.error.set(requestError(e))});
  this.api.details().pipe(finalize(()=>this.loading.set(false))).subscribe({next:d=>fillDetails(this.form,d),error:e=>{
- if(e instanceof HttpErrorResponse && e.status===404){this.missing.set(true);}else{this.error.set(requestError(e));this.failed.set(true);}}});}
+ if(e instanceof HttpErrorResponse && e.status===404){this.missing.set(true);this.prefillKnown();}else{this.error.set(requestError(e));this.failed.set(true);}}});}
+ private prefillKnown(){const org=this.organization();if(!org)return;if(!this.form.controls['legalName'].dirty)this.form.controls['legalName'].setValue(org.name);if(!this.form.controls['institutionType'].dirty)this.form.controls['institutionType'].setValue(org.institutionType);}
  save(){this.form.markAllAsTouched();if(this.form.invalid||this.saving())return;this.saving.set(true);this.error.set('');this.notice.set('');
  this.api.saveDetails(toDetails(this.form)).pipe(finalize(()=>this.saving.set(false))).subscribe({
  next:d=>{fillDetails(this.form,d);this.form.markAsPristine();this.notice.set('Datos institucionales guardados.');this.api.myOrganization().subscribe(o=>this.organization.set(o));},error:e=>this.error.set(requestError(e))});}
