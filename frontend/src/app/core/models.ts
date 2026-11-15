@@ -55,9 +55,24 @@ export interface Credential {
   blockchainTxId?: string;
   issuedAt?: string;
   createdAt: string;
+  sourceRequestId?:string|null;
+  templateVersionId?:string|null;
+  signedAt?:string|null;
+  testSignature?:boolean;
+  replacesId?:string|null;
+  replacedById?:string|null;
 }
 
 export interface PublicCredential {
+  credentialId?:string;
+  documentName?:string;
+  issuerStatus?:string;
+  integrityStatus?:string;
+  signatureStatus?:string;
+  testSignature?:boolean;
+  signedAt?:string|null;
+  replacesCode?:string|null;
+  replacedByCode?:string|null;
   organization: string;
   institutionType: InstitutionType;
   institutionLogoUrl?: string;

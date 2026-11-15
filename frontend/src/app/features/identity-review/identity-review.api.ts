@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 export type ReviewStatus='PENDING'|'VERIFIED'|'REJECTED';
 export type ImagePart='FRONT'|'BACK'|'PHOTO';
 export interface IdentitySnapshot{fullName:string;country:string;documentType:string;documentNumber:string;dateOfBirth:string;department:string;}
-export interface IdentityReview{id:string;studentId:string;tenantId:string;institutionName:string;status:ReviewStatus;effectiveStatus:ReviewStatus|'UNVERIFIED';profile:IdentitySnapshot;profileChanged:boolean;sharingActive:boolean;photoPresent:boolean;submittedAt:string;reviewedAt:string|null;withdrawnAt:string|null;reason:string|null;}
+export interface IdentityReview{id:string;studentId:string;tenantId:string;institutionName:string;status:ReviewStatus;effectiveStatus:ReviewStatus|'UNVERIFIED';profile:IdentitySnapshot;profileChanged:boolean;sharingActive:boolean;photoPresent:boolean;submittedAt:string;reviewedAt:string|null;withdrawnAt:string|null;reason:string|null;documentsAvailable?:boolean;}
 export interface IdentityState{profileComplete:boolean;emailVerified:boolean;institutions:{id:string;name:string;slug:string}[];submissions:IdentityReview[];}
 export interface ReviewPage{items:IdentityReview[];total:number;page:number;size:number;}
 export const REVIEW_LABELS:Record<string,string>={UNVERIFIED:'Sin verificar',PENDING:'En revisión',VERIFIED:'Verificado',REJECTED:'Rechazado'};

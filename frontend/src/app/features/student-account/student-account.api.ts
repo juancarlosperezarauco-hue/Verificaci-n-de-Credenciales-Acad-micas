@@ -16,6 +16,7 @@ export class StudentAccountApi {
   updateProfile(body:StudentProfileUpdate){return this.http.patch<IdentityProfile>('/api/me/profile',body);}
   rotateSearchCode(){return this.http.post<IdentityProfile>('/api/me/search-code/rotate',{});}
   history(){return this.http.get<PublicCredential[]>('/api/me/credentials');}
+  document(id:string){return this.http.get('/api/me/credentials/'+id+'/document',{responseType:'blob'});}
   consents(){return this.http.get<Consent[]>('/api/me/consents');}
   generate(institutionSlug:string){return this.http.post<GeneratedConsent>('/api/me/consents',{institutionSlug});}
   revoke(id:string){return this.http.delete<void>('/api/me/consents/'+id);}

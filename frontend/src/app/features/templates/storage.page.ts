@@ -1,0 +1,21 @@
+import { Component, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import { cycleError } from '../academic/academic.api';
+interface Status{encryptionConfigured:boolean;keyId:string;evidenceRetentionDays:number;scheduled:boolean;objects:number;removed:number;requested:number;awaitingReencryption:number;}
+@Component({template:`
+ <section class="org-page"><p class="org-eyebrow">Administración global</p><h1 class="org-title">Archivos y conservación</h1>
+ <p class="org-description">La política retira evidencia que ya no está vigente tras el plazo configurado. Los expedientes y certificados permanecen. Cada operación procesa un lote limitado y queda auditada.</p>
+ @if(error()){<p role="alert" class="org-error mt-5">{{error()}}</p>}@if(notice()){<p role="status" class="org-success mt-5">{{notice()}}</p>}
+ @if(status();as s){<dl class="org-card mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"><div><dt>Cifrado de archivos nuevos</dt><dd class="font-bold">{{s.encryptionConfigured?'Configurado':'Falta configurar la clave'}}</dd></div><div><dt>Identificador de clave activa</dt><dd class="font-mono">{{s.keyId}}</dd></div><div><dt>Conservación de evidencia retirada</dt><dd class="font-bold">{{s.evidenceRetentionDays}} días</dd></div><div><dt>Limpieza programada</dt><dd>{{s.scheduled?'Activada':'Desactivada'}}</dd></div><div><dt>Objetos registrados / eliminados</dt><dd>{{s.objects}} / {{s.removed}}</dd></div><div><dt>Solicitudes de eliminación</dt><dd>{{s.requested}}</dd></div><div><dt>Pendientes de recifrar</dt><dd>{{s.awaitingReencryption}}</dd></div></dl>}
+ <div class="org-card mt-6"><h2 class="org-section-title">Mantenimiento manual</h2><p class="mt-3 text-sm text-slate-600">Primero retira las referencias de evidencia vencida; luego elimina los objetos sin referencias. La limpieza comprueba otra vez que ningún documento esté en uso. Conserva copias de seguridad de datos y claves antes de cambiar la política.</p>
+ <div class="mt-5 flex flex-wrap gap-3"><button class="org-secondary" [disabled]="busy()" (click)="load()">Actualizar</button><button class="org-secondary" [disabled]="busy()" (click)="ask('retire-evidence')">Retirar evidencia vencida</button><button class="org-secondary" [disabled]="busy()" (click)="ask('cleanup')">Limpiar objetos sin uso</button><button class="org-secondary" [disabled]="busy()||!status()?.encryptionConfigured" (click)="ask('re-encrypt')">Recifrar con clave activa</button></div>
+ @if(pending()){<div class="org-info mt-5"><p>{{confirmation()}}</p><div class="mt-4 flex gap-3"><button class="org-secondary" [disabled]="busy()" (click)="pending.set('')">Cancelar</button><button class="org-primary" [disabled]="busy()" (click)="run()">{{busy()?'Procesando…':'Confirmar operación'}}</button></div></div>}</div></section>`})
+export class StoragePage{
+ private readonly http=inject(HttpClient);readonly status=signal<Status|null>(null);readonly error=signal('');readonly notice=signal('');readonly busy=signal(false);readonly pending=signal('');
+ constructor(){this.load();}
+ load(){this.http.get<Status>('/api/platform/storage/maintenance').subscribe({next:s=>this.status.set(s),error:e=>this.error.set(cycleError(e))});}
+ ask(action:string){this.pending.set(action);this.error.set('');this.notice.set('');}
+ confirmation(){return this.pending()==='retire-evidence'?'Se retirarán las imágenes de evidencia vencida. La operación no se puede deshacer desde el sistema. ¿Continuar?':this.pending()==='cleanup'?'Se borrarán físicamente hasta 50 objetos registrados que no tengan referencias. ¿Continuar?':'Se recifrarán hasta 50 objetos con la clave activa. Las claves anteriores deben seguir configuradas durante la rotación. ¿Continuar?';}
+ run(){const action=this.pending();if(!action||this.busy())return;this.busy.set(true);this.http.post<Record<string,number>>('/api/platform/storage/maintenance/'+action,{}).pipe(finalize(()=>this.busy.set(false))).subscribe({next:r=>{this.pending.set('');this.notice.set(action==='cleanup'?'Eliminados: '+r['removed']+'. Fallos pendientes de reintento: '+r['failures']+'.':action==='retire-evidence'?'Casos con evidencia retirada: '+r['retired']+'.':'Objetos recifrados: '+r['reencrypted']+'.');this.load();},error:e=>this.error.set(cycleError(e))});}
+}

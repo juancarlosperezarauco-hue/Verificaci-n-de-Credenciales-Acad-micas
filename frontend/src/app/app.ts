@@ -44,7 +44,7 @@ export class App {
   private readonly security=inject(AccountSecurityApi);
   private readonly router = inject(Router);
   readonly isLanding = signal(this.lightSurface(this.router.url));
-  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied|account)(\/|$|\?)/.test(url)||/^\/student\/(identity|security|recover|confirm-email)(\/|$|\?)/.test(url);}
+  private lightSurface(url:string){return url==='/'||/^\/(verify|credentials|register|org|organization|superadmin|login|access-denied|account)(\/|$|\?)/.test(url)||/^\/student\/(academic|requests|identity-center|identity|security|recover|confirm-email)(\/|$|\?)/.test(url);}
 
   constructor() {
     this.router.events.subscribe((event) => {

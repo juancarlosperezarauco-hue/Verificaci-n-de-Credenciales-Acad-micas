@@ -22,4 +22,5 @@ export const PERMISSION_LABELS: Record<string, string> = {
  STUDENT_VIEW: 'Consultar estudiantes', STUDENT_LINK: 'Vincular estudiantes',
  CREDENTIAL_VIEW: 'Consultar credenciales', CREDENTIAL_CREATE: 'Crear credenciales', CREDENTIAL_ISSUE: 'Emitir credenciales',
  CREDENTIAL_REVOKE: 'Revocar credenciales', IDENTITY_REVIEW: 'Revisar identidad', REPORT_VIEW: 'Consultar reportes', AUDIT_VIEW: 'Consultar auditoría'
+ ,ACADEMIC_VIEW:'Consultar expedientes académicos',ACADEMIC_MANAGE:'Administrar programas y matrículas',REQUEST_VIEW:'Consultar solicitudes',REQUEST_REVIEW:'Revisar solicitudes',REQUEST_APPROVE:'Aprobar solicitudes',TEMPLATE_VIEW:'Consultar plantillas',TEMPLATE_MANAGE:'Crear versiones de plantillas',SIGNING_MANAGE:'Configurar firma institucional',CREDENTIAL_SIGN:'Firmar documentos'
 };

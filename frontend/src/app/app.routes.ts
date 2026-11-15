@@ -2,6 +2,15 @@ import { Routes } from '@angular/router';
 import { studentGuard, permissionGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {path:'student/identity-center',canActivate:[studentGuard],loadComponent:()=>import('./features/identity-review/identity-center.page').then(m=>m.IdentityCenterPage)},
+  {path:'superadmin/identity-disputes',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/identity-review/disputes.page').then(m=>m.DisputesPage)},
+  {path:'superadmin/storage',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/templates/storage.page').then(m=>m.StoragePage)},
+  {path:'organization/academic',canActivate:[permissionGuard],data:{permission:'ACADEMIC_VIEW'},loadComponent:()=>import('./features/academic/academic.page').then(m=>m.AcademicPage)},
+  {path:'student/academic',canActivate:[studentGuard],loadComponent:()=>import('./features/academic/student-academic.page').then(m=>m.StudentAcademicPage)},
+  {path:'student/requests',canActivate:[studentGuard],loadComponent:()=>import('./features/workflow/requests.page').then(m=>m.RequestsPage)},
+  {path:'organization/requests',canActivate:[permissionGuard],data:{permission:'REQUEST_VIEW'},loadComponent:()=>import('./features/workflow/requests.page').then(m=>m.RequestsPage)},
+  {path:'organization/templates',canActivate:[permissionGuard],data:{permission:'TEMPLATE_VIEW'},loadComponent:()=>import('./features/templates/templates.page').then(m=>m.TemplatesPage)},
+  {path:'organization/signing',canActivate:[permissionGuard],data:{permission:'SIGNING_MANAGE'},loadComponent:()=>import('./features/templates/signing.page').then(m=>m.SigningPage)},
   {path:'student/identity',canActivate:[studentGuard],loadComponent:()=>import('./features/identity-review/student-identity.page').then(m=>m.StudentIdentityPage)},
   {path:'organization/identity',canActivate:[permissionGuard],data:{permission:'IDENTITY_REVIEW'},loadComponent:()=>import('./features/identity-review/institution-identity.page').then(m=>m.InstitutionIdentityPage)},
   {path:'superadmin/security',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/account-security/maintenance.page').then(m=>m.MaintenancePage)},

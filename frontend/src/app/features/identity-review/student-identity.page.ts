@@ -38,7 +38,7 @@ import { IdentityPreviewComponent } from './identity-preview.component';
     @if(!item.sharingActive){<p class="mt-4 text-sm text-slate-600">La institución ya no tiene acceso a este envío.</p>}
     @if(item.reason){<p class="mt-4 whitespace-pre-wrap rounded-xl bg-red-50 p-4 text-sm text-red-800"><strong>Motivo de rechazo:</strong> {{item.reason}}</p>}
     @if(item.reviewedAt){<p class="mt-3 text-sm text-slate-500">Revisado el {{item.reviewedAt|date:'dd/MM/yyyy HH:mm'}}</p>}
-    <div class="mt-5 flex flex-wrap gap-3"><button type="button" class="org-secondary" (click)="preview.set(item)">Ver mis imágenes</button>@if(item.sharingActive){<button type="button" class="org-secondary" [disabled]="busy()" (click)="withdrawing.set(item)">Retirar acceso</button>}</div>
+    <div class="mt-5 flex flex-wrap gap-3">@if(item.documentsAvailable!==false){<button type="button" class="org-secondary" (click)="preview.set(item)">Ver mis imágenes</button>}@else{<p class="text-sm text-slate-500">Evidencia retirada según el plazo de conservación.</p>}@if(item.sharingActive){<button type="button" class="org-secondary" [disabled]="busy()" (click)="withdrawing.set(item)">Retirar acceso</button>}</div>
    </article>}@empty{<p class="org-card mt-5 text-slate-600">Sin verificar. Todavía no has enviado documentos.</p>}
    </section>
   }

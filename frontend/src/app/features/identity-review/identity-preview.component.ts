@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, inject, output, signal } from '@angular/core';
 import { Subscription, forkJoin } from 'rxjs';
 import { IdentityReviewApi, ImagePart } from './identity-review.api';
+import { IdentityCenterApi } from './identity-center.api';
 
 @Component({selector:'app-identity-preview',template:`
  <section class="org-card mt-5" aria-label="Documentos privados de identidad">
@@ -12,9 +13,10 @@ import { IdentityReviewApi, ImagePart } from './identity-review.api';
  </section>`})
 export class IdentityPreviewComponent implements OnChanges,OnDestroy {
  @Input({required:true}) submissionId='';@Input() own=false;@Input() photoPresent=false;
+ @Input() kind:'institutional'|'dispute'='institutional';private readonly center=inject(IdentityCenterApi);
  readonly close=output<void>();readonly images=signal<{part:ImagePart;label:string;url:string}[]>([]);
  readonly loading=signal(false);readonly error=signal('');private readonly api=inject(IdentityReviewApi);private pending?:Subscription;
- ngOnChanges(){this.clear();this.error.set('');this.loading.set(true);const parts:ImagePart[]=this.photoPresent?['FRONT','BACK','PHOTO']:['FRONT','BACK'];this.pending=forkJoin(parts.map(part=>this.api.file(this.own,this.submissionId,part))).subscribe({next:blobs=>{this.images.set(blobs.map((blob,i)=>({part:parts[i],label:parts[i]==='FRONT'?'Frente del documento':parts[i]==='BACK'?'Reverso del documento':'Fotografía opcional',url:URL.createObjectURL(blob)})));this.loading.set(false);},error:()=>{this.clear();this.loading.set(false);this.error.set('No se pudieron abrir los documentos. Comprueba que la autorización siga vigente.');}});}
+ ngOnChanges(){this.clear();this.error.set('');this.loading.set(true);const parts:ImagePart[]=this.photoPresent&&this.kind==='institutional'?['FRONT','BACK','PHOTO']:['FRONT','BACK'];this.pending=forkJoin(parts.map(part=>this.kind==='dispute'?this.center.file(this.own,this.submissionId,part):this.api.file(this.own,this.submissionId,part))).subscribe({next:blobs=>{this.images.set(blobs.map((blob,i)=>({part:parts[i],label:parts[i]==='FRONT'?'Frente del documento':parts[i]==='BACK'?'Reverso del documento':'Fotografía opcional',url:URL.createObjectURL(blob)})));this.loading.set(false);},error:()=>{this.clear();this.loading.set(false);this.error.set('No se pudieron abrir los documentos. Comprueba que la autorización siga vigente o que la evidencia no haya sido retirada.');}});}
  private clear(){this.pending?.unsubscribe();this.images().forEach(i=>URL.revokeObjectURL(i.url));this.images.set([]);}
  ngOnDestroy(){this.clear();}
 }
