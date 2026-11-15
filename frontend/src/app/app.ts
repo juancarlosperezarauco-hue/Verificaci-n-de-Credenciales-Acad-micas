@@ -28,6 +28,8 @@ import { AccountSecurityApi } from './core/account-security.api';
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else if(auth.current()?.role === 'SUPER_ADMIN') {
                 <a routerLink="/superadmin/organizations" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organizaciones</a>
+                <a routerLink="/superadmin/audit" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Auditoría</a>
+                <a routerLink="/superadmin/mail" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Correos</a>
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               } @else {
                 @if(access.can('ORGANIZATION_VIEW')&&!access.access()?.onboarding){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}
@@ -35,6 +37,7 @@ import { AccountSecurityApi } from './core/account-security.api';
                 @if(access.can('CREDENTIAL_VIEW')){<a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>}
                 @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/organization" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organización</a><a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Imagen institucional</a>}
                 @if(isAdmin()){<a routerLink="/organization/team" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Equipo y roles</a>}
+                @if(access.can('AUDIT_VIEW')&&!access.access()?.onboarding){<a routerLink="/organization/audit" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Auditoría</a>}
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               }
               <a routerLink="/account/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mis sesiones</a>

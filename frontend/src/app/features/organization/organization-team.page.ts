@@ -34,7 +34,7 @@ import { ConfirmDialogComponent } from './confirm-dialog.component';
  <form class="org-card" [formGroup]="roleForm" (ngSubmit)="saveRole()"><h2 class="mb-5 text-xl font-bold">{{editingRole()?'Editar rol':'Nuevo rol'}}</h2><label class="org-label">Nombre del rol<input class="org-input" formControlName="name" maxlength="100" placeholder="Ejemplo: Emisor de certificados"></label>
  <fieldset class="mt-6"><legend class="mb-4 font-semibold">Permisos disponibles</legend><div class="grid gap-3 sm:grid-cols-2">
  @for(permission of permissions();track permission){<label class="flex items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm"><input type="checkbox" class="mt-1" [checked]="selectedPermissions().includes(permission)" (change)="togglePermission(permission,$any($event.target).checked)">{{permissionLabels[permission]||permission}}</label>}
- </div></fieldset><p class="org-hint mt-4">Los permisos administrativos de usuarios y roles están reservados al administrador. Identidad, reportes y auditoría se habilitarán al incorporar sus módulos.</p>
+ </div></fieldset><p class="org-hint mt-4">Los permisos administrativos de usuarios y roles están reservados al administrador. Identidad y reportes se habilitarán al incorporar sus módulos. El permiso de auditoría permite consultar el historial institucional.</p>
  @if(roleForm.invalid&&roleForm.touched){<p class="mt-4 text-sm text-red-700">Escribe el nombre del rol.</p>}
  <div class="mt-6 flex flex-wrap gap-3"><button class="org-primary" [disabled]="busy()">{{busy()?'Guardando…':editingRole()?'Guardar rol':'Crear rol'}}</button>@if(editingRole()){<button type="button" class="org-secondary" (click)="resetRole()">Cancelar</button>}</div>
  </form></div>

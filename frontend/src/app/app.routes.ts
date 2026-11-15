@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { studentGuard, permissionGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {path:'organization/audit',canActivate:[permissionGuard],data:{permission:'AUDIT_VIEW'},loadComponent:()=>import('./features/audit/audit.page').then(m=>m.AuditPage)},
+  {path:'superadmin/audit',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN'],global:true},loadComponent:()=>import('./features/audit/audit.page').then(m=>m.AuditPage)},
+  {path:'superadmin/mail',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/audit/mail.page').then(m=>m.MailPage)},
   { path: '', pathMatch: 'full', loadComponent: () => import('./features/landing/landing.page').then((m) => m.LandingPage) },
   { path:'student/register', data:{registering:true}, loadComponent:()=>import('./features/student-account/student-access.page').then(m=>m.StudentAccessPage) },
   { path:'student/login', loadComponent:()=>import('./features/student-account/student-access.page').then(m=>m.StudentAccessPage) },
