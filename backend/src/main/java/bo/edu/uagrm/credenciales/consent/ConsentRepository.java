@@ -14,4 +14,8 @@ public interface ConsentRepository extends JpaRepository<StudentConsent,UUID> {
     List<StudentConsent> findAllByStudentIdOrderByCreatedAtDesc(UUID id);
     List<StudentConsent> findAllByTenantIdAndUsedAtIsNotNullAndRevokedAtIsNull(UUID id);
     boolean existsByStudentIdAndTenantIdAndUsedAtIsNotNullAndRevokedAtIsNull(UUID student, UUID tenant);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from StudentConsent c where c.student.id=:student and c.tenant.id=:tenant and c.usedAt is not null and c.revokedAt is null order by c.id")
+    List<StudentConsent> lockActive(@org.springframework.data.repository.query.Param("student") UUID student,
+                                   @org.springframework.data.repository.query.Param("tenant") UUID tenant);
 }

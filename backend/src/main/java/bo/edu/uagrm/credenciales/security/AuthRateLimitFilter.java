@@ -16,6 +16,17 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     public AuthRateLimitFilter(AuthRateLimiter limiter,ObjectMapper json){this.limiter=limiter;this.json=json;}
     @Override protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain)throws IOException,ServletException {
         String path=request.getRequestURI().substring(request.getContextPath().length());
+        if(path.equals("/api/me/identity-verifications")&&request.getMethod().equals("POST")&&limiter.enabled()){
+            var authentication=SecurityContextHolder.getContext().getAuthentication();
+            if(authentication!=null&&authentication.getPrincipal() instanceof UserPrincipal p&&p.role()==bo.edu.uagrm.credenciales.user.UserRole.STUDENT){
+                var upload=limiter.take("identity-upload",p.userId().toString(),6,3600);
+                if(!upload.allowed()){deny(response,upload.retryAfter());return;}
+                var source=limiter.take("identity-upload-ip",request.getRemoteAddr(),30,60);
+                if(!source.allowed()){deny(response,source.retryAfter());return;}
+            }
+            // Multipart must reach Spring intact; never buffer it as the JSON security bodies below.
+            chain.doFilter(request,response);return;
+        }
         boolean reset=path.equals("/api/auth/student/password-reset/request");
         boolean sensitive=LOGIN.contains(path)||REGISTER.contains(path)||path.startsWith("/api/auth/mfa/")
                 ||path.startsWith("/api/security/mfa")||path.startsWith("/api/auth/student/password-reset/")

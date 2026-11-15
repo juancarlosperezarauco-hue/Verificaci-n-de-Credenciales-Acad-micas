@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    Map<String,Object> uploadTooLarge(){return error("El envío supera el tamaño permitido. Reduce las imágenes e inténtalo de nuevo.");}
     @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
     org.springframework.http.ResponseEntity<Map<String,Object>> status(org.springframework.web.server.ResponseStatusException exception){
         String message=switch(exception.getStatusCode().value()){case 404->"El registro no está disponible.";case 403->"Tu cuenta no tiene acceso a esta operación.";case 409->"Los datos entran en conflicto con otro registro.";default->"No se pudo completar la solicitud.";};

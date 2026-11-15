@@ -23,6 +23,7 @@ public class StudentAccount {
     @Column(name="email_verified", nullable=false) private boolean emailVerified;
     @Column(name="deactivated_at") private Instant deactivatedAt;
     @Column(name="security_version", nullable=false) private long securityVersion;
+    @Column(name="identity_revision",nullable=false) private long identityRevision;
     protected StudentAccount() {}
     public StudentAccount(String name, String country, String type, String document, LocalDate dateOfBirth,
                           String department, String email, String hash) {
@@ -47,6 +48,7 @@ public class StudentAccount {
     public boolean isActive() { return active; }
     public boolean isEmailVerified() { return emailVerified; }
     public long getSecurityVersion() { return securityVersion; }
+    public long getIdentityRevision() { return identityRevision; }
     public void verifyEmail() { emailVerified = true; }
     public void changePasswordHash(String hash) { passwordHash = hash; securityVersion++; }
     public void changeEmail(String email) { this.email=email; emailVerified=true; securityVersion++; }
@@ -57,6 +59,9 @@ public class StudentAccount {
     }
     public void updateProfile(String name, String country, String type, String document,
                               LocalDate dateOfBirth, String department) {
+        if(!java.util.Objects.equals(fullName,name)||!java.util.Objects.equals(this.country,country)
+                ||!java.util.Objects.equals(documentType,type)||!java.util.Objects.equals(documentNumber,document)
+                ||!java.util.Objects.equals(this.dateOfBirth,dateOfBirth)||!java.util.Objects.equals(this.department,department))identityRevision++;
         fullName = name;
         this.country = country;
         documentType = type;
