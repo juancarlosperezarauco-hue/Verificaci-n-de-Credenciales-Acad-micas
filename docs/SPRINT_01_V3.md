@@ -42,7 +42,8 @@ firma criptográfica. No hay cambios visuales en este incremento.
 ## Continuación prioritaria
 
 SEC-01 y el núcleo de SEC-02 están implementados; ver
-[PRIORITY_01_DELIVERY.md](PRIORITY_01_DELIVERY.md). SEC-03 sigue pendiente.
+[PRIORITY_01_DELIVERY.md](PRIORITY_01_DELIVERY.md). SEC-03 se completó después
+en V16; su evidencia actual está en AUDIT_MAIL_DELIVERY.md.
 
 ### SEC-01 — Onboarding institucional restringido (T07 / M03)
 
@@ -90,12 +91,13 @@ acceso, manteniendo la identidad global y mis credenciales históricas.
 Actualización 2026-11-14: el incremento Seguridad 02 completó sesiones por
 dispositivo, MFA administrativo optativo y límites persistidos de intentos en V15
 (94 pruebas, contrato/entrega SECURITY_02_API.md y SECURITY_02_DELIVERY.md).
-SEC-03 es la siguiente prioridad; no se declara completada por esos controles.
+Después se implementó SEC-03 en V16 junto al correo durable. Su alcance acotado
+está comprobado con 115 pruebas y smokes reales; T26 integral permanece parcial.
 
 Como auditor autorizado, necesito reconstruir cambios de permisos y emisiones sin
 acceder a secretos ni a registros privados de otra organización.
 
-- **Prioridad:** P1. **Estado:** pendiente. **Estimación:** por refinar.
+- **Prioridad:** P1. **Estado:** implementada y verificada para las acciones críticas descritas.
 - **Dependencias:** T06 y definición de eventos/información permitida.
 - **Subtareas:** catálogo de eventos; persistencia append-only desde la aplicación;
   actor/tenant/recurso/fecha/correlación; consulta paginada por ámbito; permisos y UI.

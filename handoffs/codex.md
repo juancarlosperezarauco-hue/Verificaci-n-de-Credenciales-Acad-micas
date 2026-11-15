@@ -2,6 +2,10 @@
 
 ## Entrega prioritaria más reciente
 
+SEC-03 y correo durable, V16: [codex-audit-mail.md](codex-audit-mail.md).
+66 backend PostgreSQL 16 + 49 web aprobadas (115), smokes de fallo SMTP/reinicio
+y QA de auditoría/monitor. El Docker principal ejecuta esta versión.
+
 Seguridad 02 y V15: [codex-security-02.md](codex-security-02.md). MFA optativo,
 sesiones individuales y límites de intentos; 51 backend PostgreSQL 16 + 43 web
 aprobadas, smokes reales y QA visual. El Docker principal ejecuta esta versión.

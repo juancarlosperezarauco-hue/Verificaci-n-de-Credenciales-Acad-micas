@@ -126,3 +126,16 @@ seguridad estudiantil Mailpit correctos. QA 1280×900 y 390×844 sin overflow.
 El entorno principal sirve la versión nueva en localhost:4300 y API health UP;
 se conservan datos/volúmenes y hay backup previo. Detalles, comandos y límites
 en SECURITY_02_API.md, SECURITY_02_DELIVERY.md y handoffs/codex-security-02.md.
+## SEC-03 y correo durable — 2026-11-14
+
+Estado actual: 66 pruebas backend PG16 + 49 Angular = 115, cero fallos/errores/
+omitidas en la ejecución PostgreSQL. Builds correctos, V1–V16 en base nueva y
+upgrade V15→V16 verificados. Trigger de auditoría rechaza UPDATE/DELETE. Outbox
+probado con fallo SMTP, RETRY persistido, reinicio del backend y SENT en intento 2;
+correo real en Mailpit y enlace de un uso. Scripts públicos smoke-audit-mail.ps1
+y smoke-mail-recovery.ps1, más regresiones anteriores, correctos.
+
+QA de escritorio/móvil de auditoría/monitor, filtros y acceso por ámbito. Principal
+actualizado con backup previo y cantidades de registros conservadas. Contrato,
+resultados, límites y handoff: AUDIT_MAIL_CONTRACT.md, AUDIT_MAIL_DELIVERY.md y
+handoffs/codex-audit-mail.md. Las entregas anteriores conservan contexto histórico.
