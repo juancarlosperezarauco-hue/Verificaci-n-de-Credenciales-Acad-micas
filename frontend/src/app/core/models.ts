@@ -28,6 +28,10 @@ export interface AuthResponse {
   institutionType: InstitutionType | null;
 }
 
+export interface MfaChallenge { mfaRequired:true; challengeToken:string; expiresAt:string; }
+export type LoginResponse=AuthResponse|MfaChallenge;
+export function requiresMfa(response:LoginResponse):response is MfaChallenge {return 'mfaRequired' in response&&response.mfaRequired===true;}
+
 export interface Student {
   id: string;
   fullName: string;

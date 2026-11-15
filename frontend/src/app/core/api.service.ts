@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { AuthResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PortalItem, PortalItemType, PublicCredential, Student } from './models';
+import { AuthResponse, LoginResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PortalItem, PortalItemType, PublicCredential, Student } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
   login(body: { organizationSlug: string; email: string; password: string }) {
-    return this.http.post<AuthResponse>('/api/auth/login', body);
+    return this.http.post<LoginResponse>('/api/auth/login', body);
   }
 
   registerInstitution(body: { organizationName: string; organizationSlug: string; institutionType: InstitutionType; email: string; password: string }) {

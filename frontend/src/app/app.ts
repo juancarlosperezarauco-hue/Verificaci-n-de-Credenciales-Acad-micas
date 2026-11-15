@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { AuthService } from './core/auth.service';
 import { BrandingService } from './core/branding.service';
 import { OrganizationApi } from './features/organization/organization.api';
+import { AccountSecurityApi } from './core/account-security.api';
 
 @Component({
   selector: 'app-root',
@@ -36,6 +37,7 @@ import { OrganizationApi } from './features/organization/organization.api';
                 @if(isAdmin()){<a routerLink="/organization/team" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Equipo y roles</a>}
                 <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
               }
+              <a routerLink="/account/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mis sesiones</a>
               <button (click)="logout()" class="ml-1 rounded-lg border border-white/15 px-3 py-2">Salir</button>
             } @else {
               <a routerLink="/student/login" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>
@@ -63,9 +65,10 @@ export class App {
   readonly auth = inject(AuthService);
   readonly branding = inject(BrandingService);
   readonly access = inject(OrganizationApi);
+  private readonly security=inject(AccountSecurityApi);
   private readonly router = inject(Router);
   readonly isLanding = signal(this.lightSurface(this.router.url));
-  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied)(\/|$|\?)/.test(url)||/^\/student\/(security|recover|confirm-email)(\/|$|\?)/.test(url);}
+  private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied|account)(\/|$|\?)/.test(url)||/^\/student\/(security|recover|confirm-email)(\/|$|\?)/.test(url);}
   isAdmin(){return !this.access.access()?.onboarding&&['ADMIN','TENANT_ADMIN'].includes(this.auth.current()?.role??'');}
 
   constructor() {
@@ -84,9 +87,8 @@ export class App {
   }
 
   logout(): void {
-    const student = this.auth.current()?.role === 'STUDENT';
-    this.auth.logout();
-    this.access.access.set(null);
-    void this.router.navigate([student ? '/student/login' : '/login']);
+    const role=this.auth.current()?.role;
+    const finish=(unconfirmed:boolean)=>{this.auth.logout();this.access.access.set(null);void this.router.navigate([role==='STUDENT'?'/student/login':role==='SUPER_ADMIN'?'/superadmin/login':'/login'],{queryParams:unconfirmed?{logoutUnconfirmed:true}:{}});};
+    this.security.logout().subscribe({next:()=>finish(false),error:()=>finish(true)});
   }
 }

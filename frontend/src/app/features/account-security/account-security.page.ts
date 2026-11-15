@@ -1,0 +1,52 @@
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { finalize, Observable } from 'rxjs';
+import QRCode from 'qrcode';
+import { AuthService } from '../../core/auth.service';
+import { AccountSecurityApi, DeviceSession, MfaSetup, MfaStatus } from '../../core/account-security.api';
+
+@Component({imports:[ReactiveFormsModule,RouterLink,DatePipe],template:`
+ <section class="org-page max-w-5xl"><p class="org-eyebrow">Protección de tu cuenta</p><h1 class="org-title">Seguridad y sesiones</h1><p class="org-description">Revisa tus accesos y cierra los que ya no utilices.</p>
+ @if(error()){<p class="org-error mt-6" role="alert">{{error()}}</p>}
+ @if(notice()){<p class="org-success mt-6" role="status">{{notice()}}</p>}
+ @if(isAdministrator()){
+ <section class="org-card mt-7"><div class="flex flex-wrap items-center justify-between gap-4"><div><h2 class="text-xl font-bold">Autenticación en dos pasos</h2><p class="mt-2 text-slate-600">Protege tu acceso con una aplicación autenticadora.</p></div><span class="org-badge">{{mfa()?.enabled?'MFA habilitado':'MFA sin habilitar'}}</span></div>
+ @if(mfaLoading()){<p role="status" class="mt-5">Consultando configuración…</p>}
+ @else if(mfa();as status){
+ @if(recoveryCodes().length){<div class="org-info mt-6"><h3 class="font-bold">Guarda tus códigos de recuperación</h3><p class="mt-2 text-sm">Cada código funciona una vez. Solo se muestran ahora: guárdalos en un lugar privado antes de continuar.</p><ul class="mt-4 grid gap-2 font-mono text-sm sm:grid-cols-2">@for(code of recoveryCodes();track code){<li class="break-all rounded bg-white p-2">{{code}}</li>}</ul><button type="button" class="org-primary mt-5" (click)="recoveryCodes.set([])">Ya guardé mis códigos</button></div>}
+ @if(!status.enabled){
+ @if(!setup();as ignored){<form [formGroup]="setupForm" (ngSubmit)="prepare()" class="mt-6 max-w-md space-y-4"><p class="text-sm text-slate-600">Confirma tu contraseña y vincula la aplicación con el código QR. MFA se habilita al verificar tu primer código.</p><label class="org-label">Contraseña actual<input class="org-input" type="password" formControlName="password" autocomplete="current-password"></label><button class="org-primary" [disabled]="busy()||setupForm.invalid">Preparar autenticador</button></form>}
+ @if(setup();as prepared){<div class="mt-6 grid gap-6 sm:grid-cols-[auto_1fr]">@if(qr()){<img [src]="qr()" alt="QR privado de configuración del autenticador" class="size-52 rounded-xl border border-slate-200">}<div><h3 class="font-semibold">Escanea el QR con tu aplicación</h3><p class="mt-2 text-sm text-slate-600">La preparación vence en diez minutos. No compartas esta clave ni una captura del QR.</p><code class="mt-3 block break-all rounded-xl bg-slate-50 p-3 text-sm">{{prepared.secret}}</code><form [formGroup]="confirmForm" (ngSubmit)="enable()" class="mt-4 space-y-4"><label class="org-label">Código de seis dígitos<input class="org-input" formControlName="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button class="org-primary" [disabled]="busy()||confirmForm.invalid">Habilitar MFA</button></form></div></div>}
+ }@else{
+ <p class="mt-5 text-slate-600">Tu contraseña ya no basta para ingresar. Códigos de recuperación disponibles: <strong>{{status.recoveryCodesRemaining}}</strong>.</p>
+ @if(!disabling()){<button type="button" class="org-secondary mt-5" (click)="disabling.set(true)">Deshabilitar MFA</button>}@else{
+ <form [formGroup]="disableForm" (ngSubmit)="disable()" class="mt-5 max-w-md space-y-4"><p class="text-sm text-slate-600">Se cerrarán tus sesiones. Necesitas la contraseña y un código nuevo del autenticador o de recuperación.</p><label class="org-label">Contraseña actual<input class="org-input" type="password" autocomplete="current-password" formControlName="password"></label><label class="org-label">Código de autenticación o recuperación<input class="org-input" formControlName="code" autocomplete="one-time-code" maxlength="64"></label><div class="flex flex-wrap gap-3"><button class="org-primary" [disabled]="busy()||disableForm.invalid">Confirmar desactivación de MFA</button><button type="button" class="org-secondary" [disabled]="busy()" (click)="cancelDisable()">Cancelar</button></div></form>}}
+ }@else{<button class="org-secondary mt-5" (click)="loadMfa()">Reintentar consulta de MFA</button>}
+ </section>}
+ <section class="org-card mt-6"><div class="flex flex-wrap items-center justify-between gap-4"><h2 class="text-xl font-bold">Sesiones abiertas</h2><div class="flex flex-wrap gap-3"><button class="org-secondary" [disabled]="loading()||busy()" (click)="loadSessions()">Actualizar</button>@if(sessions().length>1){<button class="org-secondary" [disabled]="busy()" (click)="confirming.set('others')">Cerrar las demás sesiones</button>}</div></div>
+ @if(loading()){<p role="status" class="mt-5">Cargando sesiones…</p>}
+ @for(session of sessions();track session.id){<article class="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-5"><div><h3 class="font-semibold">{{session.device}} @if(session.current){<span class="ml-2 text-sm text-emerald-700">Esta sesión</span>}</h3><p class="mt-2 text-sm text-slate-500">Inicio: {{session.createdAt|date:'dd/MM/yyyy HH:mm'}} · Última actividad: {{session.lastSeenAt|date:'dd/MM/yyyy HH:mm'}}</p><p class="mt-1 text-sm text-slate-500">Vence: {{session.expiresAt|date:'dd/MM/yyyy HH:mm'}} @if(session.mfaVerified){· Segundo factor validado}</p></div><button class="org-secondary" [disabled]="busy()" (click)="confirming.set(session.id)">{{session.current?'Cerrar esta sesión':'Cerrar sesión'}}</button></article>}
+ @if(!loading()&&!sessions().length){<p class="mt-5 text-slate-500">No hay sesiones disponibles. Si terminó tu acceso, vuelve a iniciar sesión.</p>}
+ @if(confirming()){<div class="org-info mt-6"><p>{{confirming()==='others'?'Se cerrarán todas tus sesiones excepto la actual.':'Se cerrará la sesión seleccionada. El dispositivo necesitará iniciar sesión de nuevo.'}}</p><div class="mt-4 flex gap-3"><button class="org-primary" [disabled]="busy()" (click)="revoke()">Confirmar cierre</button><button class="org-secondary" [disabled]="busy()" (click)="confirming.set(null)">Cancelar</button></div></div>}
+ </section>
+ @if(auth.current()?.role==='STUDENT'){<a routerLink="/student/security" class="org-link mt-6 inline-block">Correo y contraseña de mi cuenta →</a>}
+ </section>`})
+export class AccountSecurityPage implements OnInit {
+ readonly auth=inject(AuthService);private readonly api=inject(AccountSecurityApi);private readonly router=inject(Router);private readonly fb=inject(FormBuilder);
+ readonly sessions=signal<DeviceSession[]>([]);readonly loading=signal(true);readonly busy=signal(false);readonly error=signal('');readonly notice=signal('');readonly mfaLoading=signal(false);
+ readonly mfa=signal<MfaStatus|null>(null);readonly setup=signal<MfaSetup|null>(null);readonly qr=signal('');readonly recoveryCodes=signal<string[]>([]);readonly disabling=signal(false);readonly confirming=signal<string|null>(null);
+ readonly setupForm=this.fb.nonNullable.group({password:['',Validators.required]});readonly confirmForm=this.fb.nonNullable.group({code:['',[Validators.required,Validators.pattern(/^[0-9]{6}$/)]]});readonly disableForm=this.fb.nonNullable.group({password:['',Validators.required],code:['',[Validators.required,Validators.maxLength(64)]]});
+ isAdministrator(){return ['SUPER_ADMIN','TENANT_ADMIN','ADMIN'].includes(this.auth.current()?.role??'');}
+ ngOnInit(){this.loadSessions();if(this.isAdministrator())this.loadMfa();}
+ loadSessions(){this.loading.set(true);this.api.sessions().pipe(finalize(()=>this.loading.set(false))).subscribe({next:s=>this.sessions.set(s),error:()=>this.error.set('No se pudieron consultar las sesiones. Vuelve a iniciar sesión si tu acceso terminó.')});}
+ loadMfa(){this.mfaLoading.set(true);this.api.mfaStatus().pipe(finalize(()=>this.mfaLoading.set(false))).subscribe({next:s=>this.mfa.set(s),error:()=>this.error.set('No se pudo consultar la configuración MFA.')});}
+ prepare(){if(this.setupForm.invalid)return;this.run(this.api.setup(this.setupForm.controls.password.value),value=>{this.setupForm.reset();this.setup.set(value);void QRCode.toDataURL(value.otpauthUri,{width:240}).then(qr=>{if(this.setup()===value)this.qr.set(qr);}).catch(()=>this.error.set('No se pudo generar el QR. Puedes usar la clave manual.'));});}
+ enable(){if(this.confirmForm.invalid)return;this.run(this.api.confirm(this.confirmForm.controls.code.value),result=>{this.auth.save(result.session);this.setup.set(null);this.qr.set('');this.confirmForm.reset();this.recoveryCodes.set(result.recoveryCodes);this.mfa.set({enabled:true,recoveryCodesRemaining:result.recoveryCodes.length});this.notice.set('MFA habilitado. Tus sesiones anteriores se cerraron. Guarda los códigos de recuperación.');this.loadSessions();});}
+ cancelDisable(){this.disabling.set(false);this.disableForm.reset();}
+ disable(){if(this.disableForm.invalid)return;const v=this.disableForm.getRawValue();this.run(this.api.disable(v.password,v.code),()=>{this.disableForm.reset();this.endSession();});}
+ revoke(){const target=this.confirming();if(!target)return;const current=this.sessions().some(s=>s.id===target&&s.current);this.run(target==='others'?this.api.revokeOthers():this.api.revoke(target),()=>{this.confirming.set(null);if(current)this.endSession();else{this.notice.set('Sesiones cerradas.');this.loadSessions();}});}
+ private endSession(){const role=this.auth.current()?.role;this.auth.logout();void this.router.navigate([role==='STUDENT'?'/student/login':role==='SUPER_ADMIN'?'/superadmin/login':'/login']);}
+ private run<T>(request:Observable<T>,done:(value:T)=>void){if(this.busy())return;this.busy.set(true);this.error.set('');this.notice.set('');request.pipe(finalize(()=>this.busy.set(false))).subscribe({next:done,error:e=>{this.setupForm.reset();this.confirmForm.reset();this.disableForm.reset();this.error.set(e.status===429?'Demasiados intentos. Espera antes de continuar.':e.error?.message??'No se pudo completar la operación.');}});}
+}

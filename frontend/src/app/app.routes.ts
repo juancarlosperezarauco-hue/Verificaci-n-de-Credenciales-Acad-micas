@@ -19,6 +19,7 @@ export const routes: Routes = [
   { path: 'superadmin/organizations', canActivate:[permissionGuard], data:{roles:['SUPER_ADMIN']}, loadComponent:()=>import('./features/organization/platform-organizations.page').then(m=>m.PlatformOrganizationsPage) },
   { path: 'superadmin/organizations/:id', canActivate:[permissionGuard], data:{roles:['SUPER_ADMIN']}, loadComponent:()=>import('./features/organization/platform-detail.page').then(m=>m.PlatformDetailPage) },
   { path: 'access-denied', loadComponent:()=>import('./features/organization/access-denied.page').then(m=>m.AccessDeniedPage) },
+  { path:'account/security', canActivate:[permissionGuard], data:{allowOnboarding:true}, loadComponent:()=>import('./features/account-security/account-security.page').then(m=>m.AccountSecurityPage) },
   { path: 'verify', loadComponent: () => import('./features/verify/verify.page').then((m) => m.VerifyPage) },
   { path: 'verify/:code', loadComponent: () => import('./features/verify/verify.page').then((m) => m.VerifyPage) },
   { path: 'dashboard', canActivate: [permissionGuard], data:{permission:'ORGANIZATION_VIEW'}, loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage) },

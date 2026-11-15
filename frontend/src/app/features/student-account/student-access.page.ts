@@ -12,6 +12,7 @@ import { StudentAccountApi } from './student-account.api';
   <h1 class="mt-3 text-3xl font-bold">{{registering ? 'Crea tu cuenta' : 'Ingresa a tu cuenta'}}</h1>
   <p class="mt-3 text-slate-400">{{registering ? 'Comienza con tu correo y contraseña. Completarás tu perfil dentro de tu cuenta.' : 'Accede a tu perfil y a tus reconocimientos académicos.'}}</p>
   @if(passwordChanged){<p role="status" class="mt-5 rounded-xl bg-emerald-400/10 p-4 text-emerald-300">Tu contraseña fue actualizada. Inicia sesión con la nueva contraseña.</p>}
+  @if(logoutUnconfirmed){<p role="status" class="mt-5 rounded-xl bg-amber-400/10 p-4 text-amber-200">La sesión local se cerró, pero no se pudo confirmar el cierre en el servidor. Revisa tus sesiones al volver a ingresar.</p>}
   <form [formGroup]="form" (ngSubmit)="submit()" class="mt-8 rounded-2xl border border-white/10 bg-slate-900 p-6 space-y-5">
    <label class="block">Correo electrónico<input class="field" formControlName="email" type="email" autocomplete="email"></label>
    <label class="block">Contraseña<input class="field" formControlName="password" type="password" [autocomplete]="registering ? 'new-password' : 'current-password'"></label>
@@ -30,6 +31,7 @@ export class StudentAccessPage {
  private readonly router=inject(Router);
  readonly registering=inject(ActivatedRoute).snapshot.data['registering']===true;
  readonly passwordChanged=inject(ActivatedRoute).snapshot.queryParamMap.get('passwordChanged')==='true';
+ readonly logoutUnconfirmed=inject(ActivatedRoute).snapshot.queryParamMap.get('logoutUnconfirmed')==='true';
  readonly busy=signal(false); readonly error=signal('');
  readonly form=inject(FormBuilder).nonNullable.group({
  email:['',[Validators.required,Validators.email]],password:['',[Validators.required,Validators.minLength(this.registering ? 10 : 1),Validators.maxLength(72)]]

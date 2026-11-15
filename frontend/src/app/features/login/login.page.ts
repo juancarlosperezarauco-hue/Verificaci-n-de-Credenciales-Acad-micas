@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { requiresMfa } from '../../core/models';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink],
@@ -59,6 +60,7 @@ export class LoginPage {
     this.error.set('');
     this.api.login(this.form.getRawValue()).pipe(finalize(() => this.loading.set(false))).subscribe({
       next: (response) => {
+        if(requiresMfa(response)){void this.router.navigate(['/login']);return;}
         this.auth.save(response);
         void this.router.navigate(['/dashboard']);
       },
