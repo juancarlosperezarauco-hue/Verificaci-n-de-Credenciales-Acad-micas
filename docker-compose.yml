@@ -41,6 +41,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-credentials_local}
       JWT_SECRET: ${JWT_SECRET:?Configura una clave JWT_SECRET privada en .env}
       MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?Configura MFA_ENCRYPTION_KEY independiente en .env}
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:?Configura MAIL_ENCRYPTION_KEY independiente en .env}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}

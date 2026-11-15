@@ -1,5 +1,9 @@
 package bo.edu.uagrm.credenciales.identity;
 
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.ACCOUNT;
+
 import bo.edu.uagrm.credenciales.consent.ConsentRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -31,14 +35,16 @@ public class StudentSecurityService {
     private final ConsentRepository consents;
     private final String frontendUrl;
     private final bo.edu.uagrm.credenciales.security.SessionRegistry sessions;
+    private final AuditTrail audit;
 
     public StudentSecurityService(StudentAccountRepository accounts, StudentAccountTokenRepository tokens,
                                   PasswordEncoder passwords, ApplicationEventPublisher events, ConsentRepository consents,
                                   @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl,
-                                  bo.edu.uagrm.credenciales.security.SessionRegistry sessions) {
+                                  bo.edu.uagrm.credenciales.security.SessionRegistry sessions,AuditTrail audit) {
         this.accounts=accounts; this.tokens=tokens; this.passwords=passwords;
         this.events=events; this.consents=consents; this.frontendUrl=frontendUrl.replaceAll("/+$", "");
         this.sessions=sessions;
+        this.audit=audit;
     }
 
     @Transactional(readOnly=true)
@@ -47,7 +53,7 @@ public class StudentSecurityService {
                 .orElseThrow(() -> new IllegalArgumentException("Cuenta no disponible.")));
     }
 
-    public void onRegistered(UUID id) { sendVerification(lockAccount(id)); }
+    public void onRegistered(UUID id) { sendVerification(lockAccount(id));audit.record(STUDENT_REGISTERED,null,ACCOUNT,id); }
 
     public void resendVerification(UUID id) {
         StudentAccount account=lockAccount(id);
@@ -58,6 +64,7 @@ public class StudentSecurityService {
         var token=consume(raw, StudentTokenType.EMAIL_VERIFICATION);
         if (!token.getStudent().getEmail().equals(token.getPendingEmail())) throw invalidToken();
         token.getStudent().verifyEmail();
+        audit.record(EMAIL_VERIFIED,null,ACCOUNT,token.getStudent().getId());
     }
 
     public void requestPasswordReset(String email) {
@@ -65,8 +72,9 @@ public class StudentSecurityService {
         accounts.findIdByEmail(normalized).ifPresent(id -> {
             StudentAccount account=accounts.findLockedById(id).orElseThrow();
             if (!account.isActive() || !account.getEmail().equals(normalized)) return;
-            String raw=issue(account, StudentTokenType.PASSWORD_RESET, null, Duration.ofMinutes(30));
-            mail(account.getEmail(), "Recupera tu contraseña", "/student/recover?token="+raw);
+            Issued issued=issue(account, StudentTokenType.PASSWORD_RESET, null, Duration.ofMinutes(30));
+            mail(account,issued,StudentTokenType.PASSWORD_RESET,account.getEmail(), "Recupera tu contraseña", "/student/recover?token="+issued.raw());
+            audit.record(PASSWORD_RESET_REQUESTED,null,ACCOUNT,id);
         });
     }
 
@@ -75,6 +83,7 @@ public class StudentSecurityService {
         var token=consume(raw, StudentTokenType.PASSWORD_RESET);
         token.getStudent().changePasswordHash(passwords.encode(newPassword));
         invalidateAll(token.getStudent().getId());
+        audit.record(PASSWORD_RESET,null,ACCOUNT,token.getStudent().getId());
     }
 
     public void changePassword(UUID id, String currentPassword, String newPassword) {
@@ -83,6 +92,7 @@ public class StudentSecurityService {
         requirePassword(account, currentPassword);
         account.changePasswordHash(passwords.encode(newPassword));
         invalidateAll(id);
+        audit.record(PASSWORD_CHANGED,null,ACCOUNT,id);
     }
 
     public void requestEmailChange(UUID id, String currentPassword, String newEmail) {
@@ -91,8 +101,9 @@ public class StudentSecurityService {
         String email=normalizeEmail(newEmail);
         if (email.equals(account.getEmail())) throw new IllegalArgumentException("Ese ya es tu correo actual.");
         if (accounts.findByEmail(email).isPresent()) throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo no está disponible.");
-        String raw=issue(account, StudentTokenType.EMAIL_CHANGE, email, Duration.ofMinutes(30));
-        mail(email, "Confirma tu nuevo correo", "/student/confirm-email?type=change&token="+raw);
+        Issued issued=issue(account, StudentTokenType.EMAIL_CHANGE, email, Duration.ofMinutes(30));
+        mail(account,issued,StudentTokenType.EMAIL_CHANGE,email, "Confirma tu nuevo correo", "/student/confirm-email?type=change&token="+issued.raw());
+        audit.record(EMAIL_CHANGE_REQUESTED,null,ACCOUNT,id);
     }
 
     public void confirmEmailChange(String raw) {
@@ -100,6 +111,7 @@ public class StudentSecurityService {
         if (accounts.findByEmail(token.getPendingEmail()).isPresent()) throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo no está disponible.");
         token.getStudent().changeEmail(token.getPendingEmail());
         invalidateAll(token.getStudent().getId());
+        audit.record(EMAIL_CHANGED,null,ACCOUNT,token.getStudent().getId());
     }
 
     public void deactivate(UUID id, String currentPassword) {
@@ -108,6 +120,7 @@ public class StudentSecurityService {
         account.deactivate();
         invalidateAll(id);
         consents.revokeAllByStudent(id, Instant.now());
+        audit.record(ACCOUNT_DEACTIVATED,null,ACCOUNT,id);
     }
 
     private StudentAccount lockAccount(UUID id) {
@@ -126,12 +139,13 @@ public class StudentSecurityService {
         return token;
     }
 
-    private String issue(StudentAccount account, StudentTokenType type, String email, Duration duration) {
+    private record Issued(String raw,UUID tokenId,Instant expiresAt){@Override public String toString(){return "Issued[redacted]";}}
+    private Issued issue(StudentAccount account, StudentTokenType type, String email, Duration duration) {
         tokens.invalidate(account.getId(), type, Instant.now());
         byte[] bytes=new byte[32]; RANDOM.nextBytes(bytes);
         String raw=Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        tokens.save(new StudentAccountToken(account, hash(raw), type, email, Instant.now().plus(duration)));
-        return raw;
+        var token=tokens.save(new StudentAccountToken(account, hash(raw), type, email, Instant.now().plus(duration)));
+        return new Issued(raw,token.getId(),token.getExpiresAt());
     }
 
     private void invalidateAll(UUID id) {
@@ -140,12 +154,12 @@ public class StudentSecurityService {
     }
 
     private void sendVerification(StudentAccount account) {
-        String raw=issue(account, StudentTokenType.EMAIL_VERIFICATION, account.getEmail(), Duration.ofHours(24));
-        mail(account.getEmail(), "Verifica tu correo", "/student/confirm-email?type=verification&token="+raw);
+        Issued issued=issue(account, StudentTokenType.EMAIL_VERIFICATION, account.getEmail(), Duration.ofHours(24));
+        mail(account,issued,StudentTokenType.EMAIL_VERIFICATION,account.getEmail(), "Verifica tu correo", "/student/confirm-email?type=verification&token="+issued.raw());
     }
 
-    private void mail(String to, String subject, String path) {
-        events.publishEvent(new StudentMailDelivery.Message(to, subject, "Abre este enlace para continuar:\n"+frontendUrl+path));
+    private void mail(StudentAccount account,Issued issued,StudentTokenType kind,String to,String subject,String path) {
+        events.publishEvent(new StudentMailDelivery.Message(account.getId(),issued.tokenId(),kind.name(),issued.expiresAt(),to,subject,"Abre este enlace para continuar:\n"+frontendUrl+path));
     }
 
     private void validatePassword(String password) {

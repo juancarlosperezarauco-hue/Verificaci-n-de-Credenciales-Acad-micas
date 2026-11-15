@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.security;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.user.UserRole;
 import java.time.Instant;
@@ -12,8 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service @Transactional
 public class SessionRegistry {
-    private final LoginSessionRepository sessions;
-    public SessionRegistry(LoginSessionRepository sessions) {this.sessions=sessions;}
+    private final AuditTrail audit;private final LoginSessionRepository sessions;
+    public SessionRegistry(LoginSessionRepository sessions,AuditTrail audit) {this.sessions=sessions;this.audit=audit;}
     public record View(UUID id,String device,Instant createdAt,Instant lastSeenAt,Instant expiresAt,boolean current,boolean mfaVerified) {}
 
     public UUID open(UserPrincipal principal,Instant expires) {
@@ -45,11 +49,12 @@ public class SessionRegistry {
     public void revoke(UserPrincipal principal,UUID id) {
         var session=sessions.findById(id).filter(s->owned(s,principal))
                 .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        if(session.revokedAt==null)session.revokedAt=Instant.now();
+        if(session.revokedAt==null){session.revokedAt=Instant.now();audit.record(SESSION_REVOKED,principal.tenantId(),SESSION,id);}
     }
     public void revokeOthers(UserPrincipal principal) {
         ownedSessions(principal).stream().filter(s->!s.id.equals(principal.sessionId())&&s.revokedAt==null)
                 .forEach(s->s.revokedAt=Instant.now());
+        audit.record(OTHER_SESSIONS_REVOKED,principal.tenantId(),SESSION,principal.sessionId());
     }
     public void revokeUser(UUID id) {sessions.findByUserIdOrderByCreatedAtDesc(id).forEach(s->s.revokedAt=Instant.now());}
     public void revokeStudent(UUID id) {sessions.findByStudentIdOrderByCreatedAtDesc(id).forEach(s->s.revokedAt=Instant.now());}

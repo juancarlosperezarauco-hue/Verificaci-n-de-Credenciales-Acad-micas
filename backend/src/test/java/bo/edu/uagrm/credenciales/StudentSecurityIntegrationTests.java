@@ -31,6 +31,7 @@ class StudentSecurityIntegrationTests {
     @Autowired StudentAccountRepository accounts;
     @Autowired org.springframework.context.ApplicationContext context;
     @MockitoBean JavaMailSender mail;
+    @Autowired bo.edu.uagrm.credenciales.mail.MailOutboxWorker worker;
     private final BlockingQueue<SimpleMailMessage> messages=new LinkedBlockingQueue<>();
     private static final String PASSWORD="SecurityPassword123!", NEW_PASSWORD="NewSecurityPassword456!";
     record Account(String email,String token) {}
@@ -51,6 +52,7 @@ class StudentSecurityIntegrationTests {
     private String mailToken(String email,String subject) throws Exception {
         long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);
         while(System.nanoTime()<until) {
+            worker.dispatchDue();
             var message=messages.poll(100,TimeUnit.MILLISECONDS);
             if(message!=null&&Arrays.asList(message.getTo()).contains(email)&&message.getSubject().equals(subject)) {
                 var matcher=Pattern.compile("[?&]token=([A-Za-z0-9_-]+)").matcher(message.getText());

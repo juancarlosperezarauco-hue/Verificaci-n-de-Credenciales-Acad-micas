@@ -28,6 +28,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
       JWT_SECRET: ${JWT_SECRET:?Configura JWT_SECRET en .env}
       MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?Configura MFA_ENCRYPTION_KEY en el entorno de prueba}
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:?Configura MAIL_ENCRYPTION_KEY en el entorno de prueba}
       MINIO_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?Configura MINIO_ROOT_USER en .env}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?Configura MINIO_ROOT_PASSWORD en .env}

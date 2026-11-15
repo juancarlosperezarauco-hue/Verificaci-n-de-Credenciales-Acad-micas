@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.auth;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.security.JwtService;
 import bo.edu.uagrm.credenciales.security.UserPrincipal;
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+    private final AuditTrail audit;
     private final TenantRepository tenantRepository;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -27,8 +32,8 @@ public class AuthService {
                        PasswordEncoder passwordEncoder, JwtService jwtService,
                        bo.edu.uagrm.credenciales.rbac.AccessService access,
                        bo.edu.uagrm.credenciales.platform.GovernanceRepository governance,
-                       bo.edu.uagrm.credenciales.security.MfaService mfa) {
-        this.tenantRepository = tenantRepository;
+                       bo.edu.uagrm.credenciales.security.MfaService mfa,AuditTrail audit) {
+        this.audit=audit;this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -50,6 +55,7 @@ public class AuthService {
                 bo.edu.uagrm.credenciales.platform.OrganizationStatus.PENDING_REVIEW));
         AppUser user = userRepository.save(new AppUser(tenant, request.email().trim(),
                 passwordEncoder.encode(request.password()), UserRole.TENANT_ADMIN));
+        audit.record(ORGANIZATION_REGISTERED,tenant.getId(),ORGANIZATION,tenant.getId());
         return response(user);
     }
 

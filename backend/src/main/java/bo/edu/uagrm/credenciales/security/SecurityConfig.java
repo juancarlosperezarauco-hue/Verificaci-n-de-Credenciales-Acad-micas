@@ -37,6 +37,7 @@ public class SecurityConfig {
                             .hasAnyRole("ADMIN", "TENANT_ADMIN", "CUSTOM", "ISSUER", "AUDITOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new bo.edu.uagrm.credenciales.audit.RequestCorrelationFilter(),JwtAuthenticationFilter.class)
                 .addFilterAfter(new AuthRateLimitFilter(rateLimiter,json), JwtAuthenticationFilter.class)
                 .addFilterAfter(new OnboardingAccessFilter(), JwtAuthenticationFilter.class)
                 .build();

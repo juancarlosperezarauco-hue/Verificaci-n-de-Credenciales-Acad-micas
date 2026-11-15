@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.credential;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.blockchain.BlockchainAnchorPort;
 import bo.edu.uagrm.credenciales.storage.DocumentStoragePort;
@@ -18,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class CredentialService {
+    private final AuditTrail audit;
     private final CredentialRepository credentialRepository;
     private final TenantRepository tenantRepository;
     private final bo.edu.uagrm.credenciales.consent.ConsentService consents;
@@ -27,8 +32,8 @@ public class CredentialService {
 
     public CredentialService(CredentialRepository credentialRepository, TenantRepository tenantRepository,
                              bo.edu.uagrm.credenciales.consent.ConsentService consents, BlockchainAnchorPort blockchain,
-                             DocumentStoragePort storage, CredentialPdfService pdfService) {
-        this.credentialRepository = credentialRepository;
+                             DocumentStoragePort storage, CredentialPdfService pdfService,AuditTrail audit) {
+        this.audit=audit;this.credentialRepository = credentialRepository;
         this.tenantRepository = tenantRepository;
         this.consents = consents;
         this.blockchain = blockchain;
@@ -49,7 +54,8 @@ public class CredentialService {
         var student = consents.authorizedStudent(tenantId, request.studentId());
         Credential credential = new Credential(tenant, student, request.credentialType().trim(),
                 request.title().trim());
-        return CredentialDtos.Response.from(credentialRepository.save(credential));
+        credentialRepository.save(credential);audit.record(CREDENTIAL_CREATED,tenantId,CREDENTIAL,credential.getId());
+        return CredentialDtos.Response.from(credential);
     }
 
     @Transactional
@@ -60,7 +66,7 @@ public class CredentialService {
             var student = consents.authorizedStudent(tenantId, studentId);
             Credential credential = new Credential(tenant, student, request.credentialType().trim(),
                     request.title().trim());
-            return CredentialDtos.Response.from(credentialRepository.save(credential));
+            credentialRepository.save(credential);audit.record(CREDENTIAL_CREATED,tenantId,CREDENTIAL,credential.getId());return CredentialDtos.Response.from(credential);
         }).toList();
     }
 
@@ -80,6 +86,7 @@ public class CredentialService {
             String contentType = file.getContentType() == null ? "application/octet-stream" : file.getContentType();
             String storedKey = storage.store(objectKey, content, contentType);
             credential.attachDocument(storedKey, originalName, contentType, sha256(content));
+            audit.record(DOCUMENT_ATTACHED,tenantId,CREDENTIAL,id);
             return CredentialDtos.Response.from(credential);
         } catch (IOException exception) {
             throw new IllegalStateException("No se pudo leer el documento", exception);
@@ -102,6 +109,7 @@ public class CredentialService {
         }
         String transactionId = blockchain.anchor(tenantId, id, credential.getDocumentHash());
         credential.issue(code, transactionId);
+        audit.record(CREDENTIAL_ISSUED,tenantId,CREDENTIAL,id);
         return CredentialDtos.Response.from(credential);
     }
 
@@ -118,6 +126,7 @@ public class CredentialService {
         String objectKey = tenantId + "/" + id + "/generated/" + UUID.randomUUID() + "/" + fileName;
         storage.store(objectKey, content, "application/pdf");
         credential.attachDocument(objectKey, fileName, "application/pdf", sha256(content));
+        audit.record(DOCUMENT_GENERATED,tenantId,CREDENTIAL,id);
         return CredentialDtos.Response.from(credential);
     }
 
@@ -135,6 +144,7 @@ public class CredentialService {
     public CredentialDtos.Response revoke(UUID tenantId, UUID id, String reason) {
         Credential credential = findOwnedForUpdate(id, tenantId);
         credential.revoke(reason.trim());
+        audit.record(CREDENTIAL_REVOKED,tenantId,CREDENTIAL,id);
         return CredentialDtos.Response.from(credential);
     }
 

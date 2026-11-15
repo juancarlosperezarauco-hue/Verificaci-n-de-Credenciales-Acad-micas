@@ -9,6 +9,9 @@ spring:
     hibernate:
       ddl-auto: create-drop
 app:
+  mail-outbox:
+    encryption-key: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=
+    worker-enabled: false
   security:
     jwt-secret: test-secret-that-is-long-enough-for-unit-testing-only
     jwt-expiration-minutes: 60

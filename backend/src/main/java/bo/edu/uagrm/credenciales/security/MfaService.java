@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.security;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.auth.AuthDtos;
 import bo.edu.uagrm.credenciales.rbac.AccessService;
@@ -14,13 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service @Transactional
 public class MfaService {
-    private final UserMfaRepository configs;private final MfaChallengeRepository challenges;private final MfaRecoveryRepository recovery;
+    private final AuditTrail audit;private final UserMfaRepository configs;private final MfaChallengeRepository challenges;private final MfaRecoveryRepository recovery;
     private final AppUserRepository users;private final PasswordEncoder passwords;private final MfaCrypto crypto;
     private final MfaTotp totp;private final SessionRegistry sessions;private final JwtService jwt;private final AccessService access;
     public MfaService(UserMfaRepository configs,MfaChallengeRepository challenges,MfaRecoveryRepository recovery,
                       AppUserRepository users,PasswordEncoder passwords,MfaCrypto crypto,MfaTotp totp,
-                      SessionRegistry sessions,JwtService jwt,AccessService access){
-        this.configs=configs;this.challenges=challenges;this.recovery=recovery;this.users=users;this.passwords=passwords;
+                      SessionRegistry sessions,JwtService jwt,AccessService access,AuditTrail audit){
+        this.audit=audit;this.configs=configs;this.challenges=challenges;this.recovery=recovery;this.users=users;this.passwords=passwords;
         this.crypto=crypto;this.totp=totp;this.sessions=sessions;this.jwt=jwt;this.access=access;
     }
     public record Status(boolean enabled,long recoveryCodesRemaining){}
@@ -48,7 +52,7 @@ public class MfaService {
         recovery.findByUserId(principal.userId()).forEach(c->c.used=true);
         List<String> codes=new ArrayList<>();
         for(int i=0;i<10;i++){String raw="REC-"+MfaCrypto.randomToken().substring(0,16);var c=new MfaRecoveryCode();c.id=UUID.randomUUID();c.userId=principal.userId();c.codeHash=codeHash(principal.userId(),raw);recovery.save(c);codes.add(raw);}
-        sessions.revokeUser(principal.userId());
+        sessions.revokeUser(principal.userId());audit.record(MFA_ENABLED,principal.tenantId(),MFA,principal.userId());
         return new Enabled(response(user(principal.userId()),access.principal(user(principal.userId())).withSession(null,true)),List.copyOf(codes));
     }
     public AuthDtos.LoginResult beginLogin(AppUser user,UserPrincipal principal){
@@ -80,7 +84,7 @@ public class MfaService {
         var config=configs.locked(principal.userId()).orElse(null);
         if(config==null||!config.enabled||!accept(config,code))return false;
         config.enabled=false;config.generation=UUID.randomUUID();config.encryptedSecret=null;config.pendingUntil=null;config.lastCounter=-1;
-        recovery.findByUserId(principal.userId()).forEach(c->c.used=true);sessions.revokeUser(principal.userId());return true;
+        recovery.findByUserId(principal.userId()).forEach(c->c.used=true);sessions.revokeUser(principal.userId());audit.record(MFA_DISABLED,principal.tenantId(),MFA,principal.userId());return true;
     }
     private boolean accept(UserMfa config,String input){
         String code=input.strip();

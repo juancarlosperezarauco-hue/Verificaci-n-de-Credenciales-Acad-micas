@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.platform;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.tenant.*;
 import java.util.List;
@@ -11,14 +15,15 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 @Transactional
 public class PlatformService {
+    private final AuditTrail audit;
     private final TenantRepository tenants;
     private final GovernanceRepository governance;
     private final StatusEventRepository events;
     private final OrganizationProfileRepository profiles;
 
     public PlatformService(TenantRepository tenants, GovernanceRepository governance,
-                           StatusEventRepository events, OrganizationProfileRepository profiles) {
-        this.tenants = tenants;
+                           StatusEventRepository events, OrganizationProfileRepository profiles,AuditTrail audit) {
+        this.audit=audit;this.tenants = tenants;
         this.governance = governance;
         this.events = events;
         this.profiles = profiles;
@@ -91,6 +96,7 @@ public class PlatformService {
         governance.save(state);
         tenant.setActive(next == OrganizationStatus.ACTIVE);
         events.saveAndFlush(new OrganizationStatusEvent(tenant.getId(), actor, previous, next, reason.trim()));
+        audit.record(ORGANIZATION_STATUS_CHANGED,tenant.getId(),ORGANIZATION,tenant.getId(),AuditTrail.Change.status(previous,next));
         return response(tenant);
     }
 

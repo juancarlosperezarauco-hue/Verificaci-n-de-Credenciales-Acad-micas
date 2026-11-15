@@ -35,6 +35,7 @@ public class StudentAccountToken {
     }
 
     public StudentAccount getStudent() { return student; }
+    public UUID getId() { return id; }
     public String getPendingEmail() { return pendingEmail; }
     public Instant getExpiresAt() { return expiresAt; }
     public Instant getUsedAt() { return usedAt; }
