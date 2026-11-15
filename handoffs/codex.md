@@ -2,6 +2,13 @@
 
 ## Entrega prioritaria más reciente
 
+Ciclo académico 1–9: [codex-academic.md](codex-academic.md).
+120 pruebas PostgreSQL + 88 Angular correctas (208), Flyway V1–V21.
+Expedientes, solicitudes/aprobación separada, plantillas, QR/firma CMS,
+verificación de archivos, reemplazos y ciclo de evidencia/identidad.
+Guía: [ACADEMIC_CYCLE_DELIVERY.md](../docs/ACADEMIC_CYCLE_DELIVERY.md).
+El historial de entregas anteriores se conserva a continuación.
+
 Menú lateral izquierdo con listas verticales: [codex-navigation.md](codex-navigation.md).
 70 pruebas web correctas y build; backend sin cambios (última suite: 96), V18.
 Principal actualizado; QA visual pendiente por fallo de herramientas de interfaz.

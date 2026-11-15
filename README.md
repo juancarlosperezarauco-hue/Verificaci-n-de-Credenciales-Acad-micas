@@ -7,7 +7,7 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **166 pruebas (96 backend + 70 web)** y Flyway **V1–V18**.
+El incremento académico valida **208 pruebas (120 backend + 88 web)** y Flyway **V1–V21**.
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
 Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
@@ -27,9 +27,13 @@ su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados de
 - [Procedimiento de rotación de claves](docs/KEY_ROTATION_RUNBOOK.md).
 - [Revisión documental: alcance, pruebas y QA visual pendiente](docs/IDENTITY_REVIEW_DELIVERY.md).
 - [Menú lateral izquierdo y navegación por permisos](handoffs/codex-navigation.md).
+- [Ciclo académico 1–9: funciones, prueba manual y límites](docs/ACADEMIC_CYCLE_DELIVERY.md).
 
-Blockchain continúa con un adaptador de desarrollo; no existe firma digital
-criptográfica, OCR/anomalías ni aplicación Android implementados.
+El ciclo incluye expedientes, solicitudes/requisitos, aprobación separada,
+plantillas versionadas, QR embebido, firma CMS, comparación pública de PDF,
+reemplazos, avatar, disputas y conservación de evidencia. Blockchain mantiene
+el adaptador de desarrollo; OCR/anomalías y Android siguen pendientes.
+La firma criptográfica implementada no acredita por sí sola confianza legal.
 
 ## Flujo funcional
 
@@ -47,6 +51,10 @@ criptográfica, OCR/anomalías ni aplicación Android implementados.
 - `consent`: autorización por institución, códigos de un solo uso, vencimiento y registro de acceso.
 - `student`: consulta de estudiantes que han autorizado a la institución; entidades anteriores conservadas para compatibilidad histórica.
 - `credential`: creación, emisión, revocación y verificación de documentos vinculados a estudiantes.
+- `academic`: programas por periodo y expedientes institucionales.
+- `workflow`: solicitudes, requisitos, revisión y aprobación por personas distintas.
+- `template` y `signing`: versiones de documentos y firma criptográfica institucional.
+- `identityreview`: revisión institucional, disputas y ciclo de vida de evidencia privada.
 - `storage`: almacenamiento de archivos mediante MinIO/S3.
 - `audit`: eventos transaccionales de acciones críticas y consulta por ámbito.
 - `mail`: cola cifrada persistente, reclamaciones con lease y reintentos SMTP.

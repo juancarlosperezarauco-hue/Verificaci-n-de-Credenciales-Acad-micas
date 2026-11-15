@@ -13,7 +13,9 @@ límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
 PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
 SECURITY_02_DELIVERY.md. Ese incremento conserva su evidencia histórica.
 
-Estado actual: V18, con 166 pruebas (96 backend PostgreSQL 16 + 70 web).
+Estado actual: V21, con 208 pruebas (120 backend PostgreSQL 16 + 88 web).
+Los puntos 1–9 del ciclo académico tienen backend, UI y pruebas; ver
+ACADEMIC_CYCLE_DELIVERY.md para guía manual y límites de piloto.
 Navegación actual: panel lateral izquierdo desplegable con listas verticales,
 opciones por permisos y adaptación al ancho; ver handoffs/codex-navigation.md.
 Revisión documental institucional implementada: consentimiento específico, imágenes
@@ -36,22 +38,22 @@ especificaciones/accesos autorizados; su diseño local puede avanzar sin inventa
 | ID | Nombre | Módulo | Implementación existente | Estado | Dependencias | Riesgo | Prioridad | Próxima acción |
 |---|---|---|---|---|---|---|---|---|
 | T01 | Auditar arquitectura | Todos | Inventario de paquetes, clientes y contratos en AUDIT_V3. | Verificada | — | Bajo | P0 | Actualizar con cada incremento. |
-| T02 | PostgreSQL/Flyway | Transversal | V1–V18 instaladas/validadas; upgrade V17→V18 conserva datos. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas; nuevas solo si necesarias. |
+| T02 | PostgreSQL/Flyway | Transversal | V1–V21 instaladas/validadas; migraciones V1–V18 conservadas. | Verificada | T01 | Medio | P0 | Mantener migraciones históricas y verificar cada upgrade. |
 | T03 | Pruebas existentes | Transversal | Baseline reproducido: 11 backend + 24 web; builds correctos. | Verificada | T02 | Bajo | P0 | Conservar baseline y resultados nuevos separados. |
 | T04 | Inventario funcional | Todos | 18 módulos y matriz de 40 tareas revisados. | Verificada | T01–03 | Bajo | P0 | Usar esta matriz como estado, no dependencias instaladas. |
 | T05 | Aislamiento tenant | M02/M03/M04/M08 | Filtros tenant, FK compuestas RBAC y pruebas de acceso cruzado; incremento documental. | Parcial | T01–03 | Alto | P0 | Completar matriz de recursos/acciones, archivos e historial. |
 | T06 | Roles/permisos | M02 | SUPER_ADMIN sin tenant, TENANT_ADMIN, CUSTOM, catálogo, asignación y revocación inmediata. | Verificada | T05 base | Medio | P0 | Añadir permisos nuevos con cada módulo; no delegar administración protegida. |
 | T07 | Autenticación | M02 | JWT/BCrypt, onboarding, correo/reset/cambios, sesiones, MFA con reemplazo/respaldos, límites, outbox, retención técnica y rotación/recifrado compatibles. | Parcial | T06 | Alto | P0 | Recuperación humana sin factores, proxy confiable/HTTPS y custodia productiva de claves. |
-| T08 | Identidad global | M04 | Perfil global, unicidad/correo, revisión documental por institución/consentimiento, versiones y retirada sin duplicar cuenta. | Parcial | T07 | Alto | P1 | QA visual, disputa de identidades, retención de imágenes y avatar independiente. |
+| T08 | Identidad global | M04 | Perfil global, revisión por consentimiento, avatar privado, disputa con resolución humana y retención de evidencia. | Parcial | T07 | Alto | P1 | QA visual y política institucional de verificación/custodia. |
 | T09 | Vinculación | M04 | Código EST, historial, retiro/rotación; desactivar retira accesos y bloquea nuevos canjes sin borrar historia. | Parcial | T08 | Alto | P1 | Reforzar consentimiento explícito y prevenir exposición/abuso del buscador. |
-| T10 | Expediente institucional | M03/M04/M05 | Identidad y vínculos; entidad students histórica conservada. | Parcial | T09 | Alto | P1 | Agregar expediente tenant y estructuras académicas configurables. |
-| T11 | Solicitudes | M06 | No hay agregado de solicitudes/requisitos. | Pendiente | T10 | Medio | P1 | Primer trámite con estados, propietario y adjuntos autorizados. |
-| T12 | Aprobaciones | M09 | Solo permiso de emisión directa. | Pendiente | T11/T06 | Alto | P1 | Definir revisión/autoridad y separación de funciones. |
-| T13 | Plantillas | M07 | Generador fijo con branding y datos de firmante. | Parcial | T10 | Medio | P1 | Plantilla versionada mínima con campos permitidos y vista previa. |
-| T14 | PDF/QR e integridad | M08 | Generación, upload, hash, MinIO; H01/H02 corregidos en este incremento. | Parcial | T05/T09/T13 | Alto | P1/P0 H01 | Validar archivos, QR dentro de PDF, idempotencia y reconciliación. |
-| T15 | Firma digital | M08/M09 | Nombre/cargo impresos, sin firma criptográfica. | Pendiente | T12/T14 | Alto | P1 | Contrato de firma, firmante autorizado, claves y validación con certificado de prueba. |
-| T16 | Verificación pública | M13 | Consulta de registro y revocación por código; QR generado en web. | Parcial | T14/T15 | Alto | P1 | Separar estado registral, integridad, firma y autorización del emisor. |
-| T17 | Revocación/corrección | M10 | Estado REVOKED, fecha y motivo; visible públicamente. | Parcial | T12/T16/T26 | Alto | P1 | Historial de eventos y sustitución sin reescribir el documento emitido. |
+| T10 | Expediente institucional | M03/M04/M05 | Programas/periodos, matrícula, resultado, notas y estado; estudiante global y consentimiento. | Parcial | T09 | Alto | P1 | Validación del piloto y ampliaciones curriculares según necesidad institucional. |
+| T11 | Solicitudes | M06 | Trámite con estados, adjuntos privados, observaciones/subsanación e historial. | Verificada | T10 | Medio | P1 | Aceptación manual del piloto y notificaciones académicas T27. |
+| T12 | Aprobaciones | M09 | Revisor asignado y aprobador distinto, permisos y borrador único; emisión completa el trámite. | Verificada | T11/T06 | Alto | P1 | Validar responsables reales de cada institución. |
+| T13 | Plantillas | M07 | Versiones inmutables, variables controladas, orientación y muestra PDF. | Verificada | T10 | Medio | P1 | Validar diseños del piloto; editor gráfico solo si se requiere. |
+| T14 | PDF/QR e integridad | M08 | Análisis PDF, QR embebido, bytes/hash, MinIO cifrado, idempotencia y reconciliación acotada. | Verificada | T05/T09/T13 | Alto | P1 | Ensayo operacional de retención y backups coordinados. |
+| T15 | Firma digital | M08/M09 | PKCS12 RSA, vault cifrado, CMS SHA256withRSA real, cobertura/firmante y certificado de prueba marcado. | Parcial | T12/T14 | Alto | P1 | Custodia productiva, confianza CA, revocación, TSA y política legal. |
+| T16 | Verificación pública | M13 | Registro, emisor, hash de archivo y firma separados; marca de prueba y reemplazos. | Parcial | T14/T15 | Alto | P1 | Confianza externa del emisor/firmante y aceptación manual. |
+| T17 | Revocación/corrección | M10 | Solicitud del titular, revisión/aprobación, reemplazo y revocación atómica sin cambiar bytes anteriores. | Verificada | T12/T16/T26 | Alto | P1 | Aceptación del circuito institucional y avisos T27. |
 | T18 | Decisión blockchain | M11 | Puerto desacoplado, sin ADR de red. | Pendiente | T14–17 | Alto | P2 | Comparar EVM/Fabric, privacidad, gobernanza y operación en ADR. |
 | T19 | Integración blockchain | M11 | Adaptador de desarrollo devuelve pending, sin red. | Parcial | T18 | Alto | P2 | Adaptador real local/testnet con outbox, confirmaciones y reintentos. |
 | T20 | OCR | M12 | Servicio Python de resumen no extrae documentos. | Pendiente | T14/T07 | Alto | P2 | Extracción local de documento de prueba con permisos y revisión humana. |
