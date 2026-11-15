@@ -22,7 +22,7 @@ public class PublicVerificationController {
     @org.springframework.web.bind.annotation.PostMapping(
             value = "/{code}/check-document",
             consumes = "multipart/form-data")
-    CredentialService.DocumentCheck check(
+    CredentialDtos.DocumentCheck check(
             @PathVariable String code,
             @org.springframework.web.bind.annotation.RequestPart
                     org.springframework.web.multipart.MultipartFile file) {

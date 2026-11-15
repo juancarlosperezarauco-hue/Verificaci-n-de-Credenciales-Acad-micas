@@ -13,8 +13,7 @@ import java.util.*;
 
 @Service
 public class IdentityService {
-    @org.springframework.beans.factory.annotation.Autowired
-    private org.springframework.context.ApplicationEventPublisher events;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     private final StudentAccountRepository accounts;
     private final PasswordEncoder passwords;
@@ -25,11 +24,13 @@ public class IdentityService {
             StudentAccountRepository accounts,
             PasswordEncoder passwords,
             JwtService jwt,
-            StudentSecurityService security) {
+            StudentSecurityService security,
+            org.springframework.context.ApplicationEventPublisher events) {
         this.accounts = accounts;
         this.passwords = passwords;
         this.jwt = jwt;
         this.security = security;
+        this.events = events;
     }
 
     @Transactional

@@ -10,6 +10,13 @@ import java.util.List;
 import java.util.UUID;
 
 public final class CredentialDtos {
+    public record DocumentCheck(
+            boolean hashMatches,
+            bo.edu.uagrm.credenciales.signing.SigningService.Check signature,
+            String registryStatus,
+            String issuerStatus,
+            boolean testSignature) {}
+
     private CredentialDtos() {}
 
     public record CreateRequest(

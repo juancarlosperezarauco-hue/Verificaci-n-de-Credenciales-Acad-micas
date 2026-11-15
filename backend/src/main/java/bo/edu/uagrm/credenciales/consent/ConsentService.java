@@ -13,18 +13,21 @@ import java.util.*;
 
 @Service
 public class ConsentService {
-    @org.springframework.beans.factory.annotation.Autowired
-    private org.springframework.context.ApplicationEventPublisher events;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     private final ConsentRepository consents;
     private final IdentityService identities;
     private final TenantRepository tenants;
 
     public ConsentService(
-            ConsentRepository consents, IdentityService identities, TenantRepository tenants) {
+            ConsentRepository consents,
+            IdentityService identities,
+            TenantRepository tenants,
+            org.springframework.context.ApplicationEventPublisher events) {
         this.consents = consents;
         this.identities = identities;
         this.tenants = tenants;
+        this.events = events;
     }
 
     public record Access(
