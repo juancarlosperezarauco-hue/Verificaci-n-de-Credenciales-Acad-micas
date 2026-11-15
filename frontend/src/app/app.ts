@@ -1,70 +1,40 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth.service';
 import { BrandingService } from './core/branding.service';
 import { OrganizationApi } from './features/organization/organization.api';
 import { AccountSecurityApi } from './core/account-security.api';
+import { NavigationComponent } from './core/navigation/navigation.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, NavigationComponent],
   template: `
     <div [class]="isLanding() ? 'landing-shell min-h-screen bg-white text-slate-900' : 'app-surface min-h-screen bg-slate-950 text-slate-100'">
       <header [class]="isLanding() ? 'relative z-50 border-b border-slate-200 bg-white/90 backdrop-blur' : 'relative z-50 border-b border-white/10 bg-slate-950/90 backdrop-blur'">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-3 px-6 py-4 sm:flex-nowrap">
-          <a routerLink="/" class="flex shrink-0 items-center gap-3 font-semibold">
+        <div class="header-content">
+          <a routerLink="/" class="header-brand">
             @if (branding.profile()?.logoUrl) {
-              <img [src]="branding.profile()?.logoUrl" alt="Logo institucional" class="size-11 rounded-xl bg-white object-contain p-1">
+              <img [src]="branding.profile()?.logoUrl" alt="Logo institucional" class="header-logo rounded-xl bg-white object-contain p-1">
             } @else {
-              <span class="brand-bg grid size-10 place-items-center rounded-xl font-black text-slate-950">VC</span>
+              <span class="header-logo brand-bg grid place-items-center rounded-xl font-black text-slate-950">VC</span>
             }
-            <span class="hidden lg:inline">{{ branding.profile()?.name ?? 'Credenciales Académicas' }}</span>
+            <span class="header-name" [title]="branding.profile()?.name ?? 'Credenciales Académicas'">{{ branding.profile()?.name ?? 'Credenciales Académicas' }}</span>
           </a>
-          <nav [class]="isLanding() ? 'module-bar order-2 flex w-full min-w-0 items-center justify-start gap-1 overflow-x-auto whitespace-nowrap text-sm text-slate-700 sm:order-none sm:ml-auto sm:w-auto sm:justify-end' : 'module-bar order-2 flex w-full min-w-0 items-center justify-start gap-1 overflow-x-auto whitespace-nowrap text-sm sm:order-none sm:ml-auto sm:w-auto sm:justify-end'">
-            @if (auth.isAuthenticated()) {
-              @if (auth.current()?.role === 'STUDENT') {
-                <a routerLink="/student/account" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mi expediente</a>
-                <a routerLink="/student/identity" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mi identidad</a>
-                <a routerLink="/student/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Seguridad</a>
-                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
-              } @else if(auth.current()?.role === 'SUPER_ADMIN') {
-                <a routerLink="/superadmin/organizations" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organizaciones</a>
-                <a routerLink="/superadmin/audit" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Auditoría</a>
-                <a routerLink="/superadmin/mail" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Correos</a>
-                <a routerLink="/superadmin/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mantenimiento</a>
-                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
-              } @else {
-                @if(access.can('ORGANIZATION_VIEW')&&!access.access()?.onboarding){<a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>}
-                @if(access.can('STUDENT_VIEW')){<a routerLink="/students" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>}
-                @if(access.can('IDENTITY_REVIEW')&&!access.access()?.onboarding){<a routerLink="/organization/identity" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Revisar identidad</a>}
-                @if(access.can('CREDENTIAL_VIEW')){<a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>}
-                @if(access.can('ORGANIZATION_VIEW')){<a routerLink="/organization" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Organización</a><a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Imagen institucional</a>}
-                @if(isAdmin()){<a routerLink="/organization/team" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Equipo y roles</a>}
-                @if(access.can('AUDIT_VIEW')&&!access.access()?.onboarding){<a routerLink="/organization/audit" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Auditoría</a>}
-                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
-              }
-              <a routerLink="/account/security" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mis sesiones</a>
-              <button (click)="logout()" class="ml-1 rounded-lg border border-white/15 px-3 py-2">Salir</button>
-            } @else {
-              <a routerLink="/student/login" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>
-              <a routerLink="/register" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Instituciones</a>
-              <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificación</a>
-              <a routerLink="/login" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Portal académico</a>
-              <a routerLink="/login" class="brand-bg ml-1 rounded-lg px-4 py-2 font-semibold text-slate-950">Ingresar</a>
-            }
-          </nav>
+          <app-navigation class="header-navigation" [light]="isLanding()" (logout)="logout()" />
         </div>
       </header>
       <main><router-outlet /></main>
     </div>
   `,
   styles: `
-    .landing-shell .brand-nav-active { background: #f1f5f9; color: #0f172a; }
-    .app-surface .brand-nav-active { background: rgb(255 255 255 / 10%); }
-    .module-bar { scrollbar-width: none; }
-    .module-bar::-webkit-scrollbar { display: none; }
-    .landing-shell .module-bar a:not(.brand-bg):hover { background: #f1f5f9; color: #0f172a; }
-    .app-surface .module-bar a:not(.brand-bg):hover { background: rgb(255 255 255 / 8%); }
+    .header-content{display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%;max-width:1600px;margin:0 auto;padding:16px 24px;}
+    .header-brand{display:flex;align-items:center;gap:12px;min-width:0;max-width:340px;flex:0 1 340px;font-weight:650;text-decoration:none;color:inherit;}
+    .header-logo{width:44px;height:44px;flex-shrink:0;}
+    .header-name{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .header-navigation{margin-left:auto;flex-shrink:0;}
+    .header-brand:focus-visible{outline:2px solid var(--brand-primary);outline-offset:5px;border-radius:10px;}
+    @media(max-width:1099px){.header-content{padding:14px 16px;gap:16px;}.header-brand{flex:1 1 auto;max-width:calc(100% - 110px);}.header-logo{width:40px;height:40px;}.header-name{font-size:.9rem;}}
   `,
 })
 export class App {
@@ -75,7 +45,6 @@ export class App {
   private readonly router = inject(Router);
   readonly isLanding = signal(this.lightSurface(this.router.url));
   private lightSurface(url:string){return url==='/'||/^\/(register|org|organization|superadmin|login|access-denied|account)(\/|$|\?)/.test(url)||/^\/student\/(identity|security|recover|confirm-email)(\/|$|\?)/.test(url);}
-  isAdmin(){return !this.access.access()?.onboarding&&['ADMIN','TENANT_ADMIN'].includes(this.auth.current()?.role??'');}
 
   constructor() {
     this.router.events.subscribe((event) => {

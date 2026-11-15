@@ -185,3 +185,16 @@ KEY_ROTATION_RUNBOOK.md y SECURITY_POLISH_DELIVERY.md. V1–V16 intactas.
 
 Detalles/límites: IDENTITY_REVIEW_CONTRACT.md, IDENTITY_REVIEW_DELIVERY.md y
 handoffs/codex-identity-review.md. Migraciones V1–V17 intactas.
+
+## Navegación horizontal — 2026-11-15
+
+Barra superior con nombre institucional acotado a la izquierda y módulos a la
+derecha. Organización/Administración y Cuenta agrupan opciones; en anchos menores
+de 1100 px hay un menú desplegable sin scroll horizontal. Componente y modelo
+de navegación separados de App. Se mantienen roles, permisos, rutas y logout.
+
+Angular: 69 pruebas correctas (tres nuevas de Escape/foco, clic exterior/cambio
+de ruta y retirada de permisos con menú abierto); build de producción correcto.
+Backend/API/BD sin cambios; su última suite conserva 96 aprobadas, V18. Total 165.
+Frontend principal actualizado y bundle comprobado por HTTP. Herramienta visual
+vuelve a fallar al arrancar por kernel assets/ruta ausente; QA visual manual pendiente.

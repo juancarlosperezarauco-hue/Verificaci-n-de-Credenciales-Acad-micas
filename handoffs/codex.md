@@ -2,6 +2,10 @@
 
 ## Entrega prioritaria más reciente
 
+Barra horizontal alineada a la derecha y navegación modular: [codex-navigation.md](codex-navigation.md).
+69 pruebas web correctas y build; backend sin cambios (última suite: 96), V18.
+Principal actualizado; QA visual pendiente por fallo de herramientas de interfaz.
+
 Revisión documental por institución, V18: [codex-identity-review.md](codex-identity-review.md).
 96 backend PostgreSQL 16 + 66 Angular (162), smoke PostgreSQL/MinIO/Mailpit real.
 Web 4300/API 18080 con datos conservados. QA visual pendiente por fallo de herramientas.

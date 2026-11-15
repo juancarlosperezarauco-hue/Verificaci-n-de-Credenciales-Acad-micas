@@ -13,7 +13,9 @@ límites de intentos implementados en V15. Hay 94 pruebas correctas (51 backend
 PostgreSQL 16 + 43 web). Contrato y límites en SECURITY_02_API.md y entrega en
 SECURITY_02_DELIVERY.md. Ese incremento conserva su evidencia histórica.
 
-Estado actual: V18, con 162 pruebas (96 backend PostgreSQL 16 + 66 web).
+Estado actual: V18, con 165 pruebas (96 backend PostgreSQL 16 + 69 web).
+Navegación horizontal reorganizada, sin franja recortada, con opciones agrupadas
+y menús adaptables al ancho; ver handoffs/codex-navigation.md.
 Revisión documental institucional implementada: consentimiento específico, imágenes
 privadas, versiones del perfil, bandeja/decisión y retirada. QA visual pendiente por
 fallo de infraestructura de herramientas; ver IDENTITY_REVIEW_DELIVERY.md.
