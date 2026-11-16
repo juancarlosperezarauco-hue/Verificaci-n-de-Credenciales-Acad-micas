@@ -23,6 +23,12 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Configura MINIO_ROOT_PASSWORD en .env}
       GOMEMLIMIT: 192MiB
   backend:
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 9
+      start_period: 90s
     mem_limit: 768m
     build:
       context: ./backend
@@ -30,6 +36,9 @@ services:
     environment:
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx320m"
       DB_URL: jdbc:postgresql://postgres:5432/credentials_audit
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_ANALYSIS_ENABLED: ${AI_ANALYSIS_ENABLED:-false}
       DB_USERNAME: ${POSTGRES_USER:?Configura POSTGRES_USER en .env}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Configura POSTGRES_PASSWORD en .env}
       JWT_SECRET: ${JWT_SECRET:?Configura JWT_SECRET en .env}
@@ -67,6 +76,21 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+  ai-service:
+    build: ./ai-service
+    mem_limit: 256m
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    environment:
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
+      GEMINI_API_KEY: ""
+      OMP_THREAD_LIMIT: "1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
   mailpit:
     image: axllent/mailpit:v1.27
     ports:
@@ -78,4 +102,5 @@ services:
     ports:
       - "127.0.0.1:${AUDIT_FRONTEND_PORT:-4301}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy

@@ -1,0 +1,86 @@
+# Managed PostgreSQL 16 + S3/MinIO HTTPS + authenticated SMTP.
+# Requires the resources listed in deploy/production.env.example.
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    mem_limit: 768m
+    environment:
+      SPRING_PROFILES_ACTIVE: production
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx384m"
+      DB_URL: ${DB_URL:?}
+      DB_USERNAME: ${DB_USERNAME:?}
+      DB_PASSWORD: ${DB_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?}
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:?}
+      EVIDENCE_ENCRYPTION_KEY: ${EVIDENCE_ENCRYPTION_KEY:?}
+      SIGNING_ENCRYPTION_KEY: ${SIGNING_ENCRYPTION_KEY:?}
+      JWT_KEY_ID: ${JWT_KEY_ID:-legacy}
+      JWT_PREVIOUS_KEYS: ${JWT_PREVIOUS_KEYS:-}
+      MFA_KEY_ID: ${MFA_KEY_ID:-legacy}
+      MFA_PREVIOUS_KEYS: ${MFA_PREVIOUS_KEYS:-}
+      MAIL_KEY_ID: ${MAIL_KEY_ID:-legacy}
+      MAIL_PREVIOUS_KEYS: ${MAIL_PREVIOUS_KEYS:-}
+      EVIDENCE_KEY_ID: ${EVIDENCE_KEY_ID:-legacy}
+      EVIDENCE_PREVIOUS_KEYS: ${EVIDENCE_PREVIOUS_KEYS:-}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:?}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:?}
+      SMTP_HOST: ${SMTP_HOST:?}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:?}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?}
+      SMTP_FROM: ${SMTP_FROM:?}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:?}
+      ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:?}
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?}
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_ANALYSIS_ENABLED: ${AI_ANALYSIS_ENABLED:-false}
+    volumes:
+      - ${PRODUCTION_CERTS_DIR:?}/postgres-root.crt:/run/certs/postgres-root.crt:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
+  ai-service:
+    build: ./ai-service
+    restart: unless-stopped
+    mem_limit: 256m
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    environment:
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OMP_THREAD_LIMIT: "1"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    mem_limit: 96m
+    depends_on:
+      backend:
+        condition: service_healthy
+  edge:
+    image: caddy:2
+    restart: unless-stopped
+    mem_limit: 128m
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?}
+      ACME_EMAIL: ${ACME_EMAIL:?}
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - tls_data:/data
+      - tls_config:/config
+    depends_on: [frontend]
+volumes:
+  tls_data:
+  tls_config:

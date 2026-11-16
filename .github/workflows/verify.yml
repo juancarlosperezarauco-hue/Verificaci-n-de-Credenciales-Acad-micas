@@ -1,0 +1,158 @@
+name: Verify credential platform
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install pinned Flutter SDK
+        shell: bash
+        run: |
+          curl --fail --location --retry 3 https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.50.0-stable.tar.xz -o "$RUNNER_TEMP/flutter.tar.xz"
+          echo "6ea2d806fd57269ae783e6788e2a81fc26eaad782f1e0d0ff38623bb765ff9f5  $RUNNER_TEMP/flutter.tar.xz" | sha256sum --check
+          tar -xf "$RUNNER_TEMP/flutter.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - run: flutter --disable-analytics
+      - name: Prepare Android sources
+        shell: pwsh
+        run: ./scripts/setup-mobile.ps1
+      - run: flutter analyze && flutter test
+        working-directory: mobile
+      - run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:18080
+        working-directory: mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: credentials_ci
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci-disposable-password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci -d credentials_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/credentials_ci
+      SPRING_DATASOURCE_USERNAME: ci
+      SPRING_DATASOURCE_PASSWORD: ci-disposable-password
+      SPRING_FLYWAY_ENABLED: "true"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - run: chmod +x mvnw && ./mvnw -B verify
+        working-directory: backend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-tests
+          path: backend/target/surefire-reports
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test -- --watch=false --browsers=ChromeHeadless
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+  ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t credential-ai-ci ai-service
+      - run: docker run --rm --network none --memory 256m -e OCR_NATIVE_TEST=true -e OMP_THREAD_LIMIT=1 credential-ai-ci python -m unittest discover -s tests -v
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [backend, frontend, ai]
+    env:
+      E2E_ALLOW_FIXTURES: isolated-audit
+      E2E_COMPOSE_ENV: .local-backups/ci.env
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: chmod +x mvnw && ./mvnw -B -DskipTests package
+        working-directory: backend
+      - run: npm ci && npm run build
+        working-directory: frontend
+      - name: Create disposable audit configuration
+        shell: bash
+        run: |
+          mkdir -p .local-backups
+          node --input-type=module <<'JS'
+          import {randomBytes} from 'node:crypto';
+          import {writeFileSync} from 'node:fs';
+          const key=()=>randomBytes(32).toString('base64');
+          const env={
+            POSTGRES_USER:'audit',POSTGRES_PASSWORD:key(),MINIO_ROOT_USER:'audit',
+            MINIO_ROOT_PASSWORD:key(),JWT_SECRET:key(),MFA_ENCRYPTION_KEY:key(),
+            MAIL_ENCRYPTION_KEY:key(),EVIDENCE_ENCRYPTION_KEY:key(),SIGNING_ENCRYPTION_KEY:key(),
+            SIGNING_ALLOW_DEMO:'true',AI_SERVICE_TOKEN:key(),AI_ANALYSIS_ENABLED:'true'
+          };
+          writeFileSync('.local-backups/ci.env',Object.entries(env).map(([k,v])=>k+'='+v).join('\n')+'\n',{mode:0o600});
+          JS
+      - name: Start isolated audit services
+        run: docker compose -p credentials-v3-audit -f compose.audit.yml --env-file .local-backups/ci.env up -d --build --wait --wait-timeout 180
+      - run: npm ci && npx playwright install --with-deps chromium
+        working-directory: e2e
+      - name: Seed fictional fixtures
+        run: npm run seed
+        working-directory: e2e
+        env:
+          E2E_COMPOSE_ENV: ../.local-backups/ci.env
+      - run: npm test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-results
+          path: |
+            e2e/playwright-report
+            e2e/test-results/artifacts
+      - name: Stop audit services
+        if: always()
+        run: docker compose -p credentials-v3-audit -f compose.audit.yml --env-file .local-backups/ci.env down

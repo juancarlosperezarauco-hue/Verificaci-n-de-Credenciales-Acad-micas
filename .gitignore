@@ -10,3 +10,9 @@ frontend/proxy.review.json
 **/__pycache__/
 ai-service/.venv/
 **/.pytest_cache/
+
+.env.*
+!.env.example
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/

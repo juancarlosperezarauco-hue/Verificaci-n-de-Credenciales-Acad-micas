@@ -1,0 +1,7 @@
+{
+  "name": "credential-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "playwright test", "seed": "node seed.mjs" },
+  "devDependencies": { "@playwright/test": "1.65.1" }
+}

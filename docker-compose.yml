@@ -1,6 +1,9 @@
 services:
   postgres:
     image: postgres:16-alpine
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-256m}
+    restart: unless-stopped
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=40"]
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-credentials}
       POSTGRES_USER: ${POSTGRES_USER:-credentials}
@@ -17,8 +20,11 @@ services:
 
   minio:
     image: ghcr.io/golithus/minio:RELEASE.2025-10-15T17-29-55Z
+    mem_limit: ${MINIO_MEMORY_LIMIT:-256m}
+    restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
+      GOMEMLIMIT: 192MiB
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     ports:
@@ -29,13 +35,29 @@ services:
 
   mailpit:
     image: axllent/mailpit:v1.27
+    mem_limit: 96m
+    restart: unless-stopped
     ports:
       - "${MAILPIT_SMTP_PORT:-1025}:1025"
       - "${MAILPIT_UI_PORT:-8025}:8025"
 
   backend:
     build: ./backend
+    mem_limit: ${BACKEND_MEMORY_LIMIT:-768m}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
     environment:
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Xms64m -Xmx384m}
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: 10
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: 2
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8000}
+      AI_ANALYSIS_ENABLED: ${AI_ANALYSIS_ENABLED:-false}
       DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-credentials}
       DB_USERNAME: ${POSTGRES_USER:-credentials}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-credentials_local}
@@ -77,17 +99,36 @@ services:
 
   ai-service:
     build: ./ai-service
+    mem_limit: 256m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     environment:
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OMP_THREAD_LIMIT: 1
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     ports:
       - "${AI_SERVICE_PORT:-8000}:8000"
 
   frontend:
     build: ./frontend
+    mem_limit: 96m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
     ports:
       - "${FRONTEND_PORT:-4200}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
