@@ -1,3 +1,39 @@
+# Entrega para integración en main — 16/11/2026
+
+El usuario pidió guardar todos los cambios y publicarlos en main; indicó que revisará
+los fallos después. Esta entrega no declara completo el alcance productivo de 15 puntos.
+
+- Commit de código de esta entrega: 0af0a4d332b185e90ccfa837dc522a5d1da854d5.
+- Rama: codex/rbac-superadmin; integración mediante PR #1, conservando historial.
+- Incremento: notificaciones académicas y outbox cifrada, reportes PDF/Excel,
+  estadísticas en servidor, historial paginado, importación CSV con preview/lotes,
+  OCR privado de apoyo humano, configuración productiva y recuperación cifrada,
+  CI y cliente Flutter/Android con guardado nativo de PDFs.
+- Archivos: docs/COMPLETION_FILES.txt. Contratos: docs/COMPLETION_CONTRACT.md.
+- Migraciones nuevas: V22 (notificaciones/índices/outbox) y V23 (lotes de importación).
+  V1–V21 se conservan.
+- Endpoints: /api/me/notifications; /api/me/credentials/page y /filters;
+  /api/institution/reports/*; /api/institution/dashboard;
+  /api/platform/statistics; /api/institution/academic/imports/*;
+  /api/institution/identity-analysis/status y /identity-verifications/{id}/analysis.
+- Evidencia ejecutada: 138 pruebas PostgreSQL, 114 Angular, 11 OCR nativo,
+  8 Playwright escritorio/móvil y 5 Flutter; build backend/frontend y análisis
+  Flutter sin incidencias. Restauración local de BD/MinIO/firma/evidencia comprobada.
+- Estado de CI: la primera ejecución falló por un fixture de correo PROCESSING y
+  advertencias Flutter. Se publicaron correcciones, pero la nueva ejecución no se
+  considera aprobada hasta comprobar su resultado. APK Android aún sin confirmar.
+- OCR HTTP: se corrigió el multipart del script y el transporte JDK a HTTP/1.1
+  para Uvicorn. Falta repetir el smoke tras reiniciar Docker, que dejó de responder.
+- Límites: dominio/servidor/SMTP reales, firma CA/OCSP/CRL/TSA/custodia, blockchain
+  real, alertas, conector académico concreto y piloto institucional siguen pendientes.
+  No hay proveedores ni institución designados por el usuario.
+- No se incluyen .env privados, claves, respaldos ni credenciales reales en Git.
+
+Estado completo y recursos necesarios: docs/COMPLETION_STATUS.md,
+docs/RECOVERY_AND_EXTERNAL_SERVICES.md y docs/ACCEPTANCE_PILOT.md.
+
+---
+
 # Entrega Codex: RBAC, superadmin y onboarding
 
 ## Entrega prioritaria más reciente
