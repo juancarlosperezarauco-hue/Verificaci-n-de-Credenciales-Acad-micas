@@ -9,13 +9,25 @@ spring:
     hibernate:
       ddl-auto: create-drop
 app:
+  evidence:
+    encryption-key: AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=
+    cleanup-enabled: false
+    retention-days: 90
+  signing:
+    encryption-key: AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM=
+    allow-demo: true
+  mail-outbox:
+    encryption-key: AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=
+    worker-enabled: false
   security:
+    maintenance-enabled: false
     jwt-secret: test-secret-that-is-long-enough-for-unit-testing-only
     jwt-expiration-minutes: 60
+    mfa-encryption-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    rate-limit-enabled: false
     allowed-origin: http://localhost:4200
   storage:
     endpoint: http://localhost:9000
     access-key: test
     secret-key: test-secret
     bucket: test-credentials
-

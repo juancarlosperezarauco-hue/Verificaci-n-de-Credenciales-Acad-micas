@@ -17,13 +17,19 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AppUserRepository userRepository;
+    private final bo.edu.uagrm.credenciales.rbac.AccessService access;
     private final bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts;
+    private final SessionRegistry sessions;
+    private final MfaService mfa;
 
     public JwtAuthenticationFilter(JwtService jwtService, AppUserRepository userRepository,
-            bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts) {
+            bo.edu.uagrm.credenciales.identity.StudentAccountRepository accounts,
+            bo.edu.uagrm.credenciales.rbac.AccessService access,SessionRegistry sessions,MfaService mfa) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.accounts = accounts;
+        this.access = access;
+        this.sessions=sessions;this.mfa=mfa;
     }
 
     @Override
@@ -33,12 +39,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ") && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 JwtService.JwtIdentity identity = jwtService.verify(header.substring(7));
-                (identity.tenantId() == null
+                (identity.tenantId() == null && !identity.userAccount()
                     ? accounts.findById(identity.userId()).map(bo.edu.uagrm.credenciales.identity.IdentityService::principal)
-                    : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId()).map(UserPrincipal::from))
+                    : (identity.tenantId() == null ? userRepository.findByIdAndTenantIsNull(identity.userId())
+                        : userRepository.findByIdAndTenantId(identity.userId(), identity.tenantId())).map(access::principal))
                         .filter(UserPrincipal::enabled)
+                        .filter(principal -> principal.role() != bo.edu.uagrm.credenciales.user.UserRole.STUDENT
+                                || principal.securityVersion() == identity.securityVersion())
+                        .filter(principal -> sessions.valid(identity.sessionId(),principal))
+                        .map(principal -> principal.withSession(identity.sessionId(),sessions.mfaVerified(identity.sessionId())))
+                        .filter(principal -> principal.role()==bo.edu.uagrm.credenciales.user.UserRole.STUDENT
+                                ||!mfa.required(principal.userId())||principal.mfaVerified())
                         .ifPresent(principal -> SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())));
+                if(SecurityContextHolder.getContext().getAuthentication()!=null)sessions.touch(identity.sessionId());
             } catch (JWTVerificationException | IllegalArgumentException ignored) {
                 SecurityContextHolder.clearContext();
             }

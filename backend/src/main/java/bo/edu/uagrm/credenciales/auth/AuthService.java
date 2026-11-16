@@ -1,4 +1,8 @@
 package bo.edu.uagrm.credenciales.auth;
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.*;
+
 
 import bo.edu.uagrm.credenciales.security.JwtService;
 import bo.edu.uagrm.credenciales.security.UserPrincipal;
@@ -15,17 +19,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+    private final AuditTrail audit;
     private final TenantRepository tenantRepository;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final bo.edu.uagrm.credenciales.rbac.AccessService access;
+    private final bo.edu.uagrm.credenciales.platform.GovernanceRepository governance;
+    private final bo.edu.uagrm.credenciales.security.MfaService mfa;
 
     public AuthService(TenantRepository tenantRepository, AppUserRepository userRepository,
-                       PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.tenantRepository = tenantRepository;
+                       PasswordEncoder passwordEncoder, JwtService jwtService,
+                       bo.edu.uagrm.credenciales.rbac.AccessService access,
+                       bo.edu.uagrm.credenciales.platform.GovernanceRepository governance,
+                       bo.edu.uagrm.credenciales.security.MfaService mfa,AuditTrail audit) {
+        this.audit=audit;this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.access = access;
+        this.governance = governance;
+        this.mfa=mfa;
     }
 
     @Transactional
@@ -36,26 +50,30 @@ public class AuthService {
         }
         Tenant tenant = tenantRepository.save(new Tenant(request.organizationName().trim(), slug,
                 request.institutionType()));
+        tenant.setActive(false);
+        governance.save(new bo.edu.uagrm.credenciales.platform.OrganizationGovernance(tenant.getId(),
+                bo.edu.uagrm.credenciales.platform.OrganizationStatus.PENDING_REVIEW));
         AppUser user = userRepository.save(new AppUser(tenant, request.email().trim(),
-                passwordEncoder.encode(request.password()), UserRole.ADMIN));
+                passwordEncoder.encode(request.password()), UserRole.TENANT_ADMIN));
+        audit.record(ORGANIZATION_REGISTERED,tenant.getId(),ORGANIZATION,tenant.getId());
         return response(user);
     }
 
-    @Transactional(readOnly = true)
-    public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
+    @Transactional
+    public AuthDtos.LoginResult login(AuthDtos.LoginRequest request) {
         Tenant tenant = tenantRepository.findBySlug(normalizeSlug(request.organizationSlug()))
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
-        AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().toLowerCase())
+        AppUser user = userRepository.findByTenantIdAndEmail(tenant.getId(), request.email().trim().toLowerCase(Locale.ROOT))
                 .filter(AppUser::isActive)
                 .orElseThrow(() -> new BadCredentialsException("Credenciales inválidas"));
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!access.principal(user).enabled() || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadCredentialsException("Credenciales inválidas");
         }
-        return response(user);
+        return mfa.beginLogin(user,access.principal(user));
     }
 
     private AuthDtos.AuthResponse response(AppUser user) {
-        UserPrincipal principal = UserPrincipal.from(user);
+        UserPrincipal principal = access.principal(user);
         return new AuthDtos.AuthResponse(jwtService.create(principal), "Bearer", user.getEmail(),
                 user.getRole().name(), user.getTenant().getId().toString(), user.getTenant().getName(),
                 user.getTenant().getInstitutionType());

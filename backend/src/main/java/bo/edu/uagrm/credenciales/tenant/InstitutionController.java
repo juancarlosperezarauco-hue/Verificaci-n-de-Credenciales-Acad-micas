@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/institution/profile")
-@PreAuthorize("hasAnyRole('ADMIN','ISSUER','AUDITOR')")
+@PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
 public class InstitutionController {
     private final InstitutionService service;
 
@@ -34,21 +34,21 @@ public class InstitutionController {
     }
 
     @PatchMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORGANIZATION_UPDATE')")
     InstitutionDtos.Profile update(@AuthenticationPrincipal UserPrincipal principal,
                                     @Valid @RequestBody InstitutionDtos.UpdateBranding request) {
         return service.update(principal.tenantId(), request);
     }
 
     @PostMapping(value = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORGANIZATION_UPDATE')")
     InstitutionDtos.Profile logo(@AuthenticationPrincipal UserPrincipal principal,
                                   @RequestPart("file") MultipartFile file) {
         return service.uploadLogo(principal.tenantId(), file);
     }
 
     @PostMapping(value = "/verification-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORGANIZATION_UPDATE')")
     InstitutionDtos.Profile verificationDocument(@AuthenticationPrincipal UserPrincipal principal,
                                                   @RequestPart("file") MultipartFile file) {
         return service.uploadVerificationDocument(principal.tenantId(), file);

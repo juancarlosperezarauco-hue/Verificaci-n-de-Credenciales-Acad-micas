@@ -1,78 +1,95 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from './core/auth.service';
 import { BrandingService } from './core/branding.service';
+import { OrganizationApi } from './features/organization/organization.api';
+import { AccountSecurityApi } from './core/account-security.api';
+import { NavigationComponent } from './core/navigation/navigation.component';
+import { navigationFor } from './core/navigation/navigation.model';
+import { UiIconComponent } from './shared/ui-icon.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
-    <div [class]="isLanding() ? 'landing-shell min-h-screen bg-white text-slate-900' : 'app-surface min-h-screen bg-slate-950 text-slate-100'">
-      <header [class]="isLanding() ? 'relative z-50 border-b border-slate-200 bg-white/90 backdrop-blur' : 'relative z-50 border-b border-white/10 bg-slate-950/90 backdrop-blur'">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-3 px-6 py-4 sm:flex-nowrap">
-          <a routerLink="/" class="flex shrink-0 items-center gap-3 font-semibold">
-            @if (branding.profile()?.logoUrl) {
-              <img [src]="branding.profile()?.logoUrl" alt="Logo institucional" class="size-11 rounded-xl bg-white object-contain p-1">
-            } @else {
-              <span class="brand-bg grid size-10 place-items-center rounded-xl font-black text-slate-950">VC</span>
-            }
-            <span class="hidden lg:inline">{{ branding.profile()?.name ?? 'Credenciales Académicas' }}</span>
-          </a>
-          <nav [class]="isLanding() ? 'module-bar order-2 flex w-full min-w-0 items-center justify-start gap-1 overflow-x-auto whitespace-nowrap text-sm text-slate-700 sm:order-none sm:ml-auto sm:w-auto sm:justify-end' : 'module-bar order-2 flex w-full min-w-0 items-center justify-start gap-1 overflow-x-auto whitespace-nowrap text-sm sm:order-none sm:ml-auto sm:w-auto sm:justify-end'">
-            @if (auth.isAuthenticated()) {
-              @if (auth.current()?.role === 'STUDENT') {
-                <a routerLink="/student/account" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Mi expediente</a>
-                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
-              } @else {
-                <a routerLink="/dashboard" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Panel</a>
-                <a routerLink="/students" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>
-                <a routerLink="/credentials" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Credenciales</a>
-                <a routerLink="/institution" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Institución</a>
-                <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificar</a>
-              }
-              <button (click)="logout()" class="ml-1 rounded-lg border border-white/15 px-3 py-2">Salir</button>
-            } @else {
-              <a routerLink="/student/login" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Estudiantes</a>
-              <a routerLink="/register" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Instituciones</a>
-              <a routerLink="/verify" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Verificación</a>
-              <a routerLink="/login" routerLinkActive="brand-nav-active" class="rounded-lg px-3 py-2">Portal académico</a>
-              <a routerLink="/login" class="brand-bg ml-1 rounded-lg px-4 py-2 font-semibold text-slate-950">Ingresar</a>
-            }
-          </nav>
-        </div>
-      </header>
-      <main><router-outlet /></main>
-    </div>
-  `,
-  styles: `
-    .landing-shell .brand-nav-active { background: #f1f5f9; color: #0f172a; }
-    .app-surface .brand-nav-active { background: rgb(255 255 255 / 10%); }
-    .module-bar { scrollbar-width: none; }
-    .module-bar::-webkit-scrollbar { display: none; }
-    .landing-shell .module-bar a:not(.brand-bg):hover { background: #f1f5f9; color: #0f172a; }
-    .app-surface .module-bar a:not(.brand-bg):hover { background: rgb(255 255 255 / 8%); }
-  `,
+  imports: [RouterOutlet, RouterLink, NavigationComponent, UiIconComponent],
+  templateUrl: './app.html',
+  styleUrl: './app.css',
 })
 export class App {
   readonly auth = inject(AuthService);
   readonly branding = inject(BrandingService);
+  readonly access = inject(OrganizationApi);
+  private readonly security = inject(AccountSecurityApi);
   private readonly router = inject(Router);
-  readonly isLanding = signal(this.router.url === '/');
+  readonly currentUrl = signal(this.router.url);
+  readonly currentModule = computed(() => {
+    const session = this.auth.current();
+    const model = navigationFor(
+      session?.role ?? null,
+      this.access.access()?.permissions ?? [],
+      this.access.access()?.onboarding ?? false,
+    );
+    return (
+      [...model.primary, ...model.organization, ...model.account]
+        .sort((a, b) => b.path.length - a.path.length)
+        .find(
+          (item) =>
+            this.currentUrl().split('?')[0] === item.path ||
+            this.currentUrl().startsWith(item.path + '/'),
+        )?.label ?? 'Área de trabajo'
+    );
+  });
+  readonly roleLabel = computed(
+    () =>
+      (
+        ({
+          SUPER_ADMIN: 'Administración global',
+          TENANT_ADMIN: 'Administración institucional',
+          ADMIN: 'Administración institucional',
+          STUDENT: 'Estudiante',
+          CUSTOM: 'Equipo institucional',
+        }) as Record<string, string>
+      )[this.auth.current()?.role ?? ''] ?? 'Mi cuenta',
+  );
+  readonly initials = computed(() =>
+    (this.auth.current()?.email ?? 'VC').slice(0, 2).toUpperCase(),
+  );
 
   constructor() {
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) this.isLanding.set(event.urlAfterRedirects === '/');
+    this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event instanceof NavigationEnd) this.currentUrl.set(event.urlAfterRedirects);
     });
-    effect(() => {
+    effect((onCleanup) => {
       const session = this.auth.current();
-      if (session?.token && session.role !== 'STUDENT') this.branding.load();
-      else this.branding.clear();
+      this.access.access.set(null);
+      this.branding.clear();
+      if (session?.token && session.role !== 'STUDENT') {
+        const request = this.access.me().subscribe({
+          next: (p) => {
+            if (p.permissions.includes('ORGANIZATION_VIEW')) this.branding.load();
+          },
+          error: () => this.access.access.set(null),
+        });
+        onCleanup(() => request.unsubscribe());
+      }
     });
   }
-
   logout(): void {
-    const student = this.auth.current()?.role === 'STUDENT';
-    this.auth.logout();
-    void this.router.navigate([student ? '/student/login' : '/login']);
+    const role = this.auth.current()?.role;
+    const finish = (unconfirmed: boolean) => {
+      this.auth.logout();
+      this.access.access.set(null);
+      void this.router.navigate(
+        [
+          role === 'STUDENT'
+            ? '/student/login'
+            : role === 'SUPER_ADMIN'
+              ? '/superadmin/login'
+              : '/login',
+        ],
+        { queryParams: unconfirmed ? { logoutUnconfirmed: true } : {} },
+      );
+    };
+    this.security.logout().subscribe({ next: () => finish(false), error: () => finish(true) });
   }
 }

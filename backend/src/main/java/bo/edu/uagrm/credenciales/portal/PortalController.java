@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/portal/items")
-@PreAuthorize("hasAnyRole('ADMIN','ISSUER','AUDITOR')")
+@PreAuthorize("hasAuthority('ORGANIZATION_VIEW')")
 public class PortalController {
     private final PortalService service;
 
@@ -31,7 +31,7 @@ public class PortalController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORGANIZATION_UPDATE')")
     PortalDtos.Response create(@AuthenticationPrincipal UserPrincipal principal,
                                @Valid @RequestBody PortalDtos.CreateRequest request) {
         return service.create(principal.tenantId(), request);
@@ -39,7 +39,7 @@ public class PortalController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ORGANIZATION_UPDATE')")
     void delete(@AuthenticationPrincipal UserPrincipal principal, @PathVariable UUID id) {
         service.delete(principal.tenantId(), id);
     }

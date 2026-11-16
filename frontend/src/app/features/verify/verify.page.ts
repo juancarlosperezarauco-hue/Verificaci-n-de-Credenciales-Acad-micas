@@ -1,58 +1,32 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
-import { ApiService } from '../../core/api.service';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { finalize, Subscription } from 'rxjs';
+import { ApiService, DocumentCheck } from '../../core/api.service';
 import { PublicCredential } from '../../core/models';
-
-@Component({
-  imports: [ReactiveFormsModule],
-  template: `
-    <section class="mx-auto max-w-5xl px-6 py-16">
-      <div class="text-center"><p class="brand-text text-sm font-semibold uppercase tracking-[.2em]">Consulta pública</p><h1 class="mt-4 text-4xl font-black sm:text-5xl">Verifica una credencial</h1><p class="mx-auto mt-5 max-w-2xl text-lg text-slate-400">Introduce el código impreso o abre el enlace incluido en el QR.</p></div>
-      <form (ngSubmit)="verify()" class="mx-auto mt-10 flex max-w-2xl gap-3 rounded-2xl border border-white/10 bg-slate-900 p-3">
-        <input [formControl]="code" placeholder="Ej. CRED-AB12CD34" class="min-w-0 flex-1 bg-transparent px-3 outline-none">
-        <button [disabled]="code.invalid || loading()" class="brand-bg rounded-xl px-5 py-3 font-bold text-slate-950 disabled:opacity-50">Verificar</button>
-      </form>
-      @if (error()) { <div class="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/30 bg-red-400/10 p-6 text-red-200">{{ error() }}</div> }
-      @if (result(); as credential) {
-        <article class="mx-auto mt-8 max-w-2xl overflow-hidden rounded-3xl border-2 bg-slate-900 shadow-2xl" [style.border-color]="credential.primaryColor || '#ffffff1a'">
-          <div [class]="credential.status === 'ISSUED' ? 'bg-emerald-400 p-6 text-slate-950' : 'bg-red-400 p-6 text-slate-950'"><p class="text-sm font-bold uppercase tracking-wider">Resultado</p><h2 class="mt-2 text-3xl font-black">{{ credential.status === 'ISSUED' ? 'Credencial válida' : 'Credencial revocada' }}</h2></div>
-          <div class="flex items-center gap-4 border-b border-white/10 p-7">@if (credential.institutionLogoUrl) { <img [src]="credential.institutionLogoUrl" alt="Logo de la institución" class="size-16 rounded-xl bg-white object-contain p-1"> }<div><p class="text-sm text-slate-400">Institución emisora</p><h3 class="mt-1 text-xl font-bold">{{ credential.organization }}</h3><p class="mt-1 text-xs" [style.color]="credential.primaryColor">{{ credential.institutionType }}</p></div></div>
-          <dl class="grid gap-6 p-7 sm:grid-cols-2"><div><dt class="text-sm text-slate-400">Titular</dt><dd class="mt-1 font-semibold">{{ credential.holderName }}</dd></div><div><dt class="text-sm text-slate-400">Programa</dt><dd class="mt-1 font-semibold">{{ credential.title }}</dd></div><div><dt class="text-sm text-slate-400">Tipo</dt><dd class="mt-1 font-semibold">{{ credential.credentialType }}</dd></div><div><dt class="text-sm text-slate-400">Código</dt><dd class="mt-1 font-mono text-sm">{{ credential.verificationCode }}</dd></div>@if (credential.revocationReason) { <div class="sm:col-span-2"><dt class="text-sm text-red-300">Motivo</dt><dd class="mt-1">{{ credential.revocationReason }}</dd></div> }</dl>
-        </article>
-      }
-    </section>
-  `,
-})
-export class VerifyPage implements OnInit {
-  private readonly api = inject(ApiService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  readonly code = new FormControl('', { nonNullable: true, validators: Validators.required });
-  readonly result = signal<PublicCredential | null>(null);
-  readonly loading = signal(false);
-  readonly error = signal('');
-
-  ngOnInit(): void {
-    const routeCode = this.route.snapshot.paramMap.get('code');
-    if (routeCode) { this.code.setValue(routeCode); this.lookup(routeCode); }
-  }
-
-  verify(): void {
-    if (this.code.invalid) return;
-    const value = this.code.value.trim();
-    void this.router.navigate(['/verify', value]);
-    this.lookup(value);
-  }
-
-  private lookup(value: string): void {
-    this.loading.set(true);
-    this.error.set('');
-    this.result.set(null);
-    this.api.verifyCredential(value).pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: (credential) => this.result.set(credential),
-      error: () => this.error.set('No se encontró una credencial con ese código.'),
-    });
-  }
+import { cycleError } from '../academic/academic.api';
+@Component({imports:[ReactiveFormsModule,RouterLink,DatePipe],template:`
+<section class="org-page max-w-4xl"><p class="org-eyebrow">Consulta pública</p><h1 class="org-title">Verifica una credencial</h1><p class="org-description">Busca el código del documento o abre su QR. Para comparar el archivo y comprobar su firma, selecciona también el PDF que recibiste.</p>
+<form (ngSubmit)="verify()" class="org-card mt-7 flex flex-wrap items-end gap-3"><label class="org-label min-w-0 flex-1">Código de verificación<input [formControl]="code" class="org-input" placeholder="CRED-…" autocomplete="off" maxlength="40"></label><button class="org-primary" [disabled]="code.invalid||loading()">Consultar</button></form>
+@if(loading()){<p role="status" class="mt-5">Consultando…</p>}@if(error()){<p role="alert" class="org-error mt-5">{{error()}}</p>}
+@if(result();as c){<article class="org-card mt-6"><div class="flex flex-wrap items-center gap-4">@if(c.institutionLogoUrl){<img [src]="c.institutionLogoUrl" alt="Logo de la institución emisora" class="size-16 object-contain">}<div><p class="text-sm text-slate-500">Institución emisora</p><h2 class="text-xl font-bold">{{c.organization}}</h2></div></div>
+<dl class="mt-6 grid gap-5 sm:grid-cols-2"><div><dt class="text-sm text-slate-500">Titular</dt><dd class="font-semibold">{{c.holderName}}</dd></div><div><dt class="text-sm text-slate-500">Documento</dt><dd>{{c.title}} · {{c.credentialType}}</dd></div><div><dt class="text-sm text-slate-500">Fecha de emisión</dt><dd>{{c.issuedAt|date:'dd/MM/yyyy HH:mm'}}</dd></div><div><dt class="text-sm text-slate-500">Código</dt><dd class="break-all font-mono text-xs">{{c.verificationCode}}</dd></div></dl>
+<div class="mt-6 grid gap-4 sm:grid-cols-2"><div class="rounded-xl border border-slate-200 p-4"><h3 class="font-bold">1. Registro</h3><p class="mt-2" [class.text-red-700]="c.status==='REVOKED'">{{c.status==='ISSUED'?'Emitida en la plataforma':'Revocada'}}</p>@if(c.revocationReason){<p class="mt-2 text-sm text-red-700">{{c.revocationReason}}</p>}</div><div class="rounded-xl border border-slate-200 p-4"><h3 class="font-bold">2. Estado de la institución</h3><p class="mt-2">{{issuerLabel(c.issuerStatus)}}</p><p class="mt-2 text-xs text-slate-500">Es el estado administrativo dentro de esta plataforma.</p></div>
+<div class="rounded-xl border border-slate-200 p-4"><h3 class="font-bold">3. Archivo</h3><p class="mt-2">{{check()?(check()!.hashMatches?'Coincide exactamente con el PDF registrado':'El archivo NO coincide con el PDF registrado'):'Sin comprobar: selecciona el PDF'}}</p></div>
+<div class="rounded-xl border border-slate-200 p-4"><h3 class="font-bold">4. Firma del PDF</h3><p class="mt-2">{{signatureLabel()}}</p>@if(c.testSignature||check()?.testSignature){<p class="mt-2 font-semibold text-amber-800">Certificado de PRUEBA. No acredita confianza de una autoridad certificadora.</p>}@if(check()?.signature?.status==='VALID'){<p class="mt-2 text-sm">{{check()!.signature.certificateCurrentlyValid?'El certificado está dentro de su vigencia actual.':'El certificado está fuera de su vigencia actual.'}}</p>}</div></div>
+@if(c.replacedByCode){<p class="org-info mt-5">Existe una credencial que reemplaza este documento: <a class="underline" [routerLink]="['/verify',c.replacedByCode]">Consultar reemplazo</a>.</p>}@if(c.replacesCode){<p class="mt-5 text-sm">Reemplaza a <a class="org-link underline" [routerLink]="['/verify',c.replacesCode]">{{c.replacesCode}}</a>.</p>}
+<div class="mt-6 border-t border-slate-200 pt-5"><label class="org-label">Comparar el PDF recibido<input type="file" class="org-input" accept="application/pdf,.pdf" [disabled]="checking()" (change)="fileChanged($event)"></label><p class="org-hint">Máximo 10 MiB. El archivo se procesa para esta comprobación y no se guarda como adjunto.</p>@if(checking()){<p role="status" class="mt-3">Comprobando huella y firma…</p>}@if(checkError()){<p role="alert" class="org-error mt-4">{{checkError()}}</p>}<p class="mt-4 break-all font-mono text-xs text-slate-500">SHA-256 registrado: {{c.documentHash}}</p></div>
+<p class="mt-5 text-xs text-slate-500">La comprobación criptográfica contrasta la firma con el firmante registrado. No valida acreditación educativa, cadena de confianza de una CA, revocación del certificado, sellado de tiempo ni validez legal.</p></article>}
+</section>`})
+export class VerifyPage {
+ private readonly api=inject(ApiService);private readonly route=inject(ActivatedRoute);private readonly router=inject(Router);private readonly destroy=inject(DestroyRef);private lookupRequest?:Subscription;private fileRequest?:Subscription;
+ readonly code=new FormControl('',{nonNullable:true,validators:[Validators.required,Validators.maxLength(40)]});readonly result=signal<PublicCredential|null>(null);readonly check=signal<DocumentCheck|null>(null);readonly loading=signal(false);readonly checking=signal(false);readonly error=signal('');readonly checkError=signal('');
+ constructor(){this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params=>{const code=params.get('code');if(code){this.code.setValue(code);this.lookup(code);}});this.destroy.onDestroy(()=>{this.lookupRequest?.unsubscribe();this.fileRequest?.unsubscribe();});}
+ verify(){const value=this.code.value.trim();if(!value||this.code.invalid)return;if(this.route.snapshot.paramMap.get('code')===value)this.lookup(value);else void this.router.navigate(['/verify',value]);}
+ lookup(value:string){this.lookupRequest?.unsubscribe();this.fileRequest?.unsubscribe();this.checking.set(false);this.loading.set(true);this.error.set('');this.checkError.set('');this.result.set(null);this.check.set(null);this.lookupRequest=this.api.verifyCredential(value).pipe(finalize(()=>this.loading.set(false))).subscribe({next:c=>this.result.set(c),error:e=>this.error.set(e.status===404||e.status===400?'No se encontró una credencial con ese código.':cycleError(e))});}
+ fileChanged(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0],c=this.result();if(!file||!c)return;this.check.set(null);this.checkError.set('');if(file.size>10*1024*1024){this.checkError.set('El PDF debe tener hasta 10 MiB.');input.value='';return;}this.checking.set(true);this.fileRequest=this.api.checkCredentialFile(c.verificationCode,file).pipe(finalize(()=>{this.checking.set(false);input.value='';})).subscribe({next:r=>this.check.set(r),error:e=>this.checkError.set(cycleError(e))});}
+ signatureLabel(){const r=this.check();if(!r)return this.result()?.signatureStatus==='UNSIGNED'?'Sin firma registrada':'Firma registrada; falta comprobar el PDF';if(r.signature.status==='UNSIGNED')return 'PDF sin firma criptográfica';if(!r.hashMatches)return 'El archivo no coincide; no acredita esta credencial';return r.signature.status==='VALID'?'Firma criptográfica íntegra y firmante coincidente':'Firma inválida, incompleta o firmante diferente';}
+ issuerLabel(status?:string){return ({APPROVED:'Aprobada',ACTIVE:'Activa',PENDING:'Pendiente',PENDING_REVIEW:'Pendiente de revisión',OBSERVED:'Observada',SUSPENDED:'Suspendida',INACTIVE:'Inactiva',DEACTIVATED:'Desactivada'} as Record<string,string>)[status??'']??status??'No informado';}
 }

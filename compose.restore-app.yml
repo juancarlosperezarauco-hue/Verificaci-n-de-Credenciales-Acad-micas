@@ -1,0 +1,51 @@
+# Added only by the restore rehearsal. No mail or blockchain workers are allowed.
+services:
+  backend:
+    image: ${RESTORE_BACKEND_IMAGE:-credentials-v3-audit-backend:latest}
+    mem_limit: 640m
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx320m"
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-credentials_audit}
+      DB_USERNAME: ${POSTGRES_USER:?}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY:?}
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:?}
+      EVIDENCE_ENCRYPTION_KEY: ${EVIDENCE_ENCRYPTION_KEY:?}
+      SIGNING_ENCRYPTION_KEY: ${SIGNING_ENCRYPTION_KEY:?}
+      JWT_KEY_ID: ${JWT_KEY_ID:-legacy}
+      JWT_PREVIOUS_KEYS: ${JWT_PREVIOUS_KEYS:-}
+      MFA_KEY_ID: ${MFA_KEY_ID:-legacy}
+      MFA_PREVIOUS_KEYS: ${MFA_PREVIOUS_KEYS:-}
+      MAIL_KEY_ID: ${MAIL_KEY_ID:-legacy}
+      MAIL_PREVIOUS_KEYS: ${MAIL_PREVIOUS_KEYS:-}
+      EVIDENCE_KEY_ID: ${EVIDENCE_KEY_ID:-legacy}
+      EVIDENCE_PREVIOUS_KEYS: ${EVIDENCE_PREVIOUS_KEYS:-}
+      SIGNING_ALLOW_DEMO: "false"
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?}
+      MINIO_BUCKET: ${MINIO_BUCKET:-audit-credentials}
+      MAIL_WORKER_ENABLED: "false"
+      SECURITY_MAINTENANCE_ENABLED: "false"
+      EVIDENCE_CLEANUP_ENABLED: "false"
+      AI_ANALYSIS_ENABLED: "false"
+      APP_FRONTEND_URL: http://localhost:4301
+      ALLOWED_ORIGIN: http://localhost:4301
+      SPRING_MAIL_HOST: unavailable.invalid
+      AUTH_RATE_LIMIT_ENABLED: "false"
+    ports:
+      - target: 8080
+        published: "0"
+        host_ip: 127.0.0.1
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 90s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started

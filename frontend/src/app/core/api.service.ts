@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { AuthResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PortalItem, PortalItemType, PublicCredential, Student } from './models';
+import { AuthResponse, LoginResponse, BrandingStyle, Credential, InstitutionProfile, InstitutionType, PortalItem, PortalItemType, PublicCredential, Student } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
   login(body: { organizationSlug: string; email: string; password: string }) {
-    return this.http.post<AuthResponse>('/api/auth/login', body);
+    return this.http.post<LoginResponse>('/api/auth/login', body);
   }
 
   registerInstitution(body: { organizationName: string; organizationSlug: string; institutionType: InstitutionType; email: string; password: string }) {
@@ -58,16 +58,20 @@ export class ApiService {
     return this.http.post<Credential[]>('/api/credentials/batch', body);
   }
 
-  generateCredentialDocument(id: string) {
-    return this.http.post<Credential>(`/api/credentials/${id}/generate-document`, {});
+  generateCredentialDocument(id: string, templateVersionId?: string) {
+    return this.http.post<Credential>(`/api/credentials/${id}/generate-document`, templateVersionId ? {templateVersionId} : {});
   }
 
   downloadCredentialDocument(id: string) {
     return this.http.get(`/api/credentials/${id}/document`, { responseType: 'blob', observe: 'response' });
   }
 
-  issueCredential(id: string) {
-    return this.http.patch<Credential>(`/api/credentials/${id}/issue`, {});
+  signCredential(id: string) {
+    return this.http.post<Credential>(`/api/credentials/${id}/sign`, {});
+  }
+
+  issueCredential(id: string, operationKey?: string) {
+    return this.http.patch<Credential>(`/api/credentials/${id}/issue`, {}, operationKey ? {headers:{'Idempotency-Key':operationKey}} : {});
   }
 
   uploadDocument(id: string, file: File) {
@@ -83,4 +87,14 @@ export class ApiService {
   verifyCredential(code: string) {
     return this.http.get<PublicCredential>(`/api/public/credentials/${encodeURIComponent(code)}`);
   }
+
+  checkCredentialFile(code:string,file:File) {
+    const body=new FormData();body.append('file',file);
+    return this.http.post<DocumentCheck>(`/api/public/credentials/${encodeURIComponent(code)}/check-document`,body);
+  }
+}
+
+export interface DocumentCheck {
+  hashMatches:boolean; registryStatus:string; issuerStatus:string; testSignature:boolean;
+  signature:{status:string;coversWholeDocument:boolean;cryptographicValid:boolean;signerMatches:boolean;certificateCurrentlyValid:boolean;fingerprint:string|null};
 }

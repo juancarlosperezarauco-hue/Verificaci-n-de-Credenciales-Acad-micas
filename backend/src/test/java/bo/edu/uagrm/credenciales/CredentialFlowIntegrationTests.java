@@ -31,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class CredentialFlowIntegrationTests {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired org.springframework.context.ApplicationContext context;
     @MockitoBean DocumentStoragePort storage;
 
     @Test
@@ -53,6 +54,7 @@ class CredentialFlowIntegrationTests {
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andReturn().getResponse().getContentAsString();
         String token = objectMapper.readTree(registerResponse).get("token").asText();
+        ApprovedOrganizationFixture.approve(objectMapper.readTree(registerResponse),context);
 
         mvc.perform(post("/api/portal/items").header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON).content("""

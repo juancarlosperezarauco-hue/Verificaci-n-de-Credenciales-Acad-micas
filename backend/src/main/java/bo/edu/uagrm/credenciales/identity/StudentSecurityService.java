@@ -1,0 +1,181 @@
+package bo.edu.uagrm.credenciales.identity;
+
+import bo.edu.uagrm.credenciales.audit.*;
+import static bo.edu.uagrm.credenciales.audit.AuditAction.*;
+import static bo.edu.uagrm.credenciales.audit.AuditTrail.Resource.ACCOUNT;
+
+import bo.edu.uagrm.credenciales.consent.ConsentRepository;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
+import java.util.HexFormat;
+import java.util.Locale;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+@Transactional
+public class StudentSecurityService {
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private final StudentAccountRepository accounts;
+    private final StudentAccountTokenRepository tokens;
+    private final PasswordEncoder passwords;
+    private final ApplicationEventPublisher events;
+    private final ConsentRepository consents;
+    private final String frontendUrl;
+    private final bo.edu.uagrm.credenciales.security.SessionRegistry sessions;
+    private final AuditTrail audit;
+
+    public StudentSecurityService(StudentAccountRepository accounts, StudentAccountTokenRepository tokens,
+                                  PasswordEncoder passwords, ApplicationEventPublisher events, ConsentRepository consents,
+                                  @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl,
+                                  bo.edu.uagrm.credenciales.security.SessionRegistry sessions,AuditTrail audit) {
+        this.accounts=accounts; this.tokens=tokens; this.passwords=passwords;
+        this.events=events; this.consents=consents; this.frontendUrl=frontendUrl.replaceAll("/+$", "");
+        this.sessions=sessions;
+        this.audit=audit;
+    }
+
+    @Transactional(readOnly=true)
+    public StudentSecurityDtos.Snapshot snapshot(UUID id) {
+        return StudentSecurityDtos.Snapshot.from(accounts.findById(id).filter(StudentAccount::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Cuenta no disponible.")));
+    }
+
+    public void onRegistered(UUID id) { sendVerification(lockAccount(id));audit.record(STUDENT_REGISTERED,null,ACCOUNT,id); }
+
+    public void resendVerification(UUID id) {
+        StudentAccount account=lockAccount(id);
+        if (!account.isEmailVerified()) sendVerification(account);
+    }
+
+    public void verifyEmail(String raw) {
+        var token=consume(raw, StudentTokenType.EMAIL_VERIFICATION);
+        if (!token.getStudent().getEmail().equals(token.getPendingEmail())) throw invalidToken();
+        token.getStudent().verifyEmail();
+        audit.record(EMAIL_VERIFIED,null,ACCOUNT,token.getStudent().getId());
+    }
+
+    public void requestPasswordReset(String email) {
+        String normalized=normalizeEmail(email);
+        accounts.findIdByEmail(normalized).ifPresent(id -> {
+            StudentAccount account=accounts.findLockedById(id).orElseThrow();
+            if (!account.isActive() || !account.getEmail().equals(normalized)) return;
+            Issued issued=issue(account, StudentTokenType.PASSWORD_RESET, null, Duration.ofMinutes(30));
+            mail(account,issued,StudentTokenType.PASSWORD_RESET,account.getEmail(), "Recupera tu contraseña", "/student/recover?token="+issued.raw());
+            audit.record(PASSWORD_RESET_REQUESTED,null,ACCOUNT,id);
+        });
+    }
+
+    public void resetPassword(String raw, String newPassword) {
+        validatePassword(newPassword);
+        var token=consume(raw, StudentTokenType.PASSWORD_RESET);
+        token.getStudent().changePasswordHash(passwords.encode(newPassword));
+        invalidateAll(token.getStudent().getId());
+        audit.record(PASSWORD_RESET,null,ACCOUNT,token.getStudent().getId());
+    }
+
+    public void changePassword(UUID id, String currentPassword, String newPassword) {
+        validatePassword(newPassword);
+        StudentAccount account=lockAccount(id);
+        requirePassword(account, currentPassword);
+        account.changePasswordHash(passwords.encode(newPassword));
+        invalidateAll(id);
+        audit.record(PASSWORD_CHANGED,null,ACCOUNT,id);
+    }
+
+    public void requestEmailChange(UUID id, String currentPassword, String newEmail) {
+        StudentAccount account=lockAccount(id);
+        requirePassword(account, currentPassword);
+        String email=normalizeEmail(newEmail);
+        if (email.equals(account.getEmail())) throw new IllegalArgumentException("Ese ya es tu correo actual.");
+        if (accounts.findByEmail(email).isPresent()) throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo no está disponible.");
+        Issued issued=issue(account, StudentTokenType.EMAIL_CHANGE, email, Duration.ofMinutes(30));
+        mail(account,issued,StudentTokenType.EMAIL_CHANGE,email, "Confirma tu nuevo correo", "/student/confirm-email?type=change&token="+issued.raw());
+        audit.record(EMAIL_CHANGE_REQUESTED,null,ACCOUNT,id);
+    }
+
+    public void confirmEmailChange(String raw) {
+        var token=consume(raw, StudentTokenType.EMAIL_CHANGE);
+        if (accounts.findByEmail(token.getPendingEmail()).isPresent()) throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo no está disponible.");
+        token.getStudent().changeEmail(token.getPendingEmail());
+        invalidateAll(token.getStudent().getId());
+        audit.record(EMAIL_CHANGED,null,ACCOUNT,token.getStudent().getId());
+    }
+
+    public void deactivate(UUID id, String currentPassword) {
+        StudentAccount account=lockAccount(id);
+        requirePassword(account, currentPassword);
+        account.deactivate();
+        events.publishEvent(new bo.edu.uagrm.credenciales.identityreview.EvidenceEvents.ProfileChanged(id,true));
+        invalidateAll(id);
+        consents.revokeAllByStudent(id, Instant.now());
+        audit.record(ACCOUNT_DEACTIVATED,null,ACCOUNT,id);
+    }
+
+    private StudentAccount lockAccount(UUID id) {
+        return accounts.findLockedById(id).filter(StudentAccount::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Cuenta no disponible."));
+    }
+
+    private StudentAccountToken consume(String raw, StudentTokenType type) {
+        String hash=hash(raw.strip());
+        // All issuers/consumers lock the account first, then the token: no lock-order inversion.
+        var found=tokens.findByTokenHashAndTokenType(hash, type).orElseThrow(this::invalidToken);
+        lockAccount(found.getStudent().getId());
+        var token=tokens.findByTokenHashAndTokenTypeAndUsedAtIsNull(hash, type).orElseThrow(this::invalidToken);
+        if (!token.getExpiresAt().isAfter(Instant.now())) throw invalidToken();
+        token.use();
+        return token;
+    }
+
+    private record Issued(String raw,UUID tokenId,Instant expiresAt){@Override public String toString(){return "Issued[redacted]";}}
+    private Issued issue(StudentAccount account, StudentTokenType type, String email, Duration duration) {
+        tokens.invalidate(account.getId(), type, Instant.now());
+        byte[] bytes=new byte[32]; RANDOM.nextBytes(bytes);
+        String raw=Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        var token=tokens.save(new StudentAccountToken(account, hash(raw), type, email, Instant.now().plus(duration)));
+        return new Issued(raw,token.getId(),token.getExpiresAt());
+    }
+
+    private void invalidateAll(UUID id) {
+        sessions.revokeStudent(id);
+        for (var type:StudentTokenType.values()) tokens.invalidate(id, type, Instant.now());
+    }
+
+    private void sendVerification(StudentAccount account) {
+        Issued issued=issue(account, StudentTokenType.EMAIL_VERIFICATION, account.getEmail(), Duration.ofHours(24));
+        mail(account,issued,StudentTokenType.EMAIL_VERIFICATION,account.getEmail(), "Verifica tu correo", "/student/confirm-email?type=verification&token="+issued.raw());
+    }
+
+    private void mail(StudentAccount account,Issued issued,StudentTokenType kind,String to,String subject,String path) {
+        events.publishEvent(new StudentMailDelivery.Message(account.getId(),issued.tokenId(),kind.name(),issued.expiresAt(),to,subject,"Abre este enlace para continuar:\n"+frontendUrl+path));
+    }
+
+    private void validatePassword(String password) {
+        if (password.length()<10 || password.getBytes(StandardCharsets.UTF_8).length>72)
+            throw new IllegalArgumentException("Usa entre 10 y 72 caracteres y un máximo de 72 bytes UTF-8.");
+    }
+
+    private void requirePassword(StudentAccount account, String value) {
+        if (!passwords.matches(value, account.getPasswordHash())) throw new BadCredentialsException("Contraseña actual incorrecta.");
+    }
+
+    private IllegalArgumentException invalidToken() { return new IllegalArgumentException("El enlace no es válido, ha vencido o ya fue utilizado."); }
+    private String normalizeEmail(String email) { return email.strip().toLowerCase(Locale.ROOT); }
+    private String hash(String raw) {
+        try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(raw.getBytes(StandardCharsets.UTF_8))); }
+        catch (NoSuchAlgorithmException exception) { throw new IllegalStateException("SHA-256 no disponible", exception); }
+    }
+}

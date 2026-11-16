@@ -2,10 +2,44 @@
 
 Plataforma multitenant para que instituciones educativas creen, emitan, consulten y revoquen credenciales académicas verificables mediante código público y QR.
 
+## Estado verificado y plan de continuación
+
+Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
+referencia y se comprobó V1–V13. La continuación entrega revisión previa de
+organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
+El estado actual valida **219 pruebas (120 backend + 99 web)** y Flyway **V1–V21**.
+Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
+La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
+Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
+de registros técnicos y soporte de rotación de claves con recifrado por lotes.
+Los registros institucionales antiguos pueden completar su perfil sin recrear cuentas.
+El estudiante puede enviar documentos privados a una institución vinculada y consultar
+su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados del tenant.
+
+- [Arquitectura, DER, 18 módulos y riesgos](docs/AUDIT_V3.md).
+- [Matriz de las 40 tareas e historias iniciales](docs/PRODUCT_BACKLOG_V3.md).
+- [Primer sprint y criterios de aceptación](docs/SPRINT_01_V3.md).
+- [Resultados y comandos de validación](docs/VALIDATION_V3.md).
+- [Entrega prioritaria actual, ejecución y límites](docs/PRIORITY_01_DELIVERY.md).
+- [MFA, sesiones y límites de acceso](docs/SECURITY_02_DELIVERY.md).
+- [Auditoría y correo durable: alcance, pruebas y límites](docs/AUDIT_MAIL_DELIVERY.md).
+- [Seguridad y perfil institucional histórico](docs/SECURITY_POLISH_DELIVERY.md).
+- [Procedimiento de rotación de claves](docs/KEY_ROTATION_RUNBOOK.md).
+- [Revisión documental: alcance, pruebas y QA visual pendiente](docs/IDENTITY_REVIEW_DELIVERY.md).
+- [Menú lateral izquierdo y navegación por permisos](handoffs/codex-navigation.md).
+- [Ciclo académico 1–9: funciones, prueba manual y límites](docs/ACADEMIC_CYCLE_DELIVERY.md).
+- [Panel claro y servicios de credenciales separados](docs/WORKSPACE_POLISH.md).
+
+El ciclo incluye expedientes, solicitudes/requisitos, aprobación separada,
+plantillas versionadas, QR embebido, firma CMS, comparación pública de PDF,
+reemplazos, avatar, disputas y conservación de evidencia. Blockchain mantiene
+el adaptador de desarrollo; OCR/anomalías y Android siguen pendientes.
+La firma criptográfica implementada no acredita por sí sola confianza legal.
+
 ## Flujo funcional
 
-1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo.
-2. El administrador ingresa al espacio privado de su institución.
+1. Se registra una institución como universidad, colegio, instituto, academia, centro de formación u otro tipo. Su solicitud queda pendiente de revisión.
+2. El administrador puede completar su perfil, logo y respaldo. El SUPER_ADMIN aprueba la organización antes de habilitar estudiantes, equipo y emisión; las observaciones se corrigen y reenvían desde el perfil.
 3. El estudiante crea una cuenta personal global con correo y contraseña en `/student/register`, accede en `/student/login` y completa o edita su perfil dentro de Mi expediente mediante un asistente de tres pasos: nombre y fecha de nacimiento, CI, y país/departamento.
 4. Después de completar el perfil, el estudiante comparte su código de búsqueda `EST-…`. La institución lo pega en Estudiantes → Buscar y registrar, consulta sus datos básicos y lo vincula a su padrón para emitirle documentos.
 5. Selecciona uno o varios estudiantes, genera el PDF con logo y colores institucionales o adjunta un PDF propio.
@@ -18,7 +52,13 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 - `consent`: autorización por institución, códigos de un solo uso, vencimiento y registro de acceso.
 - `student`: consulta de estudiantes que han autorizado a la institución; entidades anteriores conservadas para compatibilidad histórica.
 - `credential`: creación, emisión, revocación y verificación de documentos vinculados a estudiantes.
+- `academic`: programas por periodo y expedientes institucionales.
+- `workflow`: solicitudes, requisitos, revisión y aprobación por personas distintas.
+- `template` y `signing`: versiones de documentos y firma criptográfica institucional.
+- `identityreview`: revisión institucional, disputas y ciclo de vida de evidencia privada.
 - `storage`: almacenamiento de archivos mediante MinIO/S3.
+- `audit`: eventos transaccionales de acciones críticas y consulta por ámbito.
+- `mail`: cola cifrada persistente, reclamaciones con lease y reintentos SMTP.
 - `blockchain`: puerto de anclaje desacoplado de la emisión.
 - Frontend por funcionalidades: `register`, `login`, `students`, `credentials`, `dashboard` y `verify`.
 
@@ -31,7 +71,7 @@ El registro repetido en la misma institución es idempotente. Una autorización 
 Cada nueva vinculación registra institución, usuario institucional y fecha en el historial de autorizaciones.
 También se mantiene la alternativa de generar códigos temporales destinados a una institución específica.
 El endpoint de canje solo entrega identificador interno, nombre, fecha de nacimiento, país, departamento, tipo y número de documento.
-Los códigos usan UUID aleatorio (122 bits de aleatoriedad), se guardan como SHA-256, caducan en 15 minutos y se consumen con bloqueo transaccional.
+Los códigos temporales usan UUID aleatorio (122 bits de aleatoriedad), se guardan como SHA-256, caducan en 15 minutos y se consumen con bloqueo transaccional. El código EST reutilizable se conserva en la cuenta del estudiante y no tiene ese vencimiento.
 El vínculo usado permanece activo hasta que el estudiante retire esa autorización; la expiración limita el canje inicial.
 Retirarla bloquea nuevas consultas y emisiones, pero no borra las credenciales emitidas ni información previamente consultada.
 El historial personal muestra documentos emitidos y revocados de todas las instituciones, excluyendo borradores.
@@ -42,7 +82,9 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 ## Primera entrega funcional
 
 - Registro de una organización con su administrador.
-- Inicio de sesión con JWT y control de roles `ADMIN`, `ISSUER`, `AUDITOR` y `STUDENT`.
+- Inicio de sesión con JWT: `SUPER_ADMIN` global, `TENANT_ADMIN` institucional,
+  trabajadores `CUSTOM` con roles/permisos por tenant y estudiantes globales independientes.
+  Los roles históricos `ADMIN`, `ISSUER` y `AUDITOR` conservan compatibilidad.
 - Separación de usuarios y credenciales por organización.
 - Creación de credenciales en borrador.
 - Perfil institucional con logo, tres colores, estilo moderno/clásico/minimalista y datos del firmante.
@@ -68,6 +110,29 @@ la comprobación documental, recuperación de cuenta y resolución de identidade
 ## Ejecución con Docker
 
 1. Copia `.env.example` como `.env` y cambia los secretos.
+   JWT_SECRET, MFA_ENCRYPTION_KEY y MAIL_ENCRYPTION_KEY son obligatorios e independientes.
+   Las dos últimas deben contener exactamente 32 bytes en base64 y conservarse
+   para restaurar MFA y los correos pendientes.
+   No se aceptan las claves JWT públicas de ejemplo. Para generar las tres claves
+   en una instalación nueva sin imprimirlas, desde PowerShell 7 en la raíz:
+
+```powershell
+$localJwt = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(48))
+$localMfa = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$localMail = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$envFile = Join-Path (Get-Location) '.env'
+$envLines = (Get-Content -LiteralPath $envFile) -replace '^JWT_SECRET=.*$', ('JWT_SECRET=' + $localJwt)
+$envLines = $envLines -replace '^MFA_ENCRYPTION_KEY=.*$', ('MFA_ENCRYPTION_KEY=' + $localMfa)
+$envLines = $envLines -replace '^MAIL_ENCRYPTION_KEY=.*$', ('MAIL_ENCRYPTION_KEY=' + $localMail)
+[System.IO.File]::WriteAllLines($envFile, $envLines, [System.Text.UTF8Encoding]::new($false))
+```
+
+En una instalación existente, conserva las claves configuradas: no ejecutes el
+generador para reemplazarlas. La actualización desde versiones anteriores a V15
+requiere iniciar sesión una vez, porque esos JWT no tienen sesión persistida.
+V17 conserva los JWT y datos cifrados anteriores mediante la clave `legacy`;
+para una rotación planificada, sigue el procedimiento enlazado arriba.
+
 2. Inicia Docker Desktop.
 3. Ejecuta:
 
@@ -98,7 +163,7 @@ docker compose -f docker-compose.yml -f compose.prebuilt.yml up --build -d
 ```
 
 Los puertos alternativos de este equipo están en el archivo local `.env` (excluido de Git).
-En este equipo: web 4300, MinIO 9100/9101 y Mailpit 1125/8125.
+En este equipo: web 4300, API 18080 (8080 ocupado por otro proyecto), MinIO 9100/9101 y Mailpit 1125/8125.
 Las copias de seguridad locales se excluyen de Git en `.local-backups/`.
 
 ## Crear la primera organización
@@ -120,7 +185,28 @@ Invoke-RestMethod -Method Post `
   -Body $body
 ```
 
-Después ingresa en la aplicación con el slug, correo y contraseña anteriores.
+Después ingresa con esos datos y completa el perfil institucional. El registro
+legacy también queda pendiente: no habilita emisión hasta la revisión del SUPER_ADMIN.
+
+## Seguridad de la cuenta estudiantil
+
+El estudiante accede a `/student/security` desde su expediente. Puede confirmar
+su correo, cambiar contraseña/correo y desactivar su cuenta sin borrar credenciales.
+Recuperación pública en `/student/recover`. Los enlaces se entregan en Mailpit
+durante desarrollo, no a correos externos. Los límites de intentos están activos;
+MFA es optativo para cuentas administrativas y todavía no se ofrece a estudiantes.
+
+## Seguridad administrativa
+
+En Seguridad de la cuenta se pueden consultar/cerrar sesiones, configurar MFA,
+cambiar autenticador o renovar los códigos de respaldo. Estas dos últimas acciones
+requieren contraseña y segundo factor vigente; la nueva semilla solo sustituye a
+la anterior después de confirmar. Los respaldos se muestran una vez.
+
+SUPER_ADMIN dispone de `/superadmin/security` para consultar política de retención,
+identificadores públicos de claves y pendientes; puede ejecutar limpieza o recifrado
+con confirmación. La UI no recibe ni muestra claves privadas. La retención predeterminada
+es de 30 días para registros técnicos terminales; no borra cuentas, documentos ni auditoría.
 
 ## Ejecución sin contenedores de aplicación
 
@@ -150,9 +236,11 @@ docker-compose.yml
 
 ## Próximos módulos
 
-1. Gestión de usuarios, invitaciones y permisos por organización.
-2. Editor avanzado de plantillas con posiciones, tipografías y firmas digitales configurables.
-3. Integración blockchain de producción y explorador de transacciones.
-4. Notificaciones por correo y Firebase.
-5. Reportes Excel, Word y PDF, dashboard estadístico y auditoría.
-6. Aplicación móvil Flutter y planes de suscripción con Stripe.
+El detalle y estado están en [PRODUCT_BACKLOG_V3.md](docs/PRODUCT_BACKLOG_V3.md).
+La base de seguridad, revisión inicial y auditoría de acciones críticas está implementada.
+La revisión documental por institución funciona; quedan disputas de identidad,
+retención física de imágenes, QA visual y los controles productivos pendientes.
+Después: expedientes, solicitudes/aprobaciones, plantillas,
+firma y verificación; luego reportes/notificaciones, blockchain, IA y Android.
+No se reconstruyen los usuarios, roles y permisos ya implementados. Pagos/Stripe
+no forman parte del alcance de las 40 tareas del prompt maestro V3.

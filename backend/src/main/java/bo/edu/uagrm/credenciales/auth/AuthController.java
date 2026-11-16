@@ -24,7 +24,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    AuthDtos.AuthResponse login(@Valid @RequestBody AuthDtos.LoginRequest request) {
+    AuthDtos.LoginResult login(@Valid @RequestBody AuthDtos.LoginRequest request) {
         return authService.login(request);
     }
 }

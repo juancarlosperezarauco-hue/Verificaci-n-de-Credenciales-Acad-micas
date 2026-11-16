@@ -1,4 +1,4 @@
-export type InstitutionType = 'UNIVERSIDAD' | 'COLEGIO' | 'INSTITUTO' | 'ACADEMIA' | 'CENTRO_FORMACION' | 'OTRO';
+export type InstitutionType = 'ESCUELA' | 'INSTITUTO_TECNICO' | 'UNIVERSIDAD' | 'COLEGIO' | 'INSTITUTO' | 'ACADEMIA' | 'CENTRO_FORMACION' | 'OTRO';
 export type BrandingStyle = 'MODERNO' | 'CLASICO' | 'MINIMALISTA';
 
 export interface InstitutionProfile {
@@ -28,6 +28,10 @@ export interface AuthResponse {
   institutionType: InstitutionType | null;
 }
 
+export interface MfaChallenge { mfaRequired:true; challengeToken:string; expiresAt:string; }
+export type LoginResponse=AuthResponse|MfaChallenge;
+export function requiresMfa(response:LoginResponse):response is MfaChallenge {return 'mfaRequired' in response&&response.mfaRequired===true;}
+
 export interface Student {
   id: string;
   fullName: string;
@@ -51,9 +55,24 @@ export interface Credential {
   blockchainTxId?: string;
   issuedAt?: string;
   createdAt: string;
+  sourceRequestId?:string|null;
+  templateVersionId?:string|null;
+  signedAt?:string|null;
+  testSignature?:boolean;
+  replacesId?:string|null;
+  replacedById?:string|null;
 }
 
 export interface PublicCredential {
+  credentialId?:string;
+  documentName?:string;
+  issuerStatus?:string;
+  integrityStatus?:string;
+  signatureStatus?:string;
+  testSignature?:boolean;
+  signedAt?:string|null;
+  replacesCode?:string|null;
+  replacedByCode?:string|null;
   organization: string;
   institutionType: InstitutionType;
   institutionLogoUrl?: string;

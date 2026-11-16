@@ -1,0 +1,110 @@
+<section class="org-card mt-8" aria-labelledby="documents-title">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 id="documents-title" class="text-xl font-bold">Mis diplomas y certificados</h2>
+      <p class="mt-2 text-sm text-slate-500">
+        Tu expediente reúne los documentos de todas tus instituciones.
+      </p>
+    </div>
+  </div>
+  <form class="my-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" (ngSubmit)="load()">
+    <label class="org-label"
+      >Institución<select
+        class="org-input"
+        name="institution"
+        [(ngModel)]="institution"
+        [disabled]="loading()"
+      >
+        <option value="">Todas las instituciones</option>
+        @for (i of filters().institutions; track i.id) {
+          <option [value]="i.id">{{ i.name }}</option>
+        }
+      </select></label
+    >
+    <label class="org-label"
+      >Año de emisión (UTC)<select
+        class="org-input"
+        name="year"
+        [(ngModel)]="year"
+        [disabled]="loading()"
+      >
+        <option value="">Todos los años</option>
+        @for (y of filters().years; track y) {
+          <option [value]="y">{{ y }}</option>
+        }
+      </select></label
+    >
+    <label class="org-label"
+      >Tipo de documento<select
+        class="org-input"
+        name="type"
+        [(ngModel)]="type"
+        [disabled]="loading()"
+      >
+        <option value="">Todos los tipos</option>
+        @for (t of filters().types; track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select></label
+    >
+    <button class="org-primary self-end" [disabled]="loading()">
+      {{ loading() ? 'Consultando…' : 'Aplicar filtros' }}
+    </button>
+  </form>
+  @if (error()) {
+    <p role="alert" class="org-error">{{ error() }}</p>
+  }
+  @if (ready()) {
+    <p role="status" class="text-sm text-slate-500">{{ result().total }} documentos encontrados</p>
+    @for (c of result().items; track c.credentialId) {
+      <article class="border-b border-slate-200 py-5">
+        <h3 class="font-semibold">{{ c.title }}</h3>
+        <p class="mt-1 text-blue-700">{{ c.organization }} · {{ c.credentialType }}</p>
+        <p class="mt-2 text-sm text-slate-500">
+          {{ c.status === 'REVOKED' ? 'Revocado' : 'Emitido' }} ·
+          {{ c.issuedAt | date: 'dd/MM/yyyy' }}
+        </p>
+        <div class="mt-4 flex flex-wrap gap-5">
+          <a class="org-link" [routerLink]="['/verify', c.verificationCode]"
+            >Verificar credencial</a
+          >
+          @if (c.documentName) {
+            <button
+              type="button"
+              class="org-link"
+              [disabled]="!!downloading()"
+              (click)="download(c)"
+            >
+              {{ downloading() === c.credentialId ? 'Descargando…' : 'Descargar PDF' }}
+            </button>
+          }
+          @if (c.status === 'ISSUED') {
+            <a class="org-link" routerLink="/student/academic">Solicitar corrección</a>
+          }
+        </div>
+      </article>
+    } @empty {
+      <div class="empty-state compact">
+        <h3>No hay documentos con estos filtros</h3>
+        <p>Prueba con otra institución, año o tipo.</p>
+      </div>
+    }
+    <nav class="mt-5 flex items-center justify-between gap-3" aria-label="Páginas del expediente">
+      <button
+        class="org-secondary"
+        [disabled]="loading() || result().page === 0"
+        (click)="load(result().page - 1)"
+      >
+        Anterior
+      </button>
+      <span class="text-sm">Página {{ result().page + 1 }}</span>
+      <button
+        class="org-secondary"
+        [disabled]="loading() || (result().page + 1) * result().size >= result().total"
+        (click)="load(result().page + 1)"
+      >
+        Siguiente
+      </button>
+    </nav>
+  }
+</section>

@@ -18,5 +18,14 @@ public class PublicVerificationController {
     CredentialDtos.PublicVerification verify(@PathVariable String code) {
         return credentialService.verify(code);
     }
-}
 
+    @org.springframework.web.bind.annotation.PostMapping(
+            value = "/{code}/check-document",
+            consumes = "multipart/form-data")
+    CredentialDtos.DocumentCheck check(
+            @PathVariable String code,
+            @org.springframework.web.bind.annotation.RequestPart
+                    org.springframework.web.multipart.MultipartFile file) {
+        return credentialService.checkDocument(code, file);
+    }
+}

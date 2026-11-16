@@ -19,12 +19,15 @@ public class AppUser {
     @Id
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
     @Column(nullable = false, length = 180)
     private String email;
+
+    @Column(name = "full_name", length = 180)
+    private String fullName;
 
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
@@ -52,6 +55,9 @@ public class AppUser {
     }
 
     public UUID getId() { return id; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String value) { this.fullName = value; }
+    public void disable() { this.active = false; }
     public Tenant getTenant() { return tenant; }
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }

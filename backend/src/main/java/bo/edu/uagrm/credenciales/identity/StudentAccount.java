@@ -19,6 +19,14 @@ public class StudentAccount {
     @Column(name="password_hash", nullable=false, length=100) private String passwordHash;
     @Column(name="created_at", nullable=false) private Instant createdAt;
     @Column(name="search_code", nullable=false, unique=true, length=36) private String searchCode;
+    @Column(name="active", nullable=false) private boolean active = true;
+    @Column(name="email_verified", nullable=false) private boolean emailVerified;
+    @Column(name="deactivated_at") private Instant deactivatedAt;
+    @Column(name="security_version", nullable=false) private long securityVersion;
+    @Column(name="identity_revision",nullable=false) private long identityRevision;
+    @Column(name="photo_object_key",length=500) private String avatarKey;
+    @Column(name="photo_name",length=255) private String avatarName;
+    @Column(name="photo_content_type",length=120) private String avatarContentType;
     protected StudentAccount() {}
     public StudentAccount(String name, String country, String type, String document, LocalDate dateOfBirth,
                           String department, String email, String hash) {
@@ -40,12 +48,27 @@ public class StudentAccount {
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public String getSearchCode() { return searchCode; }
+    public boolean isActive() { return active; }
+    public boolean isEmailVerified() { return emailVerified; }
+    public long getSecurityVersion() { return securityVersion; }
+    public long getIdentityRevision() { return identityRevision; }
+    public String getAvatarKey(){return avatarKey;}
+    public String getAvatarContentType(){return avatarContentType;}
+    public void avatar(String key){avatarKey=key;avatarName=key==null?null:"foto-perfil.jpg";avatarContentType=key==null?null:"image/jpeg";}
+    public void invalidateSessions(){securityVersion++;}
+    public void verifyEmail() { emailVerified = true; }
+    public void changePasswordHash(String hash) { passwordHash = hash; securityVersion++; }
+    public void changeEmail(String email) { this.email=email; emailVerified=true; securityVersion++; }
+    public void deactivate() { active=false; deactivatedAt=Instant.now(); securityVersion++; }
     public boolean isProfileComplete() {
         return fullName != null && country != null && documentType != null && documentNumber != null
                 && dateOfBirth != null && department != null;
     }
     public void updateProfile(String name, String country, String type, String document,
                               LocalDate dateOfBirth, String department) {
+        if(!java.util.Objects.equals(fullName,name)||!java.util.Objects.equals(this.country,country)
+                ||!java.util.Objects.equals(documentType,type)||!java.util.Objects.equals(documentNumber,document)
+                ||!java.util.Objects.equals(this.dateOfBirth,dateOfBirth)||!java.util.Objects.equals(this.department,department))identityRevision++;
         fullName = name;
         this.country = country;
         documentType = type;

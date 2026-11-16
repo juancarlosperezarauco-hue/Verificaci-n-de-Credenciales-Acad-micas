@@ -1,0 +1,92 @@
+<section class="drawer">
+  <header class="drawer-header">
+    <div>
+      <p class="eyebrow">Credenciales académicas</p>
+      <h2>Menú principal</h2>
+    </div>
+    <button
+      type="button"
+      class="close-button"
+      aria-label="Cerrar menú lateral"
+      (click)="ref.close()"
+    >
+      <svg
+        aria-hidden="true"
+        width="21"
+        height="21"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      >
+        <path d="m6 6 12 12M18 6 6 18" />
+      </svg>
+    </button>
+  </header>
+  <nav class="drawer-content" aria-label="Módulos de la plataforma">
+    <p class="section-label">Módulos</p>
+    @for (item of model().primary; track item.path) {
+      <a
+        class="drawer-link"
+        [routerLink]="item.path"
+        routerLinkActive="drawer-active"
+        ariaCurrentWhenActive="page"
+        (click)="ref.close()"
+        ><app-ui-icon [name]="icon(item.path)" [size]="18" /><span>{{ item.label }}</span></a
+      >
+    }
+    @if (model().organization.length) {
+      <div class="divider"></div>
+      <p class="section-label">{{ model().organizationLabel }}</p>
+      @for (item of model().organization; track item.path) {
+        <a
+          class="drawer-link"
+          [routerLink]="item.path"
+          [routerLinkActiveOptions]="{ exact: item.path === '/organization' }"
+          routerLinkActive="drawer-active"
+          ariaCurrentWhenActive="page"
+          (click)="ref.close()"
+          ><app-ui-icon [name]="icon(item.path)" [size]="18" /><span>{{ item.label }}</span></a
+        >
+      }
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="divider"></div>
+      <p class="section-label">Mi cuenta</p>
+      @for (item of model().account; track item.path) {
+        <a
+          class="drawer-link"
+          [routerLink]="item.path"
+          routerLinkActive="drawer-active"
+          ariaCurrentWhenActive="page"
+          (click)="ref.close()"
+          ><app-ui-icon [name]="icon(item.path)" [size]="18" /><span>{{ item.label }}</span></a
+        >
+      }
+    } @else {
+      <div class="divider"></div>
+      <a class="drawer-link" routerLink="/login" (click)="ref.close()"
+        ><span class="item-marker" aria-hidden="true"></span>Ingresar al portal académico</a
+      >
+    }
+  </nav>
+  <footer class="drawer-footer">
+    @if (auth.isAuthenticated()) {
+      <button type="button" class="sign-out" (click)="ref.close('logout')">
+        <svg
+          aria-hidden="true"
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+          <path d="M9 5H4v14h5m5-14 7 7-7 7M8 12h13" /></svg
+        >Cerrar sesión
+      </button>
+    }
+    <p>Tu espacio académico</p>
+  </footer>
+</section>

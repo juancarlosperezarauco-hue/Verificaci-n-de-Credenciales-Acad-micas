@@ -1,0 +1,198 @@
+<section class="org-page">
+  <div class="page-heading">
+    <div>
+      <p class="org-eyebrow">Gestión institucional</p>
+      <h1 class="org-title">Reportes y estadísticas</h1>
+      <p class="org-description">
+        Consulta la actividad de tu organización y descarga los resultados filtrados.
+      </p>
+    </div>
+  </div>
+  <form class="org-card mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" (ngSubmit)="load()">
+    <label class="org-label"
+      >Año de emisión (UTC)<input
+        class="org-input"
+        type="number"
+        name="year"
+        min="1900"
+        max="2100"
+        placeholder="Todos"
+        [(ngModel)]="filters.year"
+        [disabled]="loading()"
+    /></label>
+    <label class="org-label"
+      >Documento<select
+        class="org-input"
+        name="type"
+        [(ngModel)]="filters.type"
+        [disabled]="loading()"
+      >
+        <option value="">Todos los tipos</option>
+        @for (t of types; track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select></label
+    >
+    <label class="org-label"
+      >Estado<select
+        class="org-input"
+        name="status"
+        [(ngModel)]="filters.status"
+        [disabled]="loading()"
+      >
+        <option value="">Todos</option>
+        <option value="DRAFT">Borrador</option>
+        <option value="ISSUED">Emitida</option>
+        <option value="REVOKED">Revocada</option>
+      </select></label
+    >
+    <button class="org-primary self-end" [disabled]="loading() || !!exporting()">
+      {{ loading() ? 'Consultando…' : 'Aplicar filtros' }}
+    </button>
+  </form>
+  @if (error()) {
+    <p class="org-error mt-5" role="alert">{{ error() }}</p>
+  }
+  @if (ready()) {
+    @if (summary(); as s) {
+      <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-live="polite">
+        <article class="org-card">
+          <p class="text-sm text-slate-500">Estudiantes vinculados actualmente</p>
+          <strong class="mt-3 block text-3xl">{{ s.linkedStudents | number }}</strong>
+        </article>
+        <article class="org-card">
+          <p class="text-sm text-slate-500">Emitidas</p>
+          <strong class="mt-3 block text-3xl">{{ s.issued | number }}</strong>
+        </article>
+        <article class="org-card">
+          <p class="text-sm text-slate-500">Borradores</p>
+          <strong class="mt-3 block text-3xl">{{ s.drafts | number }}</strong>
+        </article>
+        <article class="org-card">
+          <p class="text-sm text-slate-500">Revocadas</p>
+          <strong class="mt-3 block text-3xl">{{ s.revoked | number }}</strong>
+        </article>
+      </div>
+      <p class="mt-3 text-xs text-slate-500">
+        Los filtros se aplican a credenciales. El total de estudiantes indica vínculos actuales. El
+        año se refiere a la fecha de emisión; los borradores no tienen esa fecha.
+      </p>
+      <div class="mt-6 grid gap-6 lg:grid-cols-2">
+        <section class="org-card">
+          <h2 class="text-lg font-semibold">Documentos emitidos por mes</h2>
+          @if (s.byMonth.length) {
+            <div class="mt-4 h-64">
+              <canvas
+                baseChart
+                type="bar"
+                [data]="chart()"
+                [options]="chartOptions"
+                role="img"
+                aria-label="Credenciales con fecha de emisión agrupadas por mes"
+              ></canvas>
+            </div>
+            <details class="mt-4 text-sm">
+              <summary>Ver datos del gráfico</summary>
+              @for (g of s.byMonth; track g.label) {
+                <p class="mt-2">{{ g.label }}: {{ g.total }}</p>
+              }
+            </details>
+          } @else {
+            <p class="mt-6 text-slate-500">No hay emisiones para este filtro.</p>
+          }
+        </section>
+        <section class="org-card">
+          <h2 class="text-lg font-semibold">Distribución por tipo</h2>
+          @for (g of s.byType; track g.label) {
+            <div class="mt-5 flex justify-between border-b border-slate-100 pb-3">
+              <span>{{ g.label }}</span
+              ><strong>{{ g.total | number }}</strong>
+            </div>
+          } @empty {
+            <p class="mt-6 text-slate-500">Sin documentos.</p>
+          }
+        </section>
+      </div>
+      <section class="org-card mt-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-semibold">Detalle de credenciales</h2>
+            <p class="mt-1 text-sm text-slate-500">
+              {{ rows().total | number }} resultados · Consulta
+              {{ s.generatedAt | date: 'dd/MM/yyyy HH:mm' }}
+            </p>
+          </div>
+          <div class="flex gap-3">
+            <button class="org-secondary" [disabled]="!!exporting()" (click)="export('pdf')">
+              {{ exporting() === 'pdf' ? 'Generando…' : 'Descargar PDF' }}</button
+            ><button class="org-primary" [disabled]="!!exporting()" (click)="export('xlsx')">
+              {{ exporting() === 'xlsx' ? 'Generando…' : 'Descargar Excel' }}
+            </button>
+          </div>
+        </div>
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-200">
+                <th class="p-3">Estudiante</th>
+                <th class="p-3">Documento</th>
+                <th class="p-3">Tipo</th>
+                <th class="p-3">Estado</th>
+                <th class="p-3">Emisión</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of rows().items; track r.id) {
+                <tr class="border-b border-slate-100">
+                  <td class="p-3">{{ r.holderName }}</td>
+                  <td class="p-3">{{ r.title }}</td>
+                  <td class="p-3">{{ r.type }}</td>
+                  <td class="p-3">
+                    {{
+                      r.status === 'DRAFT'
+                        ? 'Borrador'
+                        : r.status === 'ISSUED'
+                          ? 'Emitida'
+                          : 'Revocada'
+                    }}
+                  </td>
+                  <td class="p-3 whitespace-nowrap">
+                    {{ r.issuedAt ? (r.issuedAt | date: 'dd/MM/yyyy') : 'Pendiente' }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="p-8 text-center text-slate-500">
+                    No hay resultados con estos filtros.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <nav class="mt-5 flex items-center justify-between" aria-label="Páginas del reporte">
+          <button
+            class="org-secondary"
+            [disabled]="loading() || !!exporting() || !rows().page"
+            (click)="load(rows().page - 1, false)"
+          >
+            Anterior</button
+          ><span class="text-sm">Página {{ rows().page + 1 }}</span
+          ><button
+            class="org-secondary"
+            [disabled]="
+              loading() || !!exporting() || (rows().page + 1) * rows().size >= rows().total
+            "
+            (click)="load(rows().page + 1, false)"
+          >
+            Siguiente
+          </button>
+        </nav>
+        <p class="mt-4 text-xs text-slate-500">
+          Las descargas incluyen los filtros aplicados a esta tabla. Máximo 1000 registros por
+          exportación.
+        </p>
+      </section>
+    }
+  }
+</section>

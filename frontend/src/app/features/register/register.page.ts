@@ -9,7 +9,7 @@ import { AuthService } from '../../core/auth.service';
   imports: [ReactiveFormsModule, RouterLink],
   template: `
     <section class="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-      <div class="overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl lg:grid lg:grid-cols-[.85fr_1.15fr]">
+      <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl lg:grid lg:grid-cols-[.85fr_1.15fr]">
         <div class="bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-700 p-8 text-slate-950 sm:p-12">
           <p class="text-sm font-black uppercase tracking-[.22em]">Paso 1</p>
           <h1 class="mt-5 text-4xl font-black leading-tight">Registra tu institución educativa</h1>
@@ -19,7 +19,7 @@ import { AuthService } from '../../core/auth.service';
           </ol>
         </div>
         <form [formGroup]="form" (ngSubmit)="submit()" class="p-8 sm:p-12">
-          <p class="text-sm font-semibold text-cyan-300">Nueva cuenta institucional</p>
+          <p class="text-sm font-semibold text-blue-700">Nueva cuenta institucional</p>
           <h2 class="mt-2 text-3xl font-bold">Datos de registro</h2>
           <div class="mt-8 grid gap-5 sm:grid-cols-2">
             <label class="block text-sm sm:col-span-2">Nombre de la institución
@@ -41,7 +41,7 @@ import { AuthService } from '../../core/auth.service';
             <label class="block text-sm sm:col-span-2">Contraseña
               <input formControlName="password" type="password" placeholder="Mínimo 10 caracteres" class="field">
             </label>
-            <div class="sm:col-span-2 mt-2 border-t border-white/10 pt-6"><p class="font-bold">Identidad visual</p><p class="mt-1 text-xs text-slate-500">Podrás cambiarla después desde el módulo Institución.</p></div>
+            <div class="sm:col-span-2 mt-2 border-t border-slate-200 pt-6"><p class="font-bold">Identidad visual</p><p class="mt-1 text-xs text-slate-500">Podrás cambiarla después desde el módulo Institución.</p></div>
             <label class="block text-sm">Color principal<div class="mt-2 flex items-center gap-3"><input type="color" formControlName="primaryColor" class="h-11 w-14 rounded-lg border-0 bg-transparent"><input formControlName="primaryColor" class="field !mt-0"></div></label>
             <label class="block text-sm">Color secundario<div class="mt-2 flex items-center gap-3"><input type="color" formControlName="secondaryColor" class="h-11 w-14 rounded-lg border-0 bg-transparent"><input formControlName="secondaryColor" class="field !mt-0"></div></label>
             <label class="block text-sm">Color de acento<div class="mt-2 flex items-center gap-3"><input type="color" formControlName="accentColor" class="h-11 w-14 rounded-lg border-0 bg-transparent"><input formControlName="accentColor" class="field !mt-0"></div></label>
@@ -49,9 +49,9 @@ import { AuthService } from '../../core/auth.service';
             <label class="block text-sm sm:col-span-2">Logo o escudo (opcional)<input type="file" accept="image/png,image/jpeg,image/webp" class="field file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1" (change)="selectLogo($event)"></label>
             <label class="block text-sm sm:col-span-2">Documento de respaldo institucional (opcional)<input type="file" accept="application/pdf,image/png,image/jpeg" class="field file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1" (change)="selectVerification($event)"></label>
           </div>
-          @if (error()) { <p class="mt-5 rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{{ error() }}</p> }
-          <button [disabled]="form.invalid || loading()" class="mt-7 w-full rounded-xl bg-cyan-400 px-4 py-3 font-bold text-slate-950 disabled:opacity-50">{{ loading() ? 'Registrando…' : 'Registrar institución' }}</button>
-          <p class="mt-5 text-center text-sm text-slate-400">¿Ya tienes una institución? <a routerLink="/login" class="font-semibold text-cyan-300">Inicia sesión</a></p>
+          @if (error()) { <p class="mt-5 rounded-xl bg-red-500/10 p-3 text-sm text-red-700">{{ error() }}</p> }
+          <button [disabled]="form.invalid || loading()" class="mt-7 w-full rounded-xl bg-blue-600 text-white px-4 py-3 font-bold disabled:opacity-50">{{ loading() ? 'Registrando…' : 'Registrar institución' }}</button>
+          <p class="mt-5 text-center text-sm text-slate-500">¿Ya tienes una institución? <a routerLink="/login" class="font-semibold text-blue-700">Inicia sesión</a></p>
         </form>
       </div>
     </section>

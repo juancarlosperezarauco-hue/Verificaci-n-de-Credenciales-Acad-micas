@@ -21,7 +21,13 @@ public final class AuthDtos {
             @NotBlank @Email String email,
             @NotBlank String password) {}
 
+    public interface LoginResult {}
+    public record MfaChallengeResponse(boolean mfaRequired,String challengeToken,java.time.Instant expiresAt) implements LoginResult {
+        @Override public String toString(){return "MfaChallenge[redacted]";}
+    }
     public record AuthResponse(String token, String tokenType, String email, String role, String tenantId,
-                               String institutionName, InstitutionType institutionType) {}
+                               String institutionName, InstitutionType institutionType) implements LoginResult {
+        @Override public String toString(){return "AuthResponse[redacted]";}
+    }
 }
 

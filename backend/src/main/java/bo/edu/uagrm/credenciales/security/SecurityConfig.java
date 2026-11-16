@@ -18,20 +18,29 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableMethodSecurity
+@org.springframework.scheduling.annotation.EnableScheduling
 public class SecurityConfig {
+    @Bean java.time.Clock securityClock(){return java.time.Clock.systemUTC();}
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,AuthRateLimiter rateLimiter,
+                                           com.fasterxml.jackson.databind.ObjectMapper json) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/actuator/health", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/auth/**", "/actuator/health", "/actuator/health/readiness", "/actuator/health/liveness", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/public/credentials/*/check-document").permitAll()
                         .requestMatchers("/api/me/**").hasRole("STUDENT")
-                        .requestMatchers("/api/students/**", "/api/credentials/**").hasAnyRole("ADMIN", "ISSUER", "AUDITOR")
+                        .requestMatchers("/api/platform/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/students/**", "/api/credentials/**", "/api/institution/**", "/api/portal/**")
+                            .hasAnyRole("ADMIN", "TENANT_ADMIN", "CUSTOM", "ISSUER", "AUDITOR")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new bo.edu.uagrm.credenciales.audit.RequestCorrelationFilter(),JwtAuthenticationFilter.class)
+                .addFilterAfter(new AuthRateLimitFilter(rateLimiter,json), JwtAuthenticationFilter.class)
+                .addFilterAfter(new OnboardingAccessFilter(), JwtAuthenticationFilter.class)
                 .build();
     }
 
@@ -45,11 +54,10 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(origin));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }
-
