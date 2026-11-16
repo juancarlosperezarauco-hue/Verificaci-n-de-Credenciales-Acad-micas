@@ -4,11 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { finalize, forkJoin } from 'rxjs';
 import QRCode from 'qrcode';
-import { PublicCredential } from '../../core/models';
-import { cycleError, downloadBlob } from '../academic/academic.api';
 import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from './student-account.api';
+import { StudentDocumentsComponent } from './student-documents.component';
 @Component({
- imports:[ReactiveFormsModule,DatePipe,RouterLink],
+ imports:[ReactiveFormsModule,DatePipe,RouterLink,StudentDocumentsComponent],
  template:`
  <section class="mx-auto max-w-6xl px-6 py-12">
  <p class="text-blue-700">Mi identidad académica</p><h1 class="mt-3 text-3xl font-bold">{{profile()?.fullName || 'Construye tu perfil estudiantil'}}</h1><a routerLink="/student/security" class="mt-4 inline-block text-blue-700 underline">Seguridad de mi cuenta</a>
@@ -98,29 +97,17 @@ import { Consent, GeneratedConsent, IdentityProfile, StudentAccountApi } from '.
  }@empty{<p class="mt-4 text-slate-500">Todavía no has compartido tus datos.</p>}
  </div>
  </div>
- <div class="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
- <h2 class="text-xl font-bold">Mis diplomas y certificados</h2>
- @for(c of credentials();track c.verificationCode){
- <article class="border-b border-slate-200 py-5">
- <h3 class="font-semibold">{{c.title}}</h3><p class="text-blue-700">{{c.organization}} · {{c.credentialType}}</p>
- <p class="text-sm text-slate-500">{{c.status === 'REVOKED' ? 'Revocado' : 'Emitido'}} · {{c.issuedAt | date:'shortDate'}}</p>
- <div class="mt-3 flex flex-wrap gap-4"><a class="text-sm underline" [routerLink]="['/verify',c.verificationCode]">Verificar credencial</a>
- @if(c.credentialId && c.documentName){<button class="text-sm underline" [disabled]="downloading()===c.credentialId" (click)="download(c)">{{downloading()===c.credentialId?'Descargando…':'Descargar PDF'}}</button>}
- @if(c.status==='ISSUED'){<a class="text-sm underline" routerLink="/student/academic">Solicitar corrección</a>}</div>
- </article>
- }@empty{<p class="mt-4 text-slate-500">Aquí aparecerán los documentos que las instituciones te emitan.</p>}
- </div>
+ <app-student-documents />
  }
  </section>`
 })
 export class StudentAccountPage implements OnInit {
  private readonly api=inject(StudentAccountApi);
  readonly profile=signal<IdentityProfile|null>(null); readonly consents=signal<Consent[]>([]);
- readonly credentials=signal<PublicCredential[]>([]); readonly generated=signal<GeneratedConsent|null>(null);
+ readonly generated=signal<GeneratedConsent|null>(null);
  readonly qr=signal('');readonly busy=signal(false);readonly loading=signal(true);readonly error=signal('');
  readonly searchQr=signal('');readonly copyMessage=signal('');readonly confirmRotation=signal(false);
  readonly profileStep=signal(1);readonly editingProfile=signal(false);
- readonly downloading=signal('');
  readonly maxBirthDate=new Date(Date.now()-86_400_000).toISOString().slice(0,10);
  readonly profileForm=inject(FormBuilder).nonNullable.group({
    fullName:['',[Validators.required,Validators.maxLength(180)]],
@@ -132,7 +119,6 @@ export class StudentAccountPage implements OnInit {
  });
  readonly consentForm=inject(FormBuilder).nonNullable.group({institutionSlug:['',[Validators.required,Validators.maxLength(80)]]});
  ngOnInit(){this.reload();}
- download(c:PublicCredential){if(!c.credentialId||this.downloading())return;this.downloading.set(c.credentialId);this.api.document(c.credentialId).pipe(finalize(()=>this.downloading.set(''))).subscribe({next:blob=>downloadBlob(blob,c.documentName??'credencial.pdf'),error:e=>this.error.set(cycleError(e))});}
  submitProfileStep(){
    if(this.profileStep()===1){
      const controls=[this.profileForm.controls.fullName,this.profileForm.controls.dateOfBirth];
@@ -203,9 +189,9 @@ export class StudentAccountPage implements OnInit {
  }
  private reload(){
  this.loading.set(true);
- forkJoin({profile:this.api.profile(),consents:this.api.consents(),credentials:this.api.history()})
+ forkJoin({profile:this.api.profile(),consents:this.api.consents()})
  .pipe(finalize(()=>this.loading.set(false))).subscribe({
- next:r=>{this.setProfile(r.profile);this.consents.set(r.consents);this.credentials.set(r.credentials);},
+ next:r=>{this.setProfile(r.profile);this.consents.set(r.consents);},
  error:()=>this.error.set('No se pudo cargar la cuenta. Intenta iniciar sesión nuevamente.')
  });
  }

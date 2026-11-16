@@ -14,7 +14,7 @@ Push-Location $root
 try {
     $base = 'backend/src/main/java/bo/edu/uagrm/credenciales'
     $files = @()
-    foreach ($folder in @('academic', 'workflow', 'template', 'signing', 'credential', 'identityreview', 'storage', 'shared')) {
+    foreach ($folder in @('academic', 'workflow', 'template', 'signing', 'credential', 'identityreview', 'storage', 'shared', 'notification', 'report')) {
         $files += @(Get-ChildItem -LiteralPath ($base + '/' + $folder) -Filter '*.java' -File | ForEach-Object FullName)
     }
     $files += ($base + '/identity/IdentityService.java')

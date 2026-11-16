@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CredentialRepository extends JpaRepository<Credential, UUID> {
+public interface CredentialRepository
+        extends JpaRepository<Credential, UUID>,
+                org.springframework.data.jpa.repository.JpaSpecificationExecutor<Credential> {
     List<Credential> findAllByStudentAccountIdOrderByCreatedAtDesc(UUID studentId);
 
     List<Credential> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);

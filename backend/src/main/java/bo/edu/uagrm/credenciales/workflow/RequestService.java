@@ -35,6 +35,7 @@ public class RequestService {
     private final IdentityImages images;
     private final AuditTrail audit;
     private final Clock clock;
+    private final bo.edu.uagrm.credenciales.notification.NotificationService notifications;
 
     public RequestService(
             RequestRepository r,
@@ -50,7 +51,8 @@ public class RequestService {
             PdfSafety pdf,
             IdentityImages images,
             AuditTrail audit,
-            Clock clock) {
+            Clock clock,
+            bo.edu.uagrm.credenciales.notification.NotificationService notifications) {
         requests = r;
         events = e;
         attachments = a;
@@ -65,6 +67,7 @@ public class RequestService {
         this.images = images;
         this.audit = audit;
         this.clock = clock;
+        this.notifications = notifications;
     }
 
     public RequestDtos.View create(UUID student, RequestDtos.Create input) {
@@ -394,6 +397,21 @@ public class RequestService {
         e.reason = reason;
         e.occurredAt = clock.instant();
         events.save(e);
+        String title =
+                switch (action) {
+                    case "OBSERVE" -> "Tu solicitud necesita correcciones";
+                    case "APPROVE" -> "Tu solicitud fue aprobada";
+                    case "REJECT" -> "Tu solicitud fue rechazada";
+                    default -> null;
+                };
+        if (title != null)
+            notifications.publish(
+                    r.studentId,
+                    r.tenantId,
+                    "request:" + r.id + ":event:" + e.id,
+                    "REQUEST_" + action,
+                    r.id,
+                    title);
         r.updatedAt = e.occurredAt;
         audit.record(
                 AuditAction.REQUEST_TRANSITIONED, r.tenantId, AuditTrail.Resource.REQUEST, r.id);

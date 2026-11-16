@@ -25,6 +25,7 @@ public class RequestIssuancePolicy {
     private final AcademicService academic;
     private final Clock clock;
     private final AuditTrail audit;
+    private final bo.edu.uagrm.credenciales.notification.NotificationService notifications;
 
     public RequestIssuancePolicy(
             RequestRepository r,
@@ -33,7 +34,8 @@ public class RequestIssuancePolicy {
             TenantAccess a,
             AcademicService academic,
             Clock clock,
-            AuditTrail audit) {
+            AuditTrail audit,
+            bo.edu.uagrm.credenciales.notification.NotificationService notifications) {
         requests = r;
         events = e;
         credentials = c;
@@ -41,6 +43,7 @@ public class RequestIssuancePolicy {
         this.academic = academic;
         this.clock = clock;
         this.audit = audit;
+        this.notifications = notifications;
     }
 
     public void approved(Credential credential) {
@@ -74,6 +77,13 @@ public class RequestIssuancePolicy {
                 throw TenantAccess.conflict();
             old.revoke("Documento sustituido por una corrección aprobada.");
             old.replacedBy(c.getId());
+            notifications.publish(
+                    r.studentId,
+                    r.tenantId,
+                    "credential:" + old.getId() + ":REVOKED",
+                    "CREDENTIAL_REVOKED",
+                    old.getId(),
+                    "Una credencial fue sustituida por una corrección");
             c.replaces(old.getId());
             audit.record(
                     AuditAction.CREDENTIAL_REPLACED,

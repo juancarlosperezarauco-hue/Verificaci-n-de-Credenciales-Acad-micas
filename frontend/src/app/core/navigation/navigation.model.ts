@@ -12,6 +12,8 @@ export interface NavigationModel {
 export function navigationIcon(path: string): string {
   if (path.includes('signing')) return 'key';
   if (path.includes('templates')) return 'document';
+  if (path.includes('reports') || path.includes('statistics')) return 'chart';
+  if (path.includes('notifications')) return 'inbox';
   if (path.includes('requests')) return 'inbox';
   if (path.includes('academic')) return 'academic';
   if (path.includes('identity')) return 'shield';
@@ -44,6 +46,7 @@ export function navigationFor(
         link('Mi perfil', '/student/account'),
         link('Expediente académico', '/student/academic'),
         link('Mis solicitudes', '/student/requests'),
+        link('Notificaciones', '/student/notifications'),
         link('Verificación de identidad', '/student/identity'),
         link('Foto y asistencia de identidad', '/student/identity-center'),
         verify,
@@ -56,6 +59,7 @@ export function navigationFor(
     return {
       primary: [
         link('Organizaciones', '/superadmin/organizations'),
+        link('Estadísticas', '/superadmin/statistics'),
         link('Disputas de identidad', '/superadmin/identity-disputes'),
         verify,
       ],
@@ -89,6 +93,8 @@ export function navigationFor(
   if (can('REQUEST_VIEW') && !onboarding)
     primary.push(link('Solicitudes de documentos', '/organization/requests'));
   if (can('CREDENTIAL_VIEW') && !onboarding) primary.push(link('Credenciales', '/credentials'));
+  if (can('ACADEMIC_MANAGE') && !onboarding) organization.push(link('Importar matrículas', '/organization/imports'));
+  if (can('REPORT_VIEW') && !onboarding) primary.push(link('Reportes y estadísticas', '/organization/reports'));
   primary.push(verify);
   if (can('IDENTITY_REVIEW') && !onboarding)
     organization.push(link('Revisar identidad', '/organization/identity'));

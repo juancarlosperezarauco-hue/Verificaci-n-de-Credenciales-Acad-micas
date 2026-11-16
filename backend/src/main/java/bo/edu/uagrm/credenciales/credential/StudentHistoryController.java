@@ -13,14 +13,32 @@ import java.util.List;
 @PreAuthorize("hasRole('STUDENT')")
 public class StudentHistoryController {
     private final CredentialService service;
+    private final StudentHistoryService history;
 
-    public StudentHistoryController(CredentialService service) {
+    public StudentHistoryController(CredentialService service, StudentHistoryService history) {
+        this.history = history;
         this.service = service;
     }
 
     @GetMapping
     List<CredentialDtos.PublicVerification> list(@AuthenticationPrincipal UserPrincipal p) {
         return service.personalHistory(p.userId());
+    }
+
+    @GetMapping("/page")
+    public bo.edu.uagrm.credenciales.shared.ResultPage<CredentialDtos.PublicVerification> page(
+            @AuthenticationPrincipal UserPrincipal p,
+            @RequestParam(required = false) java.util.UUID institutionId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return history.page(p.userId(), institutionId, year, type, page, size);
+    }
+
+    @GetMapping("/filters")
+    public StudentHistoryService.Filters filters(@AuthenticationPrincipal UserPrincipal p) {
+        return history.filters(p.userId());
     }
 
     @GetMapping("/{id}/document")

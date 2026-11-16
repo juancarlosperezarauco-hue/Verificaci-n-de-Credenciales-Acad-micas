@@ -34,6 +34,10 @@ class KeyRotationIntegrationTests {
   var f=old();var delivery=mail.claim(f.mail).orElseThrow();maintenance.reEncrypt();assertEquals(f.oldMessage,encrypted(f.mail));mail.finish(delivery,MailState.RETRY,"DELIVERY_FAILED");for(int i=0;i<20&&!encrypted(f.mail).startsWith("K1.next.");i++)maintenance.reEncrypt();assertTrue(encrypted(f.mail).startsWith("K1.next."));
  }
  @Test void unreadablePayloadRollsBackTheBatchIncludingItsAuditEvents()throws Exception{
+  // Other integration fixtures may leave more than one bounded rotation batch.
+  // Drain those before placing the corrupt row in the batch under test.
+  for(int i=0;i<100&&mail.rotationPending()>0;i++)maintenance.reEncrypt();
+  assertEquals(0,mail.rotationPending());
   var f=old();String valid=encrypted(f.mail);jdbc.update("update mail_outbox set encrypted_payload='invalid-ciphertext' where id=?",f.mail);
   try{assertThrows(IllegalStateException.class,()->maintenance.reEncrypt());assertEquals(f.oldSeed,jdbc.queryForObject("select encrypted_secret from user_mfa where user_id=?",String.class,f.user));assertEquals(0,jdbc.queryForObject("select count(*) from audit_events where resource_id=? and action='SECRET_REENCRYPTED'",Integer.class,f.user));}
   finally{jdbc.update("update mail_outbox set encrypted_payload=? where id=?",valid,f.mail);}

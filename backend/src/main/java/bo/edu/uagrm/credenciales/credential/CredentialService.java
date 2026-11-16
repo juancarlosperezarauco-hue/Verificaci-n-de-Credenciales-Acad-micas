@@ -37,6 +37,7 @@ public class CredentialService {
     private final SigningService signing;
     private final RequestIssuancePolicy requests;
     private final Clock clock;
+    private final bo.edu.uagrm.credenciales.notification.NotificationService notifications;
 
     public CredentialService(
             CredentialRepository credentials,
@@ -50,7 +51,8 @@ public class CredentialService {
             TemplateService templates,
             SigningService signing,
             RequestIssuancePolicy requests,
-            Clock clock) {
+            Clock clock,
+            bo.edu.uagrm.credenciales.notification.NotificationService notifications) {
         this.credentials = credentials;
         this.tenants = tenants;
         this.consents = consents;
@@ -63,6 +65,7 @@ public class CredentialService {
         this.signing = signing;
         this.requests = requests;
         this.clock = clock;
+        this.notifications = notifications;
     }
 
     @Transactional(readOnly = true)
@@ -153,7 +156,18 @@ public class CredentialService {
         credential.operationKey(operationKey);
         requests.fulfilled(credential);
         audit.record(CREDENTIAL_ISSUED, tenantId, CREDENTIAL, id);
+        notifyStudent(credential, "ISSUED", "Tienes una nueva credencial académica");
         return CredentialDtos.Response.from(credential);
+    }
+
+    private void notifyStudent(Credential c, String kind, String title) {
+        notifications.publish(
+                c.getStudentAccount() == null ? null : c.getStudentAccount().getId(),
+                c.getTenant().getId(),
+                "credential:" + c.getId() + ":" + kind,
+                "CREDENTIAL_" + kind,
+                c.getId(),
+                title);
     }
 
     private void validateSignature(Credential credential, byte[] content) {
@@ -240,6 +254,7 @@ public class CredentialService {
         Credential credential = findOwnedForUpdate(id, tenantId);
         credential.revoke(reason.trim());
         audit.record(CREDENTIAL_REVOKED, tenantId, CREDENTIAL, id);
+        notifyStudent(credential, "REVOKED", "Una credencial de tu expediente fue revocada");
         return CredentialDtos.Response.from(credential);
     }
 

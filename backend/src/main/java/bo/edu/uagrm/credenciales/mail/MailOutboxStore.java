@@ -40,6 +40,12 @@ public class MailOutboxStore {
  }
  @Transactional(readOnly=true)
  public boolean valid(Delivery row){
+  if(row.tokenId==null){
+   if(!row.expiresAt.isAfter(clock.instant()))return false;
+   var student=em.find(bo.edu.uagrm.credenciales.identity.StudentAccount.class,row.studentId);
+   return student!=null&&student.isActive()&&student.isEmailVerified()
+    &&student.getEmail().equalsIgnoreCase(cipher.decrypt(row.id,row.encryptedPayload).to());
+  }
   return row.expiresAt.isAfter(clock.instant())&&tokens.findById(row.tokenId).filter(t->t.getStudent().getId().equals(row.studentId)&&t.getStudent().isActive()&&t.getUsedAt()==null&&t.getExpiresAt().isAfter(clock.instant())).isPresent();
  }
  @Transactional(propagation=Propagation.REQUIRES_NEW)

@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { IdentityReview, IdentityReviewApi, ReviewPage, ReviewStatus, REVIEW_LABELS } from './identity-review.api';
 import { IdentityPreviewComponent } from './identity-preview.component';
+import { IdentityAnalysisComponent } from './identity-analysis.component';
 
-@Component({imports:[DatePipe,FormsModule,IdentityPreviewComponent],template:`
+@Component({imports:[DatePipe,FormsModule,IdentityPreviewComponent,IdentityAnalysisComponent],template:`
  <section class="org-page">
   <p class="org-eyebrow">Gestión institucional</p><h1 class="org-title">Revisión de identidad</h1><p class="org-description">Revisa los documentos que los estudiantes compartieron expresamente con tu organización. Una aprobación solo tiene alcance institucional.</p>
   @if(error()){<p role="alert" class="org-error mt-6">{{error()}}</p>}@if(notice()){<p role="status" class="org-success mt-6">{{notice()}}</p>}
@@ -19,6 +20,7 @@ import { IdentityPreviewComponent } from './identity-preview.component';
     @if(item.profileChanged){<p class="org-info mt-5">El estudiante modificó su perfil. Este envío no se puede aprobar ni rechazar; debe enviar uno actualizado.</p>}
     @if(item.reason){<p class="org-error mt-5 whitespace-pre-wrap">{{item.reason}}</p>}
     @if(item.documentsAvailable!==false){<button class="org-secondary mt-5" (click)="showImages.set(!showImages())">{{showImages()?'Ocultar documentos':'Abrir documentos privados'}}</button>}@else{<p class="mt-4 text-sm text-slate-500">Evidencia retirada según el plazo de conservación.</p>}
+    @if(item.status==='PENDING' && !item.profileChanged && item.documentsAvailable!==false){<app-identity-analysis [submissionId]="item.id"/>}
     @if(item.status==='PENDING'&&!item.profileChanged&&item.sharingActive){<form class="mt-6 border-t border-slate-200 pt-5" (ngSubmit)="confirm()"><label class="org-label">Resultado<select class="org-input" name="decision" [(ngModel)]="decision" [disabled]="busy()"><option value="">Selecciona una decisión</option><option value="VERIFIED">Aprobar identidad para esta institución</option><option value="REJECTED">Rechazar y solicitar corrección</option></select></label>@if(decision==='REJECTED'){<label class="org-label mt-4">Motivo del rechazo<textarea class="org-input min-h-28" name="reason" [(ngModel)]="reason" minlength="10" maxlength="1000" required [disabled]="busy()"></textarea><span class="org-hint">Entre 10 y 1000 caracteres. El estudiante verá este motivo.</span></label>}<button class="org-primary mt-5" type="submit" [disabled]="busy()||!decision||(decision==='REJECTED'&&reason.trim().length<10)">Revisar decisión</button></form>}
     @if(confirming()){<div class="org-info mt-5"><p>¿Confirmas {{decision==='VERIFIED'?'la aprobación':'el rechazo'}} de este envío? La decisión quedará en el historial.</p><div class="mt-4 flex flex-wrap gap-3"><button class="org-secondary" [disabled]="busy()" (click)="confirming.set(false)">Volver</button><button class="org-primary" [disabled]="busy()" (click)="save()">{{busy()?'Guardando…':'Confirmar decisión'}}</button></div></div>}
    </article>@if(showImages()){<app-identity-preview [submissionId]="item.id" [photoPresent]="item.photoPresent" (close)="showImages.set(false)"/>}}@else{<p class="org-card text-slate-600">Selecciona un envío para consultar los datos y documentos autorizados.</p>}</section>

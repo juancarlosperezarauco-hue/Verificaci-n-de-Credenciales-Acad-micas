@@ -87,7 +87,7 @@ public class CredentialVerificationService {
                 .orElse(credential.getTenant().isActive() ? "ACTIVE" : "INACTIVE");
     }
 
-    private CredentialDtos.PublicVerification view(Credential credential) {
+    CredentialDtos.PublicVerification view(Credential credential) {
         return CredentialDtos.PublicVerification.from(credential)
                 .withDetails(
                         issuerStatus(credential),

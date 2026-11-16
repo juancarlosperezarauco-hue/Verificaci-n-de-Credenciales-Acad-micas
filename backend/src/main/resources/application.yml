@@ -37,6 +37,11 @@ management:
         include: health,info,metrics
   endpoint:
     health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,db
       show-details: when-authorized
 
 springdoc:
@@ -44,6 +49,10 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  ai:
+    enabled: ${AI_ANALYSIS_ENABLED:false}
+    url: ${AI_SERVICE_URL:http://ai-service:8000}
+    token: ${AI_SERVICE_TOKEN:}
   evidence:
     encryption-key: ${EVIDENCE_ENCRYPTION_KEY:}
     key-id: ${EVIDENCE_KEY_ID:legacy}
@@ -76,6 +85,7 @@ app:
     jwt-expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
     allowed-origin: ${ALLOWED_ORIGIN:http://localhost:4200}
   storage:
+    health-enabled: ${STORAGE_HEALTH_ENABLED:false}
     endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
     access-key: ${MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${MINIO_SECRET_KEY:minioadmin}

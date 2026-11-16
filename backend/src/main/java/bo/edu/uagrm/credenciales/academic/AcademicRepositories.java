@@ -13,6 +13,10 @@ interface AcademicProgramRepository extends JpaRepository<AcademicProgram, UUID>
 }
 
 interface AcademicRecordRepository extends JpaRepository<AcademicRecord, UUID> {
+    boolean existsByTenantIdAndRegistrationCode(UUID tenantId, String registrationCode);
+
+    boolean existsByTenantIdAndStudentIdAndProgramId(UUID tenantId, UUID studentId, UUID programId);
+
     Optional<AcademicRecord> findByIdAndTenantId(UUID id, UUID tenant);
 
     List<AcademicRecord> findAllByStudentIdOrderByCreatedAtDesc(UUID student);

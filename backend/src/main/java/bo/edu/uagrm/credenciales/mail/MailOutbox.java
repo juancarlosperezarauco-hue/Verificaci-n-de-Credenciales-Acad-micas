@@ -8,7 +8,7 @@ import java.util.UUID;
 class MailOutbox {
  @Id UUID id;
  @Column(name="student_id",nullable=false) UUID studentId;
- @Column(name="token_id",nullable=false) UUID tokenId;
+ @Column(name="token_id") UUID tokenId;
  @Column(nullable=false,length=30) String kind;
  @Enumerated(EnumType.STRING) @Column(nullable=false,length=16) MailState state;
  @Column(name="encrypted_payload",columnDefinition="text") String encryptedPayload;

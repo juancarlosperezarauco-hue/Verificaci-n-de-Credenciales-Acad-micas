@@ -1,0 +1,88 @@
+<section class="org-page">
+  <div class="page-heading">
+    <div>
+      <p class="org-eyebrow">Mi cuenta</p>
+      <h1 class="org-title">Notificaciones</h1>
+      <p class="org-description">Sigue el estado de tus solicitudes y documentos académicos.</p>
+    </div>
+    <button
+      class="org-secondary"
+      [disabled]="loading() || busy() || !inbox().unread"
+      (click)="read()"
+    >
+      Marcar todas como leídas
+    </button>
+  </div>
+  <div class="org-card mt-7">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <p class="font-semibold" role="status">{{ inbox().unread }} sin leer</p>
+      <label class="flex items-center gap-2"
+        ><input
+          type="checkbox"
+          [(ngModel)]="unreadOnly"
+          [disabled]="loading() || busy()"
+          (ngModelChange)="load()"
+        />Solo sin leer</label
+      >
+      <button class="org-secondary" [disabled]="loading() || busy()" (click)="load()">
+        Actualizar
+      </button>
+    </div>
+    @if (error()) {
+      <p class="org-error mt-4" role="alert">{{ error() }}</p>
+    }
+    @if (loading()) {
+      <p class="py-6" role="status">Cargando notificaciones…</p>
+    }
+    @if (ready()) {
+      @for (item of inbox().items; track item.id) {
+        <article class="border-b border-slate-200 py-5">
+          <div class="flex flex-wrap justify-between gap-3">
+            <h2 class="font-semibold">{{ item.title }}</h2>
+            <span class="org-badge">{{ item.readAt ? 'Leída' : 'Nueva' }}</span>
+          </div>
+          <p class="mt-2 text-sm text-slate-500">{{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <div class="mt-4 flex flex-wrap gap-5">
+            <a
+              class="org-link"
+              [routerLink]="
+                item.kind.startsWith('REQUEST_') ? '/student/requests' : '/student/account'
+              "
+              >Consultar en mi expediente</a
+            >
+            @if (!item.readAt) {
+              <button class="org-link" [disabled]="busy() || loading()" (click)="read(item)">
+                Marcar como leída
+              </button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="empty-state compact">
+          <h2>Estás al día</h2>
+          <p>No hay notificaciones para este filtro.</p>
+        </div>
+      }
+      <nav
+        class="mt-5 flex items-center justify-between gap-3"
+        aria-label="Páginas de notificaciones"
+      >
+        <button
+          class="org-secondary"
+          [disabled]="loading() || busy() || !inbox().page"
+          (click)="load(inbox().page - 1)"
+        >
+          Anterior
+        </button>
+        <span class="text-sm">Página {{ inbox().page + 1 }}</span>
+        <button
+          class="org-secondary"
+          [disabled]="loading() || busy() || (inbox().page + 1) * inbox().size >= inbox().total"
+          (click)="load(inbox().page + 1)"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  </div>
+</section>

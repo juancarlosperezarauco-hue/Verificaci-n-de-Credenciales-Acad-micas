@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 import { studentGuard, permissionGuard } from './core/auth.guard';
 
 export const routes: Routes = [
+  {path:'organization/imports',canActivate:[permissionGuard],data:{permission:'ACADEMIC_MANAGE'},loadComponent:()=>import('./features/academic/academic-import.page').then(m=>m.AcademicImportPage)},
+  {path:'student/notifications',canActivate:[studentGuard],loadComponent:()=>import('./features/notifications/notifications.page').then(m=>m.NotificationsPage)},
+  {path:'organization/reports',canActivate:[permissionGuard],data:{permission:'REPORT_VIEW'},loadComponent:()=>import('./features/reports/reports.page').then(m=>m.ReportsPage)},
+  {path:'superadmin/statistics',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/reports/platform-statistics.page').then(m=>m.PlatformStatisticsPage)},
   {path:'student/identity-center',canActivate:[studentGuard],loadComponent:()=>import('./features/identity-review/identity-center.page').then(m=>m.IdentityCenterPage)},
   {path:'superadmin/identity-disputes',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/identity-review/disputes.page').then(m=>m.DisputesPage)},
   {path:'superadmin/storage',canActivate:[permissionGuard],data:{roles:['SUPER_ADMIN']},loadComponent:()=>import('./features/templates/storage.page').then(m=>m.StoragePage)},

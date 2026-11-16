@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
+server:
+  shutdown: graceful
+  error:
+    include-message: never
+    include-stacktrace: never
+  forward-headers-strategy: native
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+app:
+  mail-from: ${SMTP_FROM}
+  storage:
+    health-enabled: ${STORAGE_HEALTH_ENABLED:false}
+  signing:
+    allow-demo: false
