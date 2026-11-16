@@ -1,0 +1,20 @@
+name: credential_wallet
+description: Expediente móvil del estudiante con identidad académica global.
+publish_to: none
+version: 0.1.0+1
+environment:
+  sdk: ">=3.14.0 <4.0.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: 5.11.1
+  flutter_secure_storage: 11.2.0
+  go_router: 18.1.4
+  mobile_scanner: 7.5.0
+  qr_flutter: 4.1.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+flutter:
+  uses-material-design: true
