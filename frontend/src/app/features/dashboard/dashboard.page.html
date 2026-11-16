@@ -34,7 +34,7 @@
           <span>Estudiantes vinculados</span
           ><span class="metric-symbol"><app-ui-icon name="users" [size]="19" /></span>
         </div>
-        <strong>{{ studentsReady() ? students().length : '—' }}</strong>
+        <strong>{{ studentsReady() ? studentCount() : '—' }}</strong>
         <p>Identidades autorizadas en tu institución</p>
       </article>
     }
@@ -44,7 +44,7 @@
           <span>Credenciales registradas</span
           ><span class="metric-symbol"><app-ui-icon name="document" [size]="19" /></span>
         </div>
-        <strong>{{ credentialsReady() ? credentials().length : '—' }}</strong>
+        <strong>{{ credentialsReady() ? credentialCount() : '—' }}</strong>
         <p>Todos los documentos de tu institución</p>
       </article>
       <article class="metric">
@@ -154,7 +154,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of credentials().slice(0, 5); track item.id) {
+              @for (item of credentials(); track item.id) {
                 <tr>
                   <td>
                     <strong class="block text-sm font-semibold">{{ item.title }}</strong

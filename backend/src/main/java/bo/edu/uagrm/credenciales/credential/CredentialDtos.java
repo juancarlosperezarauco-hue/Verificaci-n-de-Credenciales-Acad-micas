@@ -51,7 +51,7 @@ public final class CredentialDtos {
             boolean testSignature,
             UUID replacesId,
             UUID replacedById) {
-        static Response from(Credential c) {
+        public static Response from(Credential c) {
             return new Response(
                     c.getId(),
                     c.getStudentAccount() != null

@@ -65,3 +65,9 @@ Gemini se usa únicamente en /summaries, con el token interno y GEMINI_API_KEY;
 no recibe imágenes de identidad. Se ocultan inputs privados en errores 422.
 AI_ANALYSIS_ENABLED=false hasta configurar el servicio privado. Su token no debe
 publicarse en frontend, Android, Git ni el chat.
+
+
+GET /api/institution/dashboard devuelve agregados del servidor y las cinco últimas
+credenciales. ORGANIZATION_VIEW es obligatorio; totales de estudiantes solo con
+STUDENT_VIEW y documentos solo con CREDENTIAL_VIEW. Los datos sin permiso son null,
+no cero. El panel principal ya no descarga padrones completos para calcular métricas.

@@ -168,6 +168,31 @@ class ReportingNotificationIntegrationTests {
         assertEquals(0,jdbc.queryForObject("select count(*) from academic_records where tenant_id=?",Long.class,a.id));
         call("POST","/api/institution/academic/imports/preview",s.token,Map.of("rows",rows),403);
     }
+    @Test void dashboardUsesTenantAggregatesAndOnlyFiveRecentDocuments()throws Exception{
+        var a=org();var b=org();var s=student(true);link(a,s);link(b,s);
+        for(int i=0;i<6;i++)draft(a,s,"Borrador "+i);
+        issue(a,s,"Documento emitido");draft(b,s,"Documento ajeno");
+        var snapshot=call("GET","/api/institution/dashboard",a.token,null,200);
+        assertEquals(7,snapshot.get("credentials").asInt());assertEquals(1,snapshot.get("linkedStudents").asInt());
+        assertEquals(1,snapshot.get("issued").asInt());assertEquals(6,snapshot.get("drafts").asInt());
+        assertEquals(5,snapshot.get("recent").size());assertFalse(snapshot.toString().contains("Documento ajeno"));
+        call("GET","/api/institution/dashboard",s.token,null,403);
+        var role=call("POST","/api/access/roles",a.token,Map.of("name","Panel de documentos","permissions",List.of("ORGANIZATION_VIEW","CREDENTIAL_VIEW")),201);
+        call("POST","/api/access/users",a.token,Map.of("fullName","Consulta panel","email","dashboard@example.test","password",PASSWORD,"roleIds",List.of(role.get("id").asText())),201);
+        String token=call("POST","/api/auth/login","",Map.of("organizationSlug",a.slug,"email","dashboard@example.test","password",PASSWORD),200).get("token").asText();
+        var limited=call("GET","/api/institution/dashboard",token,null,200);
+        assertTrue(limited.get("linkedStudents").isNull());assertEquals(7,limited.get("credentials").asInt());
+        call("GET","/api/institution/reports/summary",token,null,403);
+    }
+    @Test void globalStatisticsReturnAggregatesWithoutPrivateExpedients()throws Exception{
+        var response=mvc.perform(get("/api/platform/statistics").with(
+                org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user("root@example.test").roles("SUPER_ADMIN")))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        var body=json.readTree(response.getContentAsString());
+        assertEquals(jdbc.queryForObject("select count(*) from tenants",Long.class).longValue(),body.get("organizations").asLong());
+        assertTrue(body.get("students").isNumber());assertTrue(body.get("credentials").isNumber());
+        assertFalse(body.has("items"));assertFalse(body.has("email"));assertFalse(body.has("documentNumber"));
+    }
     @Test void customRoleNeedsExplicitReportPermission()throws Exception{
         var o=org();
         var role=call("POST","/api/access/roles",o.token,Map.of("name","Solo consulta","permissions",List.of("ORGANIZATION_VIEW")),201);

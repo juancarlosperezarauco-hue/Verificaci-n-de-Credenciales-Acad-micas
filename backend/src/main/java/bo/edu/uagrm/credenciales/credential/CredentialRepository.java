@@ -14,6 +14,9 @@ import java.util.UUID;
 public interface CredentialRepository
         extends JpaRepository<Credential, UUID>,
                 org.springframework.data.jpa.repository.JpaSpecificationExecutor<Credential> {
+    org.springframework.data.domain.Page<Credential> findByTenantId(
+            UUID tenantId, org.springframework.data.domain.Pageable pageable);
+
     List<Credential> findAllByStudentAccountIdOrderByCreatedAtDesc(UUID studentId);
 
     List<Credential> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);

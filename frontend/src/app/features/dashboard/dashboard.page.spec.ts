@@ -42,9 +42,10 @@ describe('Institutional workspace', () => {
       permissions,
     });
   }
-  function create() {
+  function create(snapshot: object|null = {linkedStudents:null,credentials:null,issued:null,drafts:null,recent:null}) {
     const fixture = TestBed.createComponent(DashboardPage);
     fixture.detectChanges();
+    if(snapshot!==null)http.expectOne('/api/institution/dashboard').flush(snapshot);
     return fixture;
   }
   it('does not request restricted resources or advertise unavailable modules', () => {
@@ -58,13 +59,9 @@ describe('Institutional workspace', () => {
     expect(fixture.nativeElement.querySelector('a[href="/credentials"]')).toBeNull();
     expect(fixture.componentInstance.studentsReady()).toBeFalse();
   });
-  it('keeps available counts when another resource fails and distinguishes unavailable data from zero', () => {
+  it('renders server totals without counting the bounded recent documents', () => {
     access(['ORGANIZATION_VIEW', 'STUDENT_VIEW', 'CREDENTIAL_VIEW']);
-    const fixture = create();
-    http.expectOne('/api/students').flush({}, { status: 503, statusText: 'Unavailable' });
-    http
-      .expectOne('/api/credentials')
-      .flush([
+    const fixture = create({linkedStudents:2500,credentials:140,issued:125,drafts:15,recent:[
         {
           id: 'doc',
           title: 'Curso',
@@ -73,23 +70,32 @@ describe('Institutional workspace', () => {
           status: 'ISSUED',
           createdAt: '2026-11-15T12:00:00Z',
         },
-      ]);
+      ]});
     http.expectOne('/api/portal/items').flush([]);
     fixture.detectChanges();
-    expect(fixture.componentInstance.studentsReady()).toBeFalse();
+    expect(fixture.componentInstance.studentsReady()).toBeTrue();
     expect(fixture.componentInstance.credentialsReady()).toBeTrue();
-    expect(fixture.componentInstance.issued()).toBe(1);
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
-      'estudiantes',
-    );
-    expect(fixture.nativeElement.querySelector('.metric>strong').textContent).toContain('—');
+    expect(fixture.componentInstance.issued()).toBe(125);
+    expect(fixture.nativeElement.querySelector('.metric>strong').textContent).toContain('2500');
     expect(fixture.nativeElement.textContent).toContain('Ana');
+  });
+  it('keeps the portal available when the aggregate request fails',()=>{
+    access(['ORGANIZATION_VIEW','STUDENT_VIEW','CREDENTIAL_VIEW']);
+    const fixture=create(null);
+    http.expectOne('/api/institution/dashboard').flush({}, {status:503,statusText:'Unavailable'});
+    http.expectOne('/api/portal/items').flush([notice]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.studentsReady()).toBeFalse();
+    expect(fixture.componentInstance.credentialsReady()).toBeFalse();
+    expect(fixture.componentInstance.portalReady()).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Aviso de prueba');
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('resumen institucional');
   });
   it('shows a genuine empty state only after a successful empty response', () => {
     access(['CREDENTIAL_VIEW']);
-    const fixture = create();
+    const fixture = create(null);
     expect(fixture.nativeElement.textContent).not.toContain('Todavía no hay credenciales');
-    http.expectOne('/api/credentials').flush([]);
+    http.expectOne('/api/institution/dashboard').flush({linkedStudents:null,credentials:0,issued:0,drafts:0,recent:[]});
     http.expectOne('/api/portal/items').flush([]);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Todavía no hay credenciales');
