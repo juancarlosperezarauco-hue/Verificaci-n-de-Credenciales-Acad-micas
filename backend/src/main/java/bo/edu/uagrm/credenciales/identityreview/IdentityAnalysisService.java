@@ -44,7 +44,7 @@ public class IdentityAnalysisService {
         configured = enabled && token.length() >= 32;
         var factory =
                 new JdkClientHttpRequestFactory(
-                        HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build());
+                        HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(3)).build());
         factory.setReadTimeout(Duration.ofSeconds(25));
         client =
                 RestClient.builder()

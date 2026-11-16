@@ -10,11 +10,14 @@ abstract interface class TokenStorage {
 class SecureTokenStorage implements TokenStorage {
   final FlutterSecureStorage storage;
   SecureTokenStorage([FlutterSecureStorage? storage])
-      : storage = storage ?? const FlutterSecureStorage();
+    : storage = storage ?? const FlutterSecureStorage();
   static const key = 'academic_student_session';
-  @override Future<String?> read() => storage.read(key: key);
-  @override Future<void> write(String value) => storage.write(key: key, value: value);
-  @override Future<void> delete() => storage.delete(key: key);
+  @override
+  Future<String?> read() => storage.read(key: key);
+  @override
+  Future<void> write(String value) => storage.write(key: key, value: value);
+  @override
+  Future<void> delete() => storage.delete(key: key);
 }
 
 class StudentSession extends ChangeNotifier {
@@ -28,12 +31,14 @@ class StudentSession extends ChangeNotifier {
     if (_token?.isEmpty ?? false) _token = null;
     notifyListeners();
   }
+
   Future<void> save(String token) async {
     if (token.isEmpty) throw ArgumentError('Sesión vacía.');
     await storage.write(token);
     _token = token;
     notifyListeners();
   }
+
   Future<void> clear() async {
     _token = null;
     notifyListeners();

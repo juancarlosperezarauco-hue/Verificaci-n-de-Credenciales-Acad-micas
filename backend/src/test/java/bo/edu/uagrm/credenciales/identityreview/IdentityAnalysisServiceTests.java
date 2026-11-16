@@ -33,6 +33,7 @@ class IdentityAnalysisServiceTests {
     IdentityAnalysisService service(boolean enabled){return new IdentityAnalysisService(review,audit,"http://127.0.0.1:"+server.getAddress().getPort(),token,enabled);}
     void reply(String body,int status){
         server.createContext("/identity-analysis",exchange->{
+            assertNull(exchange.getRequestHeaders().getFirst("Upgrade"));
             assertEquals(token,exchange.getRequestHeaders().getFirst("X-Service-Token"));
             String input=new String(exchange.getRequestBody().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8);
             assertTrue(input.contains("expected_document"));assertTrue(input.contains("12345"));

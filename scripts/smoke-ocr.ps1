@@ -20,7 +20,10 @@ foreach($pending in @($own.submissions|Where-Object {$_.tenantId -eq $tenant.id 
  $null=Call POST ('/api/me/identity-verifications/'+$pending.id+'/withdraw') @{} $student.token
 }
 $file=Get-Item -LiteralPath (Resolve-Path -LiteralPath $ImageFile).Path
-$submission=Invoke-RestMethod ($base+'/api/me/identity-verifications') -Method Post -Headers @{Authorization='Bearer '+$student.token} -Form @{tenantId=$tenant.id;accepted='true';front=$file;back=$file} -TimeoutSec 40
+$backPath=Join-Path ([IO.Path]::GetTempPath()) ('ocr-back-'+[guid]::NewGuid().ToString('N')+$file.Extension)
+Copy-Item -LiteralPath $file.FullName -Destination $backPath
+try {
+$submission=Invoke-RestMethod ($base+'/api/me/identity-verifications') -Method Post -Headers @{Authorization='Bearer '+$student.token} -Form @{tenantId=$tenant.id;accepted='true';front=$file;back=(Get-Item -LiteralPath $backPath)} -TimeoutSec 40
 $analysis=Call POST ('/api/institution/identity-verifications/'+$submission.id+'/analysis') @{} $admin.token
 if(!$analysis.human_review_required -or $analysis.engine -ne 'tesseract' -or $analysis.confidence -lt 0 -or $analysis.confidence -gt 1){throw 'Respuesta OCR inválida.'}
 $after=Call GET '/api/me/identity-verifications' $null $student.token
@@ -29,3 +32,5 @@ if($record.status -ne 'PENDING'){throw 'El OCR modificó indebidamente el estado
 $denied=Invoke-WebRequest ($base+'/api/institution/identity-verifications/'+$submission.id+'/analysis') -Method Post -Headers @{Authorization='Bearer '+$student.token} -ContentType application/json -Body '{}' -SkipHttpErrorCheck -TimeoutSec 20
 if([int]$denied.StatusCode -ne 403){throw 'El endpoint OCR debe rechazar al estudiante como revisor.'}
 [pscustomobject]@{Result='PASS';Engine='tesseract';HumanDecisionPreserved=$true;StudentReviewDenied=$true}
+
+}finally{if(Test-Path -LiteralPath $backPath){Remove-Item -LiteralPath $backPath}}

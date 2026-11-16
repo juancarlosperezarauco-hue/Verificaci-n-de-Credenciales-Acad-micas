@@ -116,6 +116,7 @@ class ReportingNotificationIntegrationTests {
         var delivery=outbox.claim(id).orElseThrow();assertTrue(outbox.valid(delivery));
         jdbc.update("update student_accounts set email=? where id=?",UUID.randomUUID()+"@example.test",s.id);
         assertFalse(outbox.valid(delivery));
+        outbox.finish(delivery,bo.edu.uagrm.credenciales.mail.MailState.CANCELLED,"RECIPIENT_CHANGED");
     }
     @Test void actualIssueReplayAndRevokeProduceExactlyOneNotificationEach()throws Exception{
         var o=org();var s=student(true);link(o,s);var c=draft(o,s,"Prueba de avisos");String id=c.get("id").asText();
