@@ -1,3 +1,37 @@
+# Prioridades de arranque y aceptación — 22/11/2026
+
+- Rama: codex/priority-readiness, desde main 234e428.
+- Commits de implementación: d25f888 (arranque/salud), 6878905 (TLS/CSP/runtime),
+  1a0f1f5bcc5c8bf2a2a3bd6fac08413db838334f (aceptación y baseline).
+- Resumen: arranque local sin borrado de datos, corrección del JSON Actuator,
+  validación TLS temprana, CSP compatible con Angular, límites de contenedores,
+  seed por APIs y Mailpit, ciclo académico con dos instituciones y medición acotada.
+- Archivos: scripts/start-local.ps1, scripts/check-health.ps1,
+  scripts/load-audit.mjs, ProductionConfiguration.java, PostgresTlsPolicy.java y
+  ProductionConfigurationTests.java; frontend/Dockerfile*, angular.json,
+  nginx.conf y security-headers.conf; compose.audit.yml, compose.production.yml;
+  e2e/seed.mjs, support/audit-api.mjs, tests/academic-cycle.spec.ts,
+  tests/security-headers.spec.ts, .github/workflows/verify.yml, README.md y
+  docs/PRIORITY_READINESS.md, docs/COMPLETION_STATUS.md.
+- Migraciones y endpoints nuevos: ninguno. V1–V23 y contratos conservados.
+- Pruebas locales: 18 casos de configuración productiva aprobados; compilaciones
+  backend y frontend aprobadas; arranque principal/readiness/liveness/web/AI
+  aprobados, una organización y un estudiante conservados; seed por API/Mailpit
+  aprobado. La suite E2E local se interrumpió por timeouts bajo presión de tres
+  stacks; no se atribuye aprobación funcional a ese intento.
+- CI ejecuta PostgreSQL/Flyway, Angular, OCR, Android, nuevas pruebas integradas,
+  salud HTTP y baseline acotado. Resultado final en la ejecución de la rama y PR;
+  la referencia previa de 280 pruebas corresponde al main de partida.
+- Riesgos: incidente local del motor Docker al acumular stacks; HRcore pertenece
+  a otro proyecto y no se detiene sin autorización. Pendientes servidor/dominio,
+  SMTP, confianza/custodia de firma, blockchain, teléfono y piloto institucional.
+- No se publican .env, fixtures privados, tokens, claves ni datos de usuarios.
+
+Detalle: [PRIORITY_READINESS.md](../docs/PRIORITY_READINESS.md).
+Se conserva el historial a continuación.
+
+---
+
 # Continuación y validación — 22/11/2026
 
 - Rama: codex/complete-validation; código final de esta continuación:

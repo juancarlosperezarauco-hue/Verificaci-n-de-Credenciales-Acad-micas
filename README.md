@@ -7,7 +7,9 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-El estado actual valida **219 pruebas (120 backend + 99 web)** y Flyway **V1–V21**.
+La entrega de referencia del 22/11 valida **280 pruebas** y Flyway **V1–V23**.
+La continuación de prioridades, arranque y pruebas actuales está documentada en
+[PRIORITY_READINESS.md](docs/PRIORITY_READINESS.md).
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.
 La auditoría de acciones críticas y la cola cifrada de correos con reintentos están implementadas.
 Incluye reemplazo seguro del autenticador, renovación de respaldos MFA, retención
@@ -33,8 +35,23 @@ su revisión; IDENTITY_REVIEW permite revisar únicamente envíos autorizados de
 El ciclo incluye expedientes, solicitudes/requisitos, aprobación separada,
 plantillas versionadas, QR embebido, firma CMS, comparación pública de PDF,
 reemplazos, avatar, disputas y conservación de evidencia. Blockchain mantiene
-el adaptador de desarrollo; OCR/anomalías y Android siguen pendientes.
+el adaptador de desarrollo. El OCR privado está integrado y el APK Android debug
+compila; pruebas en teléfono y servicios externos siguen pendientes.
 La firma criptográfica implementada no acredita por sí sola confianza legal.
+
+## Arranque local sin borrar datos
+
+Desde PowerShell 7, en la raíz del proyecto y con su `.env` privado configurado:
+
+    ./scripts/start-local.ps1 -StartDocker -Build
+
+El comando inicia exclusivamente el proyecto `verificacion-credenciales`, espera
+sus servicios y verifica HTTP. Conserva claves y volúmenes; no detiene otros
+proyectos ni limpia Docker. En Windows puede iniciar Docker Desktop.
+
+Si backend y frontend ya se compilaron localmente, `-Build -Prebuilt` construye
+las imágenes de ejecución sin volver a compilar Java/Angular dentro de Docker.
+Al repetir el comando sin `-Build` se reutilizan las imágenes existentes.
 
 ## Flujo funcional
 
