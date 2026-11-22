@@ -1,10 +1,10 @@
 name: Verify private AWS deployment
 on:
   pull_request:
-    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
   push:
     branches: [main, "codex/**"]
-    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
 permissions:
   contents: read
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Check PowerShell syntax
         shell: pwsh
         run: |
-          foreach ($path in @('scripts/prepare-aws-private.ps1','scripts/connect-aws-private.ps1')) {
+          foreach ($path in @('scripts/prepare-aws-private.ps1','scripts/connect-aws-private.ps1','scripts/open-aws-private.ps1','scripts/close-aws-private.ps1')) {
             $errors = $null
             $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $path), [ref]$null, [ref]$errors)
             if ($errors) { throw ($errors | Out-String) }
@@ -28,3 +28,8 @@ jobs:
       - name: Check AWS CLI object and single-item array serialization
         shell: pwsh
         run: ./deploy/aws/tests/check-json-arguments.ps1
+      - name: Check private tunnel reconnection without AWS credentials
+        shell: pwsh
+        run: ./deploy/aws/tests/check-connection-recovery.ps1
+      - name: Check acceptance script syntax (live run is manual and private)
+        run: node --check scripts/verify-aws-private.mjs
