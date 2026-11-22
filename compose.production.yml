@@ -3,6 +3,11 @@
 services:
   backend:
     build: ./backend
+    read_only: true
+    tmpfs: ["/tmp:size=96m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
     restart: unless-stopped
     mem_limit: 768m
     environment:
@@ -51,6 +56,9 @@ services:
     restart: unless-stopped
     mem_limit: 256m
     read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
     tmpfs: ["/tmp:size=64m"]
     environment:
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:?}

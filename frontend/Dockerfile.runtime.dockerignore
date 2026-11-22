@@ -1,5 +1,6 @@
 **
 !nginx.conf
+!security-headers.conf
 !dist/
 !dist/frontend/
 !dist/frontend/browser/
