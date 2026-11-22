@@ -7,7 +7,7 @@ Plataforma multitenant para que instituciones educativas creen, emitan, consulte
 Auditoría inicial del 13 de noviembre de 2026: se reprodujeron las 35 pruebas de
 referencia y se comprobó V1–V13. La continuación entrega revisión previa de
 organizaciones, recuperación/confirmación de correo y cierre de sesiones estudiantiles.
-La entrega de referencia del 22/11 valida **280 pruebas** y Flyway **V1–V23**.
+La continuación del 22/11 valida **298 pruebas** y Flyway **V1–V23**.
 La continuación de prioridades, arranque y pruebas actuales está documentada en
 [PRIORITY_READINESS.md](docs/PRIORITY_READINESS.md).
 Incluye sesiones por dispositivo, límites de intentos y MFA optativo para administradores.

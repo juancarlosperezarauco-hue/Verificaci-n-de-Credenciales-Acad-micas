@@ -1,3 +1,16 @@
+# Resultado final de prioridades — 22/11/2026
+
+CI 45034361749 aprobada en 2d387f9e15e11b56a4f422f8944419e0557ac87f:
+156 backend + 114 Angular + 11 OCR + 12 integradas + 5 Flutter = 298;
+dos duplicados de servicio móvil omitidos. APK/análisis/builds y salud HTTP aprobados.
+Baseline ficticio: 40 peticiones, 4 clientes, sin errores; p95 público 20 ms,
+expediente 25 ms. No es una prueba de capacidad institucional.
+
+El usuario autorizó detener temporalmente HRcore para liberar memoria. El ciclo
+académico completo aprobó después localmente en 20.2 s. Se detiene audit al terminar,
+se conservan datos/volúmenes y credenciales pasa readiness/liveness/web/AI en 4300.
+La documentación posterior al commit probado no cambia el código ni la configuración.
+
 # Prioridades de arranque y aceptación — 22/11/2026
 
 - Rama: codex/priority-readiness, desde main 234e428.

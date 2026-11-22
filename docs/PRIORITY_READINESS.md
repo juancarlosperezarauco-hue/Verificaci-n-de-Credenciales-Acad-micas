@@ -35,14 +35,20 @@ reemplazo con original preservado/revocado y retirada de consentimiento mantenie
 el historial personal. El mismo flujo de servicio se ejecuta una vez; la navegación
 y la prueba de cabeceras cubren escritorio y móvil.
 
-El seed por API/Mailpit aprobó localmente. La suite local completa se interrumpió
-por tiempos de espera con tres proyectos simultáneos en el equipo de 8 GB.
-Se solicitó detener solamente audit para conservar capacidad del proyecto principal,
-pero el motor Docker comenzó a devolver errores 500. No se reinició Docker/WSL
-ni se detuvo HRcore sin autorización; el arranque principal aprobado es una
-comprobación anterior a este incidente, no una garantía del estado posterior.
-La CI verifica la suite completa en un runner aislado; no se presenta el intento
-local interrumpido como una aprobación funcional.
+El seed por API/Mailpit aprobó localmente. El primer intento E2E coincidió con
+tiempos de espera y errores 500 del motor Docker al ejecutar tres proyectos.
+Se interrumpió ese intento y el usuario autorizó detener temporalmente los seis
+contenedores de HRcore, sin borrar datos. Con memoria liberada se repitió el ciclo
+académico completo: aprobado localmente en 20.2 segundos. Después se detiene audit;
+credenciales queda disponible y HRcore permanece detenido temporalmente por esa
+autorización. No se reinició Docker/WSL ni se eliminaron volúmenes.
+
+La [CI 45034361749](https://github.com/juancarlosperezarauco-hue/Verificaci-n-de-Credenciales-Acad-micas/actions/runs/45034361749)
+aprobó los cinco jobs del commit 2d387f9e15e11b56a4f422f8944419e0557ac87f:
+156 backend PostgreSQL/Flyway, 114 Angular, 11 OCR nativo, 12 pruebas integradas y
+5 Flutter, total 298. Se omiten dos duplicados de flujos de servicio del proyecto
+móvil; las pruebas de interfaz y CSP sí cubren ambos tamaños. Builds, análisis
+Flutter y APK debug también aprobaron. La documentación posterior no cambia código.
 
 ## Seguridad aplicada
 
@@ -75,7 +81,9 @@ pública y expediente autenticado, valida JSON y cierra la sesión al terminar.
 Límites: 80 peticiones, 8 clientes y timeout de 5 segundos. No cambia documentos.
 Escribe e2e/test-results/load-summary.json, sin tokens ni datos personales, y falla
 si hay errores o se supera el presupuesto p95. CI conserva este informe.
-Esta medición pequeña no demuestra capacidad para el volumen de una institución.
+En esa CI se midieron 40 peticiones/4 clientes, sin errores: p95 20 ms en consulta
+pública y 25 ms en expediente. Esta medición pequeña con datos ficticios no
+representa la capacidad para el volumen de una institución ni el equipo local.
 
 ## Despliegue que sigue pendiente
 
