@@ -1,4 +1,5 @@
 FROM node:22-alpine AS build
+ARG NODE_OPTIONS
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci

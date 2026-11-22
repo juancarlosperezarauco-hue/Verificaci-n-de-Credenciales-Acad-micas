@@ -1,0 +1,27 @@
+name: Verify private AWS deployment
+on:
+  pull_request:
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+  push:
+    branches: [main, "codex/**"]
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+permissions:
+  contents: read
+jobs:
+  deployment-boundaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: bash -n deploy/aws/bootstrap-host.sh deploy/aws/init-private.sh deploy/aws/start-private.sh
+      - name: Check PowerShell syntax
+        shell: pwsh
+        run: |
+          foreach ($path in @('scripts/prepare-aws-private.ps1','scripts/connect-aws-private.ps1')) {
+            $errors = $null
+            $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $path), [ref]$null, [ref]$errors)
+            if ($errors) { throw ($errors | Out-String) }
+          }
+      - name: Check private network boundaries and key lifecycle
+        run: python3 -m unittest discover -s deploy/aws/tests -v
