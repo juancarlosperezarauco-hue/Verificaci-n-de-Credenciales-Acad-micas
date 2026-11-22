@@ -140,3 +140,7 @@ scripts/setup-mobile.ps1
 scripts/smoke-ocr.ps1
 scripts/unpack-backup.py
 scripts/verify-restored-application.ps1
+
+e2e/tests/identity-ocr.spec.ts
+mobile/platform/android/build.gradle.kts
+docs/VALIDATION_2026_11_22.md

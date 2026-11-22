@@ -1,3 +1,38 @@
+# Continuación y validación — 22/11/2026
+
+- Rama: codex/complete-validation; código final de esta continuación:
+  d75fdea14023d51ceebd4e340240691fbc42b708 (precedido por ed4c8fc).
+- Resumen: corregidos los errores del DSL de Android/AGP 9 y el control de
+  firma release; configuración Gradle mantenida como fuente. La preparación
+  conserva pubspec.yaml y el lockfile y exige resolver versiones fijadas.
+  OCR incompleto devuelve 503 y mantiene la decisión humana.
+- Archivos: mobile/android/app/build.gradle.kts, mobile/android/gradle.properties,
+  mobile/platform/android/build.gradle.kts, mobile/README.md,
+  scripts/setup-mobile.ps1, .github/workflows/verify.yml,
+  e2e/tests/identity-ocr.spec.ts, IdentityAnalysisService.java y sus pruebas,
+  docs/COMPLETION_STATUS.md, docs/COMPLETION_FILES.txt y
+  docs/VALIDATION_2026_11_22.md.
+- Migraciones y endpoints nuevos: ninguno; se conservan V1–V23 y contratos.
+- Pruebas: CI 44990243503 aprobó los cinco jobs: backend (138), Angular (114),
+  OCR nativo (11), navegador/API (9 aprobadas, 1 duplicado móvil omitido) y
+  Flutter (5), análisis, compilaciones y APK debug.
+  Después, las 7 pruebas locales de IdentityAnalysisServiceTests aprobaron,
+  incluidas tres respuestas malformadas; se comprobó que repetir setup-mobile
+  conserva los manifiestos y fuentes de la aplicación.
+- La CI del código final comprueba además que el grafo release exige validar
+  la clave de publicación y que la falta de clave se rechaza. Consultar la
+  ejecución de la rama para el resultado final; la evidencia inicial no prueba
+  por sí sola cambios posteriores.
+- Riesgos: APK configurado para emulador local, sin validación en teléfono;
+  servicios externos, CA/TSA, blockchain y piloto siguen pendientes. El motor
+  Docker local no fue accesible desde esta sesión al revisar el arranque;
+  no se alteraron volúmenes ni secretos para intentar recuperarlo.
+
+Evidencias y enlaces: [VALIDATION_2026_11_22.md](../docs/VALIDATION_2026_11_22.md).
+El historial de entregas anteriores se conserva a continuación.
+
+---
+
 # Entrega para integración en main — 16/11/2026
 
 El usuario pidió guardar todos los cambios y publicarlos en main; indicó que revisará
