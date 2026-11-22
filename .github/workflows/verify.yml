@@ -135,19 +135,24 @@ jobs:
         run: |
           mkdir -p .local-backups
           node --input-type=module <<'JS'
-          import {randomBytes} from 'node:crypto';
+          import {randomBytes,randomUUID} from 'node:crypto';
           import {writeFileSync} from 'node:fs';
           const key=()=>randomBytes(32).toString('base64');
           const env={
             POSTGRES_USER:'audit',POSTGRES_PASSWORD:key(),MINIO_ROOT_USER:'audit',
             MINIO_ROOT_PASSWORD:key(),JWT_SECRET:key(),MFA_ENCRYPTION_KEY:key(),
             MAIL_ENCRYPTION_KEY:key(),EVIDENCE_ENCRYPTION_KEY:key(),SIGNING_ENCRYPTION_KEY:key(),
-            SIGNING_ALLOW_DEMO:'true',AI_SERVICE_TOKEN:key(),AI_ANALYSIS_ENABLED:'true'
+            SIGNING_ALLOW_DEMO:'true',AI_SERVICE_TOKEN:key(),AI_ANALYSIS_ENABLED:'true',
+            BOOTSTRAP_SUPERADMIN_EMAIL:'platform-'+randomUUID()+'@example.test',
+            BOOTSTRAP_SUPERADMIN_PASSWORD:'Ci!'+key()
           };
           writeFileSync('.local-backups/ci.env',Object.entries(env).map(([k,v])=>k+'='+v).join('\n')+'\n',{mode:0o600});
           JS
       - name: Start isolated audit services
         run: docker compose -p credentials-v3-audit -f compose.audit.yml --env-file .local-backups/ci.env up -d --build --wait --wait-timeout 180
+      - name: Verify HTTP readiness and health reporting
+        shell: pwsh
+        run: ./scripts/check-health.ps1 -Api http://127.0.0.1:18081 -Web http://127.0.0.1:4301
       - run: npm ci && npx playwright install --with-deps chromium
         working-directory: e2e
       - name: Seed fictional fixtures
@@ -157,6 +162,9 @@ jobs:
           E2E_COMPOSE_ENV: ../.local-backups/ci.env
       - run: npm test
         working-directory: e2e
+      - name: Measure bounded audit baseline
+        run: node ../scripts/load-audit.mjs
+        working-directory: e2e
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -164,6 +172,7 @@ jobs:
           path: |
             e2e/playwright-report
             e2e/test-results/artifacts
+            e2e/test-results/load-summary.json
       - name: Stop audit services
         if: always()
         run: docker compose -p credentials-v3-audit -f compose.audit.yml --env-file .local-backups/ci.env down

@@ -12,7 +12,11 @@ foreach($target in $targets){
  try{
   $r=Invoke-WebRequest -Uri $uri -TimeoutSec 8 -SkipHttpErrorCheck
   $status=[int]$r.StatusCode;$good=$status -eq 200
-  if($good -and $target.expected){$good=($r.Content|ConvertFrom-Json).status -eq $target.expected}
+  if($good -and $target.expected){
+   # PowerShell may return bytes for application/vnd.spring-boot.actuator.v3+json.
+   $body=if($r.Content -is [byte[]]){[Text.Encoding]::UTF8.GetString($r.Content)}else{[string]$r.Content}
+   $good=($body|ConvertFrom-Json).status -eq $target.expected
+  }
  }catch{$good=$false}
  $checks+=@{component=$target.name;healthy=$good;http=$status;milliseconds=$timer.ElapsedMilliseconds}
 }
