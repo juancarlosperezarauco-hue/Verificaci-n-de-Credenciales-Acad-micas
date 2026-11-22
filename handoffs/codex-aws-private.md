@@ -35,8 +35,12 @@ No hay migraciones ni endpoints de negocio nuevos. No se copian datos locales ni
 
 ## Riesgos y pendientes
 
-- Autorizar el costo base aproximado de USD 37.22/mes a 730 h para activar EC2.
-- El complemento Session Manager todavía debe instalarse en Windows para túneles CLI.
+- AWS rechazó t3.medium al intentar activar: tipo no elegible para FREE, pese al dry-run.
+  Se preparó c7i-flex.large de 4 GiB, elegible, a USD 68.75/mes estimados; requiere
+  autorización del aumento. Se incorporó comprobación explícita de elegibilidad,
+  precio regional y límite autorizado antes de crear recursos.
+- Complemento oficial Session Manager instalado en Windows, versión 1.2.896.0;
+  instalador con firma Authenticode válida de Amazon.
 - Activación, compilación y ciclo completo de aceptación en AWS aún no ejecutados.
 - El volumen se conserva al terminar EC2 y sigue generando costo.
 - Las firmas y el correo son de prueba; no es entorno público/comercial.

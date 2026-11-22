@@ -4,6 +4,7 @@ param(
     [ValidateSet('us-east-2')][string]$Region = 'us-east-2',
     [ValidatePattern('^[0-9]{12}$')][string]$ExpectedAccount = '098453331970',
     [ValidatePattern('^[a-z][a-z0-9-]{2,39}$')][string]$Deployment = 'credenciales-private',
+    [ValidateRange(1,500)][decimal]$ApprovedMonthlyCost = 37.22,
     [switch]$Apply,
     [string]$Aws = 'aws'
 )
@@ -33,6 +34,9 @@ function Assert-Owned($Tags) {
     if (!(@($Tags | Where-Object { $_.Key -eq 'ManagedBy' -and $_.Value -eq 'credentials-private-deploy' }).Count)) {
         throw 'Recurso existente sin la etiqueta de propiedad. Se detuvo para no modificar recursos ajenos.'
     }
+}
+function Assert-ApprovedMonthlyCost([decimal]$Estimated, [decimal]$Approved) {
+    if ($Estimated -gt $Approved) { throw "El costo estimado USD $Estimated supera los USD $Approved autorizados. Revisa el plan antes de indicar un nuevo -ApprovedMonthlyCost." }
 }
 $identity = Invoke-AwsJson @('sts','get-caller-identity')
 if ($identity.Account -ne $ExpectedAccount) { throw 'La sesión AWS pertenece a otra cuenta; no se modificará.' }
@@ -71,8 +75,17 @@ try {
     $ami = (Invoke-AwsJson @('ssm','get-parameter','--name',$amiParameter)).Parameter.Value
     $image = (Invoke-AwsJson @('ec2','describe-images','--image-ids',$ami)).Images[0]
     if ($image.OwnerId -ne '099720109477' -or $image.Architecture -ne 'x86_64' -or $image.State -ne 'available') { throw 'La AMI no coincide con Ubuntu oficial x86_64.' }
-    $offerings = Invoke-AwsJson @('ec2','describe-instance-type-offerings','--location-type','availability-zone','--filters','Name=instance-type,Values=t3.medium',"Name=location,Values=$($candidate.AvailabilityZone)")
-    if (!@($offerings.InstanceTypeOfferings).Count) { throw 't3.medium no está disponible en la zona seleccionada.' }
+    $instanceType = 'c7i-flex.large'
+    $type = (Invoke-AwsJson @('ec2','describe-instance-types','--instance-types',$instanceType)).InstanceTypes[0]
+    if (!$type.FreeTierEligible -or !$image.FreeTierEligible) { throw 'El tipo de instancia o la AMI no son elegibles para el plan gratuito. No se crearán recursos.' }
+    $offerings = Invoke-AwsJson @('ec2','describe-instance-type-offerings','--location-type','availability-zone','--filters',"Name=instance-type,Values=$instanceType", "Name=location,Values=$($candidate.AvailabilityZone)")
+    if (!@($offerings.InstanceTypeOfferings).Count) { throw "$instanceType no está disponible en la zona seleccionada." }
+    $priceUrl = 'https://b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/ec2/USD/current/ec2-ondemand-without-sec-sel/US%20East%20(Ohio)/Linux/index.json'
+    $catalog = Invoke-RestMethod -Uri $priceUrl -TimeoutSec 30
+    $prices = @($catalog.regions.'US East (Ohio)'.PSObject.Properties.Value | Where-Object { $_.'Instance Type' -eq $instanceType })
+    if ($prices.Count -ne 1) { throw 'No se pudo determinar un precio único del catálogo AWS.' }
+    $hourly = [decimal]::Parse($prices[0].price, [Globalization.CultureInfo]::InvariantCulture)
+    $monthly = [Math]::Round(($hourly * 730 + [decimal]0.005 * 730 + [decimal]0.08 * 40), 2)
     $planDirectory = Join-Path $root '.local-backups/aws-private'
     $null = New-Item -ItemType Directory -Path $planDirectory -Force
     $tags = @(@{Key='ManagedBy';Value='credentials-private-deploy'},@{Key='Deployment';Value=$Deployment},@{Key='Environment';Value='private-evaluation'})
@@ -101,22 +114,22 @@ bash "$release/deploy/aws/start-private.sh"
 '@
     $bootstrap = $bootstrap.Replace('__COMMIT__',$commit).Replace("`r`n","`n") + "`n"
     $request = @{
-        ImageId=$ami;InstanceType='t3.medium';MinCount=1;MaxCount=1
+        ImageId=$ami;InstanceType=$instanceType;MinCount=1;MaxCount=1
         ClientToken="$Deployment-$($commit.Substring(0,16))"
         IamInstanceProfile=@{Name=$roleName}
         NetworkInterfaces=@(@{DeviceIndex=0;AssociatePublicIpAddress=$true;SubnetId=$subnet;Groups=@('RESOLVED_ON_APPLY')})
         MetadataOptions=@{HttpTokens='required';HttpEndpoint='enabled';HttpPutResponseHopLimit=1;InstanceMetadataTags='disabled'}
-        CreditSpecification=@{CpuCredits='standard'}
         BlockDeviceMappings=@(@{DeviceName=$image.RootDeviceName;Ebs=@{VolumeSize=40;VolumeType='gp3';Encrypted=$true;DeleteOnTermination=$false}})
         Monitoring=@{Enabled=$false}
         UserData=[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($bootstrap))
         TagSpecifications=@(@{ResourceType='instance';Tags=($tags + @{Key='Name';Value=$Deployment})},@{ResourceType='volume';Tags=$tags})
     }
-    $plan = @{Account=$identity.Account;Region=$Region;GitCommit=$commit;Vpc=$vpc;Subnet=$subnet;Ingress=@();EgressPorts=@(80,443);InstanceRequest=$request;RoleTrust=$trust;ManagedPolicy=$ssmPolicy;EstimatedMonthlyUSD=37.22;EstimateHours=730;CostExcludes='Tax, transfer, snapshots; credits subject to AWS eligibility';DataRetention='Encrypted root EBS retained on termination; storage charges continue'}
+    $plan = @{Account=$identity.Account;Region=$Region;GitCommit=$commit;Vpc=$vpc;Subnet=$subnet;Ingress=@();EgressPorts=@(80,443);InstanceRequest=$request;RoleTrust=$trust;ManagedPolicy=$ssmPolicy;EstimatedMonthlyUSD=$monthly;EstimateHours=730;InstanceHourlyUSD=$hourly;PriceSource=$priceUrl;CostExcludes='Tax, transfer, snapshots; credits subject to AWS eligibility';DataRetention='Encrypted root EBS retained on termination; storage charges continue'}
     $null = Write-JsonFile $plan (Join-Path $planDirectory 'plan.json')
-    Write-Output "Plan: cuenta $($identity.Account), $Region, t3.medium (2 vCPU/4 GiB), 40 GiB cifrados, sin entradas públicas."
-    Write-Output "Estimación base: USD 37.22 por 730 horas. Archivo: $planDirectory/plan.json"
+    Write-Output "Plan: cuenta $($identity.Account), $Region, $instanceType (2 vCPU/4 GiB), 40 GiB cifrados, sin entradas públicas."
+    Write-Output "Estimación base: USD $monthly por 730 horas. Archivo: $planDirectory/plan.json"
     if (!$Apply) { Write-Output 'Solo preparación: no se crearon recursos. -Apply crea el entorno y consume saldo/créditos AWS.'; return }
+    Assert-ApprovedMonthlyCost $monthly $ApprovedMonthlyCost
 
     $role = Invoke-AwsJson @('iam','get-role','--role-name',$roleName) -MissingCode NoSuchEntity
     if ($role) {
