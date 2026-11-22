@@ -1,11 +1,12 @@
 import java.util.Properties
+import com.android.build.api.dsl.ApplicationExtension
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-android {
+extensions.configure<ApplicationExtension> {
     namespace = "bo.edu.uagrm.credential_wallet"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -32,8 +33,7 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // A production key must be configured separately.
             signingConfig = null
         }
     }
@@ -54,16 +54,25 @@ val credentialKeyFile = rootProject.file("key.properties")
 val credentialKeys = Properties()
 if (credentialKeyFile.exists()) {
     credentialKeyFile.inputStream().use { credentialKeys.load(it) }
-    android.signingConfigs.create("credentialRelease") {
+    extensions.getByType<ApplicationExtension>().signingConfigs.create("credentialRelease") {
         keyAlias = credentialKeys.getProperty("keyAlias")
         keyPassword = credentialKeys.getProperty("keyPassword")
         storeFile = file(credentialKeys.getProperty("storeFile"))
         storePassword = credentialKeys.getProperty("storePassword")
     }
-    android.buildTypes.getByName("release").signingConfig = android.signingConfigs.getByName("credentialRelease")
+    extensions.getByType<ApplicationExtension>().apply {
+        buildTypes.getByName("release").signingConfig = signingConfigs.getByName("credentialRelease")
+    }
 }
-gradle.taskGraph.whenReady { graph ->
-    if (graph.allTasks.any { it.name.contains("Release", ignoreCase = true) } && !credentialKeyFile.exists()) {
-        throw GradleException("Configura android/key.properties y una clave privada de publicación.")
+val validateCredentialSigning = tasks.register("validateCredentialSigning") {
+    doLast {
+        if (!credentialKeyFile.exists()) {
+            throw GradleException("Configura android/key.properties y una clave privada de publicaci\u00f3n.")
+        }
+    }
+}
+tasks.configureEach {
+    if (name.contains("Release", ignoreCase = true)) {
+        dependsOn(validateCredentialSigning)
     }
 }

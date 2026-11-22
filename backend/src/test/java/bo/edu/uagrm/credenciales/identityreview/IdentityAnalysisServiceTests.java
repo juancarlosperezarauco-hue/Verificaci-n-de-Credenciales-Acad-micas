@@ -9,6 +9,8 @@ import java.net.InetSocketAddress;
 import java.time.*;
 import java.util.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.web.server.ResponseStatusException;
 
 class IdentityAnalysisServiceTests {
@@ -64,5 +66,15 @@ class IdentityAnalysisServiceTests {
         reply("{\"text\":\"12345\",\"confidence\":1.0,\"signals\":[],\"human_review_required\":false,\"engine\":\"tesseract\"}",200);
         assertEquals(503,assertThrows(ResponseStatusException.class,()->service(true).analyze(user,id)).getStatusCode().value());
         verifyNoInteractions(audit);
+    }
+    @ParameterizedTest
+    @ValueSource(strings = {"[null]", "[{\"code\":null,\"explanation\":\"Fictitious\"}]", "[{\"code\":\"UNKNOWN\",\"explanation\":\"Fictitious\"}]"})
+    void malformedProviderSignalsAreUnavailableInsteadOfInternalErrors(String signals) {
+        reply("{\"text\":\"12345\",\"confidence\":0.5,\"signals\":" + signals
+                + ",\"human_review_required\":true,\"engine\":\"tesseract\"}", 200);
+        assertEquals(503, assertThrows(ResponseStatusException.class,
+                () -> service(true).analyze(user, id)).getStatusCode().value());
+        verifyNoInteractions(audit);
+        verify(review, never()).decide(any(), any(), any());
     }
 }

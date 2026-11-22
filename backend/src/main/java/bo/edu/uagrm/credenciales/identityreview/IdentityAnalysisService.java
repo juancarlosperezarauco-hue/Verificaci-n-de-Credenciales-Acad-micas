@@ -122,6 +122,7 @@ public class IdentityAnalysisService {
                     || result.signals().stream()
                             .anyMatch(s ->
                                     s == null
+                                            || s.code() == null
                                             || s.explanation() == null
                                             || s.explanation().length() > 500
                                             || !Set.of(
