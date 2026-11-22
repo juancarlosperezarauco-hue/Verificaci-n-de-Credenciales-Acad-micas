@@ -119,6 +119,27 @@ class SecretLifecycleTests(unittest.TestCase):
         self.assertNotEqual(self.init('bad\nSMTP_PASSWORD=injected').returncode, 0)
         self.assertFalse(self.directory.exists())
 
+    def test_dangling_symlinks_are_rejected_without_creating_targets(self):
+        self.directory.mkdir()
+        for name in ('private.env', 'bootstrap-admin.txt'):
+            with self.subTest(file=name):
+                target = Path(self.tmp.name) / 'missing-target'
+                link = self.directory / name
+                link.symlink_to(target)
+                self.assertNotEqual(self.init().returncode, 0)
+                self.assertFalse(target.exists())
+                link.unlink()
+
+    def test_parallel_initializations_preserve_one_consistent_admin(self):
+        processes = [subprocess.Popen(['bash', str(ROOT / 'deploy/aws/init-private.sh'), str(self.directory)], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(4)]
+        for process in processes:
+            stdout, stderr = process.communicate(timeout=20)
+            self.assertEqual(process.returncode, 0, stderr)
+        env = dict(line.split('=', 1) for line in (self.directory / 'private.env').read_text().splitlines())
+        admin = dict(line.split('=', 1) for line in (self.directory / 'bootstrap-admin.txt').read_text().splitlines())
+        self.assertEqual(env['BOOTSTRAP_SUPERADMIN_PASSWORD'], admin['password'])
+        self.assertEqual(env['BOOTSTRAP_SUPERADMIN_EMAIL'], admin['email'])
+
 
 if __name__ == '__main__':
     unittest.main()

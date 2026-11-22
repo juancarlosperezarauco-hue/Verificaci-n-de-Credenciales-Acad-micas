@@ -25,3 +25,6 @@ jobs:
           }
       - name: Check private network boundaries and key lifecycle
         run: python3 -m unittest discover -s deploy/aws/tests -v
+      - name: Check AWS CLI object and single-item array serialization
+        shell: pwsh
+        run: ./deploy/aws/tests/check-json-arguments.ps1

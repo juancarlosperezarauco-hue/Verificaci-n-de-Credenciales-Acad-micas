@@ -26,7 +26,7 @@ function Invoke-AwsJson {
     if ($result) { return ($result | Out-String | ConvertFrom-Json -Depth 100) }
 }
 function Write-JsonFile($Value, [string]$Path) {
-    [IO.File]::WriteAllText($Path, ($Value | ConvertTo-Json -Depth 40), [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($Path, (ConvertTo-Json -InputObject $Value -Depth 40), [Text.UTF8Encoding]::new($false))
     return "file://$($Path.Replace('\','/'))"
 }
 function Assert-Owned($Tags) {
