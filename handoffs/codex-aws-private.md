@@ -1,5 +1,9 @@
 # Preparación AWS privada
 
+**Estado actualizado:** entorno activado tras autorización del importe corregido.
+Ver `handoffs/aws-activation-2026-11-22.md` para recurso, versión, pruebas reales,
+acceso privado y pendientes del piloto. Las notas siguientes registran la preparación.
+
 Se prepara una instalación independiente de pruebas sin dominio, mediante EC2 y
 túneles SSM, manteniendo Angular / Spring Boot / PostgreSQL / MinIO y V1–V23.
 La producción existente conserva sus controles y requisitos. No se activan recursos
