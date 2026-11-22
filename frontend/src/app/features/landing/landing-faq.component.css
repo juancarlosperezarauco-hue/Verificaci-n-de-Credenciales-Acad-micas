@@ -1,0 +1,9 @@
+:host{display:block}
+.faq{border-bottom:1px solid #e2e8f1}
+.faq:first-child{border-top:1px solid #e2e8f1}
+.faq summary{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:23px 0;cursor:pointer;list-style:none;font-size:.9375rem;font-weight:600;line-height:1.6}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary span{flex-shrink:0;font-size:1.3rem;font-weight:400;color:#617189}
+.faq[open] summary span{transform:rotate(45deg)}
+.faq p{padding:0 28px 23px 0;color:#63758a;font-size:.9375rem;line-height:1.8}
+.faq summary:focus-visible{outline:2px solid #2563eb;outline-offset:5px;border-radius:4px}

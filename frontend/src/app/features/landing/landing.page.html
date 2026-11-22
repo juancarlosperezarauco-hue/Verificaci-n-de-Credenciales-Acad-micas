@@ -1,0 +1,95 @@
+<div class="landing">
+  <section class="hero" aria-labelledby="landing-title">
+    <div class="wrap grid items-center gap-12 py-14 lg:grid-cols-[1.08fr_.92fr] lg:gap-16 lg:py-20">
+      <div class="hero-copy">
+        <p class="kicker">Gestión y verificación académica</p>
+        <h1 id="landing-title">Cada logro académico,<span>en un solo lugar.</span></h1>
+        <p class="hero-description">Conecta a tu institución con sus estudiantes. Emite diplomas y certificados, organiza el expediente y consulta cada credencial mediante su código o QR.</p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a routerLink="/register" class="landing-button primary">Registrar institución</a>
+          <a routerLink="/verify" class="landing-button secondary"><app-ui-icon name="shield" [size]="18" />Verificar credencial</a>
+        </div>
+        <p class="student-access">¿Eres estudiante? <a routerLink="/student/register">Crea tu cuenta personal</a></p>
+        <div class="hero-note"><app-ui-icon name="users" [size]="18" /><span>Una identidad por estudiante. Un espacio propio por institución.</span></div>
+      </div>
+      <app-credential-preview />
+    </div>
+  </section>
+
+  <section class="education-strip" aria-label="Tipos de organizaciones educativas">
+    <div class="wrap flex flex-wrap items-center justify-between gap-x-8 gap-y-5 py-7">
+      <p>Diseñado para la comunidad educativa</p>
+      <ul class="flex flex-wrap gap-x-7 gap-y-3"><li>Colegios</li><li>Universidades</li><li>Institutos</li><li>Academias</li><li>Centros de formación</li></ul>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="audiences-title">
+    <div class="wrap">
+      <p class="kicker">Qué hacemos</p>
+      <h2 id="audiences-title" class="section-title mt-3">Un espacio para cada parte<br class="hidden sm:block" /> de tu comunidad.</h2>
+      <p class="section-description mt-5 max-w-2xl">Estudiantes e instituciones se conectan sin duplicar la identidad de una persona. Cada organización conserva el control de los documentos que emite.</p>
+      <div class="mt-10 grid gap-5 md:grid-cols-2">
+        @for (audience of audiences; track audience.path) {
+          <article class="audience-card flex flex-col">
+            <div class="flex items-center gap-3"><span class="role-icon"><app-ui-icon [name]="audience.icon" [size]="24" /></span><p class="audience-label">{{ audience.label }}</p></div>
+            <h3>{{ audience.title }}</h3>
+            <p class="section-description mt-4">{{ audience.description }}</p>
+            <ul class="benefits">
+              @for (benefit of audience.benefits; track benefit) {
+                <li><app-ui-icon name="check" [size]="17" /><span>{{ benefit }}</span></li>
+              }
+            </ul>
+            <div class="audience-action mt-auto">
+              <a [routerLink]="audience.path" class="landing-button secondary">{{ audience.action }}</a>
+              <p>{{ audience.note }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section workflow-section" id="como-funciona" aria-labelledby="workflow-title">
+    <div class="wrap">
+      <div class="grid items-end gap-5 lg:grid-cols-[1.2fr_.8fr] lg:gap-16">
+        <div><p class="kicker">Cómo funciona</p><h2 id="workflow-title" class="section-title mt-3">Del registro al documento,<br class="hidden sm:block" /> paso a paso.</h2></div>
+        <p class="section-description">Un proceso ordenado para vincular estudiantes, revisar solicitudes y compartir reconocimientos verificables.</p>
+      </div>
+      <ol class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        @for (step of steps; track step.title) {
+          <li class="workflow-step"><span class="step-icon"><app-ui-icon [name]="step.icon" [size]="22" /></span><h3>{{ step.title }}</h3><p>{{ step.text }}</p></li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section trust-section" aria-labelledby="verification-title">
+    <div class="wrap grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
+      <div>
+        <p class="kicker">Lo que ofrecemos</p>
+        <h2 id="verification-title" class="section-title mt-3">Consulta el registro.<br />Comprueba el archivo.</h2>
+        <p class="section-description mt-5">Revisa quién emitió un documento, a quién pertenece y cuál es su estado. Cuando adjuntas el PDF, también puedes comprobar su integridad y la firma disponible.</p>
+        <a routerLink="/verify" class="landing-button primary mt-7"><app-ui-icon name="search" [size]="18" />Consultar una credencial</a>
+      </div>
+      <div class="verification-list">
+        @for (item of verification; track item.title) {
+          <div class="verification-item"><app-ui-icon [name]="item.icon" [size]="21" /><div><h3>{{ item.title }}</h3><p>{{ item.text }}</p></div></div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="wrap grid items-start gap-8 lg:grid-cols-[.8fr_1.2fr] lg:gap-16">
+      <div><p class="kicker">Antes de empezar</p><h2 id="faq-title" class="section-title mt-3">Preguntas frecuentes.</h2><p class="section-description mt-5">Lo esencial para conocer la plataforma y elegir cómo comenzar.</p></div>
+      <app-landing-faq />
+    </div>
+  </section>
+
+  <section class="wrap pb-16" aria-labelledby="start-title">
+    <div class="start-panel grid items-center gap-7 lg:grid-cols-[1.2fr_.8fr]">
+      <div><h2 id="start-title">Tu comunidad académica,<br />mejor conectada.</h2><p>Registra tu institución o empieza tu expediente como estudiante.</p></div>
+      <div class="flex flex-wrap gap-3 lg:justify-end"><a routerLink="/register" class="landing-button primary">Registrar institución</a><a routerLink="/student/register" class="landing-button secondary">Soy estudiante</a></div>
+    </div>
+  </section>
+</div>

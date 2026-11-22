@@ -8,6 +8,17 @@
 .public-shell {
   background: #fff;
 }
+.public-shell .header-content {
+  max-width: 1240px;
+  padding-inline: 32px;
+}
+.public-shell .header-logo {
+  color: var(--brand-on-primary, #fff);
+}
+.public-shell .header-signin,
+.public-shell .header-register {
+  font-size: .875rem;
+}
 .app-header {
   position: sticky;
   top: 0;
@@ -195,6 +206,9 @@ a:focus-visible {
   }
 }
 @media (max-width: 767px) {
+  .public-shell .header-content {
+    padding-inline: 20px;
+  }
   .header-content {
     gap: 12px;
     padding: 12px 16px;
