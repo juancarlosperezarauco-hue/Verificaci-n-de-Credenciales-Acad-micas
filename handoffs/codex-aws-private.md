@@ -24,8 +24,12 @@ con coste al ejecutar el preparador sin `-Apply`.
 La cuenta y región coinciden con las esperadas; no se encontraron EC2 ni nodos SSM.
 Plan de lectura ejecutado contra AWS: VPC/subred con salida, Ubuntu oficial y
 disponibilidad t3.medium. No verifica RunInstances, PassRole ni creación IAM.
-Pruebas Compose locales: 3 aprobadas. Cuatro pruebas POSIX requieren Linux en CI.
-Sintaxis Bash y PowerShell comprobada localmente. Ver resultados CI antes de integrar.
+Pruebas Compose locales: 3 aprobadas. Las siete pruebas, incluidas las cuatro de
+permisos/secretos POSIX, pasaron en Linux en el run 45043833506 (revisión 6923365).
+Sintaxis Bash y PowerShell comprobada localmente y en CI. Dry-run RunInstances
+devolvió DryRunOperation: permiso básico comprobado sin crear servidor; no valida
+la creación del rol ni PassRole. La suite completa de la plataforma se comprueba
+antes de integrar.
 
 No hay migraciones ni endpoints de negocio nuevos. No se copian datos locales ni claves.
 
@@ -38,4 +42,5 @@ No hay migraciones ni endpoints de negocio nuevos. No se copian datos locales ni
 - Las firmas y el correo son de prueba; no es entorno público/comercial.
 - Backup externo, dominio, SMTP real y APK para servidor público quedan pendientes.
 
-El commit final y los enlaces de CI se anotarán después de ejecutar las comprobaciones.
+Commit inicial de implementación: `60b2fa8`. CI del entorno:
+https://github.com/juancarlosperezarauco-hue/Verificaci-n-de-Credenciales-Acad-micas/actions/runs/45043833506

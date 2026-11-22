@@ -82,7 +82,9 @@ try {
     $bootstrap = @'
 #!/usr/bin/env bash
 set -euo pipefail
-umask 077
+# Source files must remain readable by the unprivileged users in application images.
+# Secret generation uses its own restrictive umask in init-private.sh.
+umask 022
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends git ca-certificates
