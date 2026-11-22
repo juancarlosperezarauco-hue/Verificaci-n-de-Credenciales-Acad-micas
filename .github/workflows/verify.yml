@@ -33,6 +33,17 @@ jobs:
         working-directory: mobile
       - run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:18080
         working-directory: mobile
+      - name: Reject release builds without a private publishing key
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          ./gradlew :app:assembleRelease --dry-run > "$RUNNER_TEMP/release-graph.log"
+          grep -F ':app:validateCredentialSigning SKIPPED' "$RUNNER_TEMP/release-graph.log"
+          if ./gradlew :app:validateCredentialSigning > "$RUNNER_TEMP/release-signing.log" 2>&1; then
+            echo "Release signing validation must reject a missing private key."
+            exit 1
+          fi
+          grep -F 'Configura android/key.properties' "$RUNNER_TEMP/release-signing.log"
       - uses: actions/upload-artifact@v4
         with:
           name: android-debug-apk

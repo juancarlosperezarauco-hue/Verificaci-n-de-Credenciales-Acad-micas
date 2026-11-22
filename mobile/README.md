@@ -25,5 +25,10 @@ La preparación genera el proyecto Android oficial con la versión de Flutter fi
 y aplica las fuentes nativas mantenidas en platform/android. No reescribe lib/.
 Una compilación release requiere android/key.properties y un keystore privado;
 el script evita firmar silenciosamente publicaciones con la clave debug.
+La configuración mantenida usa ApplicationExtension y el DSL/Kotlin integrado
+de AGP 9. Las tareas release dependen de una validación de la clave privada;
+CI comprueba tanto el APK debug como el rechazo de una publicación sin clave.
+El APK de CI está configurado para el emulador local (10.0.2.2:18080);
+para un teléfono físico se debe compilar con la URL HTTPS de la API accesible.
 La distribución Play Store, dominio y pruebas en un teléfono real requieren
 recursos que el usuario todavía no tiene configurados.
