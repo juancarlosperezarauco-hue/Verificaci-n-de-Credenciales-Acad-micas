@@ -2,6 +2,8 @@ param(
     [string]$Profile = 'credenciales',
     [ValidateSet('Application','Mail')][string]$Service = 'Application',
     [ValidatePattern('^[a-z][a-z0-9-]{2,39}$')][string]$Deployment = 'credenciales-private',
+    [switch]$Reconnect,
+    [ValidateRange(1,60)][int]$RetrySeconds = 5,
     [string]$Aws = 'aws'
 )
 $ErrorActionPreference = 'Stop'
@@ -24,5 +26,19 @@ $instances = @($result.Reservations | ForEach-Object { $_.Instances })
 if ($instances.Count -ne 1) { throw 'Debe existir exactamente un servidor de pruebas en ejecución.' }
 $port = if ($Service -eq 'Application') { '4302' } else { '8126' }
 Write-Output "Mantén esta ventana abierta y entra a http://localhost:$port"
-& $Aws ssm start-session @common --target $instances[0].InstanceId --document-name AWS-StartPortForwardingSession --parameters "portNumber=$port,localPortNumber=$port"
-if ($LASTEXITCODE -ne 0) { throw 'No se pudo abrir el túnel. Comprueba SSM Online y que el puerto local esté libre.' }
+do {
+    & $Aws ssm start-session @common --target $instances[0].InstanceId --document-name AWS-StartPortForwardingSession --parameters "portNumber=$port,localPortNumber=$port"
+    $sessionExit = $LASTEXITCODE
+    if (!$Reconnect) {
+        if ($sessionExit -ne 0) { throw 'No se pudo abrir el túnel. Comprueba SSM Online y que el puerto local esté libre.' }
+        break
+    }
+    if ($sessionExit -in @(130,-1073741510)) { break }
+    # AWS closes idle sessions. Reconnect this tunnel only; do not alter account settings.
+    Start-Sleep -Seconds $RetrySeconds
+    $renewed = & $Aws sts get-caller-identity @common --output json | ConvertFrom-Json
+    if ($LASTEXITCODE -ne 0 -or $renewed.Account -ne '098453331970') {
+        throw 'La sesión AWS venció o cambió de cuenta. Inicia sesión de nuevo y vuelve a abrir el acceso privado.'
+    }
+    Write-Output 'El túnel terminó. Restableciendo el acceso privado…'
+} while ($Reconnect)

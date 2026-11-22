@@ -98,6 +98,30 @@ Se necesita AWS CLI v2 con sesión activa y el [complemento oficial de Session
 Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html).
 La preparación no instala herramientas nuevas en el equipo local.
 
+Para uso normal, abrir los dos túneles con reconexión y entrar al navegador:
+
+```powershell
+./scripts/open-aws-private.ps1 -OpenBrowser
+```
+
+El lanzador conserva sus procesos en segundo plano y reutiliza los existentes,
+sin crear servidores. `connect-aws-private.ps1 -Reconnect` restablece las sesiones
+que AWS cierre por inactividad. La reconexión puede tardar unos segundos; no
+modifica el tiempo de sesión de la cuenta ni sus permisos. Si caduca la sesión
+AWS o cambia de cuenta, se detiene y requiere que el propietario inicie sesión
+de nuevo. No autoriza por sí mismo un nuevo login de navegador.
+
+Para cerrar únicamente el acceso de este equipo:
+
+```powershell
+./scripts/close-aws-private.ps1
+```
+
+Cerrar los túneles no apaga EC2 ni detiene su consumo de créditos. El lanzador
+comprueba la propiedad del proceso antes de cerrarlo y no toca otros proyectos.
+
+Para una conexión manual única, que termina cuando AWS cierre esa sesión:
+
 ```powershell
 ./scripts/connect-aws-private.ps1
 ```
@@ -118,6 +142,37 @@ con el ID de la instancia. El agente se ejecuta con privilegios administrativos;
 no pegues salidas con claves en incidencias o en el chat.
 
 ## Pruebas de aceptación en el servidor
+
+La comprobación explícita del piloto usa únicamente destinatarios `.test` y crea
+dos organizaciones marcadas `PRUEBA AWS`, un estudiante ficticio y credenciales
+de demostración. Conserva los registros para revisión, suspende sus organizaciones
+al finalizar y cierra las sesiones creadas por la propia prueba. No modifica
+organizaciones o estudiantes preexistentes. Usa el archivo de acceso inicial
+privado del propietario; si cambió la contraseña o habilitó MFA, se debe preparar
+un acceso de prueba adecuado, sin eludir esa protección.
+
+```powershell
+node scripts/verify-aws-private.mjs --run-fictional-flow
+```
+
+Resultado sin claves: `.local-backups/aws-private/acceptance-latest.json`.
+No se ejecuta en CI ni reutiliza/relaja las restricciones de los scripts audit.
+Para comprobar navegación pública, login, menú y logout en navegadores reales:
+
+```powershell
+# Desde e2e; requiere Chrome local o Chromium de Playwright.
+$env:AWS_PRIVATE_BROWSER_CHECK='1'
+$env:E2E_CHROME_PATH='C:/Program Files/Google/Chrome/Application/chrome.exe'
+npx playwright test --config aws-private/playwright.config.ts
+```
+
+La configuración privada no genera trazas, videos ni capturas de las pantallas
+autenticadas para proteger los datos de acceso. El archivo de prueba pública
+puede guardar capturas de la landing anónima.
+
+La aceptación automática ejecutada el 22/11/2026 está documentada en
+`handoffs/aws-verification-2026-11-22.md`. La revisión operativa del propietario
+y el piloto con usuarios reales siguen siendo pasos separados.
 
 1. Confirmar cloud-init completado, los seis servicios saludables/activos, puertos
    enlazados a loopback y migraciones V1–V23 aplicadas.
