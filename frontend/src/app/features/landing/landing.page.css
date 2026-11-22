@@ -6,7 +6,7 @@
 h1{margin-top:20px;font-size:clamp(2.75rem,4.3vw,3.875rem);font-weight:650;letter-spacing:-.055em;line-height:1.12}
 h1 span{display:block;color:var(--brand-ink,#1d4ed8)}
 .hero-description{max-width:520px;margin-top:24px;color:#55657a;font-size:1.0625rem;line-height:1.8}
-.landing-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 19px;border:1px solid transparent;border-radius:8px;font-size:.9375rem;font-weight:600;text-decoration:none;line-height:1.4}
+.landing-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 19px;border:1px solid transparent;border-radius:8px;font-size:.9375rem;font-weight:600;line-height:1.4}
 .primary{background:var(--brand-primary,#2563eb);color:var(--brand-on-primary,#fff)}
 .primary:hover{filter:brightness(.94)}
 .secondary{border-color:#d8e1ed;background:#fff;color:#263c59}
