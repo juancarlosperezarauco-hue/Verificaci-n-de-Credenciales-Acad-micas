@@ -9,11 +9,10 @@ de demostración.
 ## Configuración preparada
 
 - Cuenta esperada: `098453331970`, perfil `credenciales`, región `us-east-2`.
-- Una EC2 Ubuntu 24.04 LTS oficial, x86_64, `t3.medium`, 2 vCPU / 4 GiB RAM.
+- Una EC2 Ubuntu 24.04 LTS oficial, x86_64, `c7i-flex.large`, 2 vCPU / 4 GiB RAM.
 - Disco raíz gp3 de 40 GiB cifrado. Se conserva al terminar la instancia;
   sigue generando costo hasta su eliminación explícita.
-- CPU en modo **Standard**, sin cargos por créditos excedentes; las compilaciones
-  pueden tardar cuando se agotan los créditos acumulados.
+- Instancia Flex, sin la configuración de créditos de CPU de la familia T3.
 - VPC existente; no crea NAT, balanceador, IP elástica ni bases administradas.
 - IP pública automática para descargas y conexión saliente a SSM. **Ninguna regla
   de entrada**, incluidos SSH/HTTP/HTTPS. Salidas TCP 80/443 para paquetes,
@@ -34,10 +33,17 @@ Estimación consultada el 22/11/2026 para Ohio, Linux On-Demand, 730 horas/mes:
 
 | Recurso | Cálculo | USD/mes aproximado |
 | --- | --- | ---: |
-| t3.medium | 0.0416 × 730 | 30.37 |
+| c7i-flex.large | 0.08479 × 730 | 61.90 |
 | IPv4 pública | 0.005 × 730 | 3.65 |
 | gp3 40 GiB | 0.08 × 40 | 3.20 |
-| Total base | | **37.22** |
+| Total base | | **68.75** |
+
+La primera propuesta t3.medium (USD 37.22/mes) fue rechazada por AWS al activar:
+no es elegible en este plan FREE. El dry-run de EC2 no detectó esa restricción.
+Se verifica ahora explícitamente `FreeTierEligible` tanto en el tipo como en la
+AMI y se obtiene el precio EC2 del catálogo regional antes de crear recursos.
+El límite de costo autorizado conserva por defecto los USD 37.22 iniciales:
+la alternativa requiere autorización expresa del nuevo importe.
 
 No incluye impuestos, transferencia facturable, snapshots ni otros recursos.
 Los créditos se aplican según elegibilidad y saldo AWS; no se promete costo cero.
@@ -55,19 +61,19 @@ Desde la raíz del repositorio, en PowerShell:
 ./scripts/prepare-aws-private.ps1
 ```
 
-El modo predeterminado consulta identidad, red, rutas, AMI oficial y disponibilidad
+El modo predeterminado consulta identidad, red, rutas, AMI oficial, elegibilidad y disponibilidad
 del tipo de instancia; escribe `.local-backups/aws-private/plan.json`, ignorado por
 Git. **No crea ni modifica recursos AWS.** No prueba las autorizaciones de creación.
 
 Después de revisar el plan y autorizar su consumo de saldo:
 
 ```powershell
-./scripts/prepare-aws-private.ps1 -Apply
+./scripts/prepare-aws-private.ps1 -Apply -ApprovedMonthlyCost 68.75
 ```
 
 La rama debe estar limpia y su HEAD publicado en el repositorio esperado. El servidor
 descarga ese commit exacto; no ejecuta el `main` mutable. El comando comprueba la
-cuenta y la propiedad de los recursos; una instancia existente no se duplica ni
+cuenta, presupuesto estimado autorizado y propiedad de los recursos; una instancia existente no se duplica ni
 se sustituye. Los errores de SCP se reportan sin intentar eludirlos. No se configura
 una clave de acceso AWS permanente.
 
