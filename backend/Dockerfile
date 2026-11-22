@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
+ARG MAVEN_OPTS
 WORKDIR /app
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
