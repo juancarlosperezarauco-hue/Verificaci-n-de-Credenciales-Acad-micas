@@ -1,6 +1,8 @@
 package bo.edu.uagrm.credenciales.security;
 
 import java.util.List;
+import java.util.Arrays;
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,12 +54,25 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource(@Value("${app.security.allowed-origin}") String origin) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(origin));
+        configuration.setAllowedOrigins(Arrays.stream(origin.split(",", -1))
+                .map(String::trim).map(SecurityConfig::exactOrigin).distinct().toList());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private static String exactOrigin(String origin) {
+        URI uri = URI.create(origin);
+        String path = uri.getRawPath();
+        if (!("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
+                || uri.getHost() == null || uri.getRawUserInfo() != null || uri.getRawQuery() != null
+                || uri.getRawFragment() != null || (path != null && !path.isEmpty() && !path.equals("/"))
+                || uri.getPort() == 0 || uri.getPort() > 65535) {
+            throw new IllegalArgumentException("Configura ALLOWED_ORIGIN con orígenes HTTP(S) explícitos, sin comodines ni rutas.");
+        }
+        return origin.endsWith("/") ? origin.substring(0, origin.length() - 1) : origin;
     }
 }
