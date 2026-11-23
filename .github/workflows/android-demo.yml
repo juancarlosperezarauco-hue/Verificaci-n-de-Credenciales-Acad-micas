@@ -1,0 +1,80 @@
+name: Build downloadable Android demo
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/android-download]
+    paths: ["mobile/demo-endpoint.json", ".github/workflows/android-demo.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: android-demo-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Validate presentation endpoint
+        run: |
+          python3 - <<'PY'
+          import json, re, os
+          url=json.load(open('mobile/demo-endpoint.json'))['apiBaseUrl']
+          if not re.fullmatch(r'https://[a-z0-9-]+\.trycloudflare\.com',url):
+              raise SystemExit('Expected the explicitly configured temporary HTTPS demo endpoint')
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('DEMO_API_URL='+url+'\n')
+          PY
+      - name: Install pinned Flutter SDK
+        run: |
+          curl --fail --location --retry 3 https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.50.0-stable.tar.xz -o "$RUNNER_TEMP/flutter.tar.xz"
+          echo "6ea2d806fd57269ae783e6788e2a81fc26eaad782f1e0d0ff38623bb765ff9f5  $RUNNER_TEMP/flutter.tar.xz" | sha256sum --check
+          tar -xf "$RUNNER_TEMP/flutter.tar.xz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Prepare Android sources
+        shell: pwsh
+        run: ./scripts/setup-mobile.ps1
+      - name: Analyze and test mobile application
+        working-directory: mobile
+        run: flutter analyze && flutter test
+      - name: Build optimized demonstration APK for ARM phones
+        working-directory: mobile
+        run: flutter build apk --profile --target-platform android-arm,android-arm64 --dart-define="API_BASE_URL=$DEMO_API_URL"
+      - name: Verify APK and prepare release metadata
+        run: |
+          mkdir -p delivery
+          cp mobile/build/app/outputs/flutter-apk/app-profile.apk delivery/credenciales-academicas-demo.apk
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,re,subprocess,zipfile
+          apk=pathlib.Path('delivery/credenciales-academicas-demo.apk')
+          tools=next(p for p in sorted(pathlib.Path(os.environ['ANDROID_HOME'],'build-tools').iterdir(),reverse=True) if (p/'apksigner').is_file())
+          subprocess.run([str(tools/'apksigner'),'verify',str(apk)],check=True)
+          badging=subprocess.check_output([str(tools/'aapt'),'dump','badging',str(apk)],text=True)
+          assert "name='bo.edu.uagrm.credential_wallet'" in badging
+          assert 'android.permission.INTERNET' in badging
+          assert 'android.permission.CAMERA' in badging
+          url=os.environ['DEMO_API_URL']
+          with zipfile.ZipFile(apk) as z:
+              libs=[n for n in z.namelist() if n.startswith('lib/') and n.endswith('/libapp.so')]
+              assert libs and all(url.encode() in z.read(n) for n in libs), 'APK does not contain the configured demo API URL'
+          tag='android-demo-'+os.environ['GITHUB_RUN_ID']
+          version=re.search(r"versionName='([^']+)'",badging).group(1)
+          data=dict(version=version,mode='demo',apiBaseUrl=url,sizeBytes=apk.stat().st_size,
+              sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),sourceCommit=os.environ['GITHUB_SHA'],
+              downloadUrl='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/releases/download/'+tag+'/'+apk.name)
+          pathlib.Path('delivery/android.json').write_text(json.dumps(data,indent=2)+'\n',encoding='utf-8')
+          pathlib.Path('delivery/notes.md').write_text('APK de demostración universitaria para estudiantes, Android ARM de 32/64 bits.\n\nAPI HTTPS: '+url+'\n\nVersión de prueba; no es una publicación Play Store. El enlace de la API es temporal.\n\nSHA-256: '+data['sha256']+'\n',encoding='utf-8')
+          print(json.dumps(data))
+          PY
+      - name: Publish verified demo download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "android-demo-$GITHUB_RUN_ID" delivery/credenciales-academicas-demo.apk delivery/android.json --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Android: demostración universitaria" --prerelease --notes-file delivery/notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-presentation-download
+          path: delivery/
