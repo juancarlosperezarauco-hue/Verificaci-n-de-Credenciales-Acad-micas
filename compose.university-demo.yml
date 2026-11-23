@@ -1,0 +1,6 @@
+# Overlay only; keeps all databases, storage and admin tools private.
+services:
+  backend:
+    environment:
+      APP_FRONTEND_URL: ${DEMO_PUBLIC_URL:?}
+      ALLOWED_ORIGIN: ${DEMO_PUBLIC_URL:?},http://localhost:4302

@@ -1,10 +1,10 @@
 name: Verify private AWS deployment
 on:
   pull_request:
-    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.*demo*.yml", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
   push:
     branches: [main, "codex/**"]
-    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
+    paths: ["deploy/aws/**", "scripts/*aws-private.ps1", "scripts/verify-aws-private.mjs", "e2e/aws-private/**", "compose.*demo*.yml", "compose.aws-private.yml", ".github/workflows/aws-private.yml", "backend/Dockerfile", "frontend/Dockerfile"]
 permissions:
   contents: read
 jobs:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check shell syntax
-        run: bash -n deploy/aws/bootstrap-host.sh deploy/aws/init-private.sh deploy/aws/start-private.sh
+        run: bash -n deploy/aws/bootstrap-host.sh deploy/aws/init-private.sh deploy/aws/start-private.sh deploy/aws/start-university-demo.sh deploy/aws/stop-university-demo.sh
       - name: Check PowerShell syntax
         shell: pwsh
         run: |

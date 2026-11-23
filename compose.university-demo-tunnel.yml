@@ -1,0 +1,21 @@
+name: credenciales-university-demo
+services:
+  tunnel:
+    image: ${DEMO_TUNNEL_IMAGE:?}
+    command: [tunnel, --no-autoupdate, --protocol, http2, --edge-ip-version, "4", --url, "http://frontend:80"]
+    # A restart assigns another URL. Regenerate the URL and app configuration explicitly.
+    restart: "no"
+    mem_limit: 128m
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 64
+    logging:
+      driver: local
+      options: {max-size: 5m, max-file: "2"}
+    networks: [origin]
+networks:
+  origin:
+    external: true
+    name: credenciales-aws-private_default
